@@ -128,15 +128,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void NavigateDepartment(List<dynamic> departments) {
     if (departments.contains("Admin")) {
-      GoRouter.of(context).pushNamed(AppRoutesName.Adminroutename);
+      context.go('/admin'); // ✅ absolute route
       return;
     }
 
-    GoRouter.of(context).pushNamed(
-      AppRoutesName.DepartmentCommonPage,
-      extra: departments,
+    // Non-admin → dashboard shell
+    context.go(
+      '/dashboard',
+      extra: departments, // ✅ passed to ShellRoute
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

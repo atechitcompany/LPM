@@ -5,4 +5,9 @@ class AppRoutesName{
   static const String Embossroutename = "emboss";
   static const String DepartmentCommonPage ="department_common_page";
   static const String NewForm ="new_form";
+  static const String DashboardScreen ="DashboardScreen";
+  static const String MapScreen ="MapScreen";
+  static const String ChatScreen ="ChatScreen";
+  static const String AnalyticsScreen ="AnalyticsScreen";
+  static const String Home ="Home";
 }
