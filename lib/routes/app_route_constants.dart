@@ -10,4 +10,7 @@ class AppRoutesName{
   static const String ChatScreen ="ChatScreen";
   static const String AnalyticsScreen ="AnalyticsScreen";
   static const String Home ="Home";
+  static const String TaskDetail = "TaskDetail";
+  static const String TasksPage = "TasksPage";
+  static const String GraphPage = "GraphPage";
 }

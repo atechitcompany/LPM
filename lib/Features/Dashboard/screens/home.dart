@@ -21,7 +21,7 @@ class Home extends StatelessWidget {
     int currentIndex = 0;
     if (location.startsWith('/map')) currentIndex = 1;
     else if (location.startsWith('/chat')) currentIndex = 2;
-    else if (location.startsWith('/analytics')) currentIndex = 3;
+    else if (location.startsWith('/graph')) currentIndex = 3;
 
     return Scaffold(
       body: child,
@@ -32,7 +32,7 @@ class Home extends StatelessWidget {
             case 0: context.go('/dashboard'); break;
             case 1: context.go('/map'); break;
             case 2: context.go('/chat'); break;
-            case 3: context.go('/analytics'); break;
+            case 3: context.go('/graph'); break;
           }
         },
       ),

@@ -3,16 +3,19 @@ import 'package:go_router/go_router.dart';
 import 'package:lightatech/Pages/Common/department_common_page.dart';
 import 'package:lightatech/Pages/Designer/Designer.dart';
 import 'package:lightatech/Pages/Emboss/Embosse.dart';
-// import 'package:lightatech/Pages/Login.dart';
 import 'package:lightatech/Pages/Admin/Admin.dart';
 import 'package:lightatech/Pages/LoginScreen.dart';
 import 'package:lightatech/Pages/NewForm.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
-import 'package:lightatech/Features/Dashboard/screens/analytics_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/chat_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/dashboard_screen.dart';
-import 'package:lightatech/Features/Dashboard/screens/map_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/home.dart';
+import 'package:lightatech/Features/MapScreen/screens/map_screen.dart';
+import 'package:lightatech/Features/MapScreen/screens/task_detail_page.dart';
+import 'package:lightatech/Features/MapScreen/models/task.dart';
+import 'package:lightatech/Features/Graph/screens/graph_page.dart';
+import 'package:lightatech/Features/Graph/widgets/graph_form.dart';
+import 'package:lightatech/Features/Graph/screens/graph_tasks_page.dart';
 
 class AppRoutes {
   final GoRouter router = GoRouter(
@@ -55,6 +58,29 @@ class AppRoutes {
         MaterialPage(child: NewForm()),
       ),
 
+      GoRoute(
+        name: AppRoutesName.TaskDetail,
+        path: '/task',
+        builder: (context, state) {
+          final task = state.extra as Task;
+          return TaskDetailPage(
+            task: task,
+            onChanged: () {}, // harmless (Firestore already updated)
+            onDelete: () {},  // pop already handled inside page
+          );
+        },
+      ),
+      GoRoute(
+        path: '/',
+        name: 'form',
+        builder: (context, state) => const GraphFormPage(),
+      ),
+      GoRoute(
+        path: '/tasks',
+        name: 'tasks',
+        builder: (context, state) => const GraphTasksPage(),
+      ),
+
       /* ---------------- DASHBOARD SHELL ---------------- */
       ShellRoute(
         builder: (context, state, child) {
@@ -77,7 +103,7 @@ class AppRoutes {
           GoRoute(
             name: AppRoutesName.MapScreen,
             path: "/map",
-            builder: (context, state) => const MapScreen(),
+            builder: (context, state) => const MapScreen(title: 'Maps',),
           ),
 
           GoRoute(
@@ -87,9 +113,9 @@ class AppRoutes {
           ),
 
           GoRoute(
-            name: AppRoutesName.AnalyticsScreen,
-            path: "/analytics",
-            builder: (context, state) => const AnalyticsScreen(),
+            path: '/graph',
+            name: 'graph',
+            builder: (context, state) => const GraphPage(),
           ),
         ],
       ),

@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     "Admin",
     "Designer",
     "Account",
-    "Autobending",
+    "AutoBending",
     "Delivery",
     "Emboss",
     "Lasercut",
