@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "930679859953",
+    "project_id": "light-punch-maker-atech1",
+    "storage_bucket": "light-punch-maker-atech1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930679859953:android:abc7cb1144da1796019750",
+        "android_client_info": {
+          "package_name": "com.example.lightatech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChRuJhT6oI1wdV1GKbjwf99lbaRYbo8jM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
