@@ -19,7 +19,7 @@ class StatusCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 320,
+        width: 160,
         height: 120,
         margin: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         padding: EdgeInsets.all(20),

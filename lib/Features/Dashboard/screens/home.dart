@@ -8,7 +8,6 @@ class Home extends StatelessWidget {
   final String location;
   final List<dynamic>? departments;
 
-
   const Home({
     super.key,
     required this.child,
@@ -18,25 +17,46 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int currentIndex = 0;
-    if (location.startsWith('/map')) currentIndex = 1;
-    else if (location.startsWith('/chat')) currentIndex = 2;
-    else if (location.startsWith('/graph')) currentIndex = 3;
+    int currentIndex = _calculateIndex(location);
 
     return Scaffold(
       body: child,
+
       bottomNavigationBar: BottomNavBar(
         currentIndex: currentIndex,
-        onNavTap: (index) {
-          switch (index) {
-            case 0: context.go('/dashboard'); break;
-            case 1: context.go('/map'); break;
-            case 2: context.go('/chat'); break;
-            case 3: context.go('/graph'); break;
-          }
-        },
+        onNavTap: (index) => _onNavTap(context, index),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+
     );
+  }
+
+  // ------------------ ROUTE → INDEX ------------------
+  int _calculateIndex(String location) {
+    if (location.startsWith('/map')) return 1;
+    if (location.startsWith('/payment')) return 2;
+    if (location.startsWith('/graph')) return 3;
+    if (location.startsWith('/target')) return 4;
+    return 0; // dashboard
+  }
+
+  // ------------------ INDEX → ROUTE ------------------
+  void _onNavTap(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/dashboard');
+        break;
+      case 1:
+        context.go('/map');
+        break;
+      case 2:
+        context.go('/payment');
+        break;
+      case 3:
+        context.go('/graph');
+        break;
+      case 4:
+        context.go('/target');
+        break;
+    }
   }
 }

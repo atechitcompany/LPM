@@ -74,7 +74,7 @@ class _AdminState extends State<Admin> {
             right: 20,
             child: FloatingActionButton(
               onPressed: () {
-                GoRouter.of(context).pushNamed(AppRoutesName.NewForm);
+                GoRouter.of(context).pushNamed(AppRoutesName.JobForm);
               },
               child: Icon(Icons.add),
             ),

@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"light-punch-maker-atech1","appId":"1:930679859953:android:abc7cb1144da1796019750","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"light-punch-maker-atech1","configurations":{"android":"1:930679859953:android:abc7cb1144da1796019750","ios":"1:930679859953:ios:51840cc93e9b578b019750","macos":"1:930679859953:ios:51840cc93e9b578b019750","web":"1:930679859953:web:8eabd085ba760b32019750","windows":"1:930679859953:web:8f8b884a8dd8ef93019750"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "light-punch-maker-atech1",
+          "appId": "1:930679859953:android:abc7cb1144da1796019750",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "light-punch-maker-atech1",
+          "configurations": {
+            "android": "1:930679859953:android:abc7cb1144da1796019750",
+            "ios": "1:930679859953:ios:51840cc93e9b578b019750",
+            "macos": "1:930679859953:ios:51840cc93e9b578b019750",
+            "web": "1:930679859953:web:8eabd085ba760b32019750",
+            "windows": "1:930679859953:web:8f8b884a8dd8ef93019750"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
