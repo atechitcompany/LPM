@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:lightatech/FormComponents/FLoatingButton.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task.dart';
 import '../models/floating_sheet_type.dart';
@@ -1251,16 +1252,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: selectionActive
           ? null
-          : FloatingActionButton(
-        backgroundColor: Colors.yellow,
-        onPressed: _openAddTaskSheet,
-        shape: const CircleBorder(),
-        child: const Icon(
-          Icons.add,
-          color: Colors.brown,
-          size: 35,
-        ),
-      ),
+          : FloatingButton(onPressed: _openAddTaskSheet)
     );
   }
 }

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:lightatech/FormComponents/FLoatingButton.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/graph_form.dart' show TaskEntry;
 
@@ -608,12 +609,7 @@ class _GraphPageState extends State<GraphPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddChartDialog,
-        label: const Text("Add"),
-        icon: const Icon(Icons.add_chart),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingButton(onPressed: _openAddChartDialog)
     );
   }
 
