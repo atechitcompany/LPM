@@ -138,9 +138,6 @@ class _LoginpageState extends State<Loginpage> {
       return;
     }
 
-    GoRouter.of(
-      context,
-    ).pushNamed(AppRoutesName.DepartmentCommonPage, extra: departments);
   }
 
   @override

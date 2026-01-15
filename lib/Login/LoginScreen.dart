@@ -13,14 +13,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool rememberMe = false;
   bool showPassword = false;
+  bool isLoading = false;
+  bool showDepartmentForm = false;
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  bool isLoading = false;
-  bool showDepartmentForm = false;
-
-  List<String> departments = [
+  final List<String> departments = [
     "Admin",
     "Designer",
     "Account",
@@ -128,13 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // 🖼️ SAFE ICON (NO OVERFLOW, NO 403)
-  Widget safeIcon(IconData fallback) {
-    return SizedBox(
-      width: 18,
-      height: 18,
-      child: Icon(fallback, size: 18, color: Colors.grey),
-    );
+  Widget safeIcon(IconData icon) {
+    return Icon(icon, size: 18, color: Colors.grey);
   }
 
   @override
@@ -149,12 +143,16 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 60),
 
-              /// LOGO
+              /// 🔰 LOGO (BUILT-IN ICON, UI MAINTAINED)
               Center(
-                child: SizedBox(
-                  height: 90,
-                  child: Icon(Icons.account_circle,
-                      size: 90, color: Colors.grey.shade400),
+                child: CircleAvatar(
+                  radius: 45,
+                  backgroundColor: const Color(0xFFF8D94B),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    size: 48,
+                    color: Color(0xff46000A),
+                  ),
                 ),
               ),
 
@@ -178,7 +176,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
-              /// EMAIL
               inputBox(
                 icon: safeIcon(Icons.email),
                 child: TextField(
@@ -192,7 +189,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-              /// PASSWORD
               inputBox(
                 icon: safeIcon(Icons.lock),
                 child: TextField(
@@ -227,7 +223,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 35),
 
-              /// SIGN IN BUTTON
               primaryButton("Sign In", login),
 
               const SizedBox(height: 40),
@@ -235,10 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
               if (showDepartmentForm) ...[
                 const Text(
                   "Select Department",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style:
+                  TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 20),
                 ...departments.map((dept) => CheckboxListTile(
@@ -262,11 +255,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// 🔹 INPUT BOX
   Widget inputBox(
-      {required Widget icon,
-        required Widget child,
-        Widget? trailing}) {
+      {required Widget icon, required Widget child, Widget? trailing}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -287,16 +277,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// 🔹 PRIMARY BUTTON
   Widget primaryButton(String text, VoidCallback onTap) {
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFF8D94B),
+        minimumSize: const Size(double.infinity, 60),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
-        minimumSize: const Size(double.infinity, 60),
       ),
       child: Text(
         text,
