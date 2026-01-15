@@ -48,6 +48,10 @@ import 'package:lightatech/Features/Payment/screens/settings_screen.dart';
 import 'package:lightatech/Features/Payment/screens/splash_screen.dart';
 
 
+import '../customer/intro/screens/order_detail_screen.dart';
+
+
+
 
 /// 🔑 Navigator Keys (SINGLE INSTANCE)
 final GlobalKey<NavigatorState> _rootNavigatorKey =
@@ -67,6 +71,13 @@ class AppRoutes {
     routes: [
 
       /* ---------------- ROOT ROUTES ---------------- */
+
+      GoRoute(
+        path: '/order-details',
+        name: 'orderDetails',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const OrderDetailScreen(),
+      ),
 
       GoRoute(
         path: '/',
