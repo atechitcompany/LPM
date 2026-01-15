@@ -3,6 +3,8 @@ import '../widgets/sidebar_logo.dart';
 
 // ✅ Added import for User Rights Screen
 import '../../adminAccess/screens/user_rights_screen.dart';
+import 'package:lightatech/customer/intro/screens/order_detail_screen.dart';
+
 class SidebarMenu extends StatelessWidget {
   const SidebarMenu({Key? key}) : super(key: key);
 
@@ -53,6 +55,7 @@ class SidebarMenu extends StatelessWidget {
 
             // ✅ Only this item was updated
             buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {
+            buildMenuItem('App Gallery', Icons.apps, () {
               Navigator.pop(context); // close drawer
 
               Navigator.push(
@@ -61,6 +64,21 @@ class SidebarMenu extends StatelessWidget {
                   builder: (_) => UserRightsScreen(),
                 ),
               );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+                  builder: (_) => OrderDetailScreen(),
+                ),
+              );
+            }),
+
+            // ✅ Only this item was updated
+            buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {
+
             }),
           ],
         ),
