@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/sidebar_logo.dart';
 
 // ✅ Added import for User Rights Screen
+import '../../adminAccess/screens/user_rights_screen.dart';
 import 'package:lightatech/customer/intro/screens/order_detail_screen.dart';
 
 class SidebarMenu extends StatelessWidget {
@@ -50,12 +51,26 @@ class SidebarMenu extends StatelessWidget {
             buildMenuItem('Feedback', Icons.feedback_outlined, () {}),
             buildMenuItem('Share', Icons.share_outlined, () {}),
             const Divider(),
+            buildMenuItem('App Gallery', Icons.apps, () {}),
+
+            // ✅ Only this item was updated
+            buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {
             buildMenuItem('App Gallery', Icons.apps, () {
               Navigator.pop(context); // close drawer
 
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  builder: (_) => UserRightsScreen(),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
                   builder: (_) => OrderDetailScreen(),
                 ),
               );
