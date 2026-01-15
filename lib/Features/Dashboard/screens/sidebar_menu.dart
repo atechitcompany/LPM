@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/sidebar_logo.dart';
 
+// ✅ Added import for User Rights Screen
+import '../../adminAccess/screens/user_rights_screen.dart';
 class SidebarMenu extends StatelessWidget {
   const SidebarMenu({Key? key}) : super(key: key);
 
@@ -31,7 +33,7 @@ class SidebarMenu extends StatelessWidget {
     return Drawer(
       child: SafeArea(
         child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           children: [
             SidebarLogo(), // ✅ Add this here
 
@@ -42,17 +44,27 @@ class SidebarMenu extends StatelessWidget {
             buildMenuItem('Turnover', Icons.bar_chart, () {}),
             buildMenuItem('Packages', Icons.card_giftcard, () {}),
             buildMenuItem('Productivity', Icons.show_chart, () {}),
-            Divider(),
+            const Divider(),
             buildMenuItem('About', Icons.info_outline, () {}),
             buildMenuItem('Feedback', Icons.feedback_outlined, () {}),
             buildMenuItem('Share', Icons.share_outlined, () {}),
-            Divider(),
+            const Divider(),
             buildMenuItem('App Gallery', Icons.apps, () {}),
-            buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {}),
+
+            // ✅ Only this item was updated
+            buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {
+              Navigator.pop(context); // close drawer
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => UserRightsScreen(),
+                ),
+              );
+            }),
           ],
         ),
       ),
     );
   }
-
 }
