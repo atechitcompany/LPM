@@ -355,7 +355,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildPageViewChildren() {
     List<Widget> pages = [];
     if (_allowedTabs.contains('Home') || _allowedTabs.isEmpty) pages.add(_buildHomeTab());
-    if (_allowedTabs.contains('ToDo')) pages.add(const MapScreen());
     if (_allowedTabs.contains('Paid')) pages.add(const PaidScreen());
     if (_allowedTabs.contains('Graph')) pages.add(const ReportsScreen());
 
