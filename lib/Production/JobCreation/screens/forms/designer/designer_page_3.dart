@@ -46,6 +46,64 @@ class DesignerPage3 extends StatelessWidget {
 
             const SizedBox(height: 30),
 
+            AddableSearchDropdown(
+              label: "Ply",
+              items: form.ply,
+              initialValue: "No",
+              onChanged: (v) {
+                form.PlyType.text = v ?? "";
+              },
+              onAdd: (v) => form.ply.add(v),
+            ),
+
+            const SizedBox(height: 30),
+
+            SearchableDropdownWithInitial(
+              label: "Blade",
+              items: form.ply,
+              initialValue: "No",
+              onChanged: (v) {
+                form.Blade.text = v ?? "";
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            SearchableDropdownWithInitial(
+              label: "Creasing",
+              items: form.ply,
+              initialValue: "No",
+              onChanged: (v) {
+                form.Creasing.text = v ?? "";
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            FlexibleToggle(
+              label: "Micro sarration Half cut 23.60",
+              inactiveText: "No",
+              activeText: "Yes",
+              initialValue: false,
+              onChanged: (val) {
+                // Store toggle value if needed
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            FlexibleToggle(
+              label: "Micro sarration Creasing 23.60",
+              inactiveText: "No",
+              activeText: "Yes",
+              initialValue: false,
+              onChanged: (val) {
+                // Store toggle value if needed
+              },
+            ),
+
+            const SizedBox(height: 30),
+
 
           ],
         ),
