@@ -30,6 +30,88 @@ class DesignerPage5 extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            AddableSearchDropdown(
+              label: "Transport Name",
+              items: form.jobs,
+              onChanged: (v) {
+                form.TransportName.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+            ),
+
+            const SizedBox(height: 30),
+
+            AddableSearchDropdown(
+              label: "House No",
+              items: form.HouseNoList,
+              onChanged: (v) {
+                form.HouseNo = v;
+                form.updateAddress();
+              },
+              onAdd: (newValue) {
+                form.HouseNoList.add(newValue);
+                form.HouseNo = newValue;
+                form.updateAddress();
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            AddableSearchDropdown(
+              label: "Appartment",
+              items: form.AppartmentList,
+              onChanged: (v) {
+                form.Appartment = v;
+                form.updateAddress();
+              },
+              onAdd: (newValue) {
+                form.AppartmentList.add(newValue);
+                form.Appartment = newValue;
+                form.updateAddress();
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            AddableSearchDropdown(
+              label: "Street",
+              items: form.StreetList,
+              onChanged: (v) {
+                form.Street = v;
+                form.updateAddress();
+              },
+              onAdd: (newValue) {
+                form.StreetList.add(newValue);
+                form.Street = newValue;
+                form.updateAddress();
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            AddableSearchDropdown(
+              label: "Pincode",
+              items: form.PincodeList,
+              onChanged: (v) {
+                form.Pincode = v;
+                form.updateAddress();
+              },
+              onAdd: (newValue) {
+                form.PincodeList.add(newValue);
+                form.Pincode = newValue;
+                form.updateAddress();
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            AutoCalcTextBox(
+              label: "Full Address",
+              controller: form.AddressOutput,
+            ),
+
+            const SizedBox(height: 30),
+
 
           ],
         ),
