@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:lightatech/routes/app_route_config.dart';
 import 'firebase_options.dart';
+import 'Features/Intro/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
