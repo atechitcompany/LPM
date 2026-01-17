@@ -15,16 +15,24 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 
 import '../new_form_scope.dart';
 
-
-class DesignerPage3 extends StatelessWidget {
+class DesignerPage3 extends StatefulWidget {
   const DesignerPage3({super.key});
 
   @override
+  State<DesignerPage3> createState() => _DesignerPage3State();
+}
+
+class _DesignerPage3State extends State<DesignerPage3> {
+  @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Designer 3"), backgroundColor: Colors.yellow),
+      appBar: AppBar(
+        title: const Text("Designer 3"),
+        backgroundColor: Colors.yellow,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -103,8 +111,6 @@ class DesignerPage3 extends StatelessWidget {
             ),
 
             const SizedBox(height: 30),
-
-
           ],
         ),
       ),
