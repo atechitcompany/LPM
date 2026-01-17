@@ -1,28 +1,19 @@
 import 'package:flutter/material.dart';
 import '../widgets/sidebar_logo.dart';
 
-// ✅ Added import for User Rights Screen
+// Screens
 import '../../adminAccess/screens/user_rights_screen.dart';
 import 'package:lightatech/customer/intro/screens/order_detail_screen.dart';
 
 class SidebarMenu extends StatelessWidget {
   const SidebarMenu({Key? key}) : super(key: key);
 
-  Widget buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey[700],
-        ),
-      ),
-    );
-  }
-
-  Widget buildMenuItem(String label, IconData icon, VoidCallback onTap) {
+  Widget buildMenuItem(
+      BuildContext context,
+      String label,
+      IconData icon,
+      VoidCallback onTap,
+      ) {
     return ListTile(
       leading: Icon(icon, color: Colors.blue),
       title: Text(label),
@@ -37,49 +28,97 @@ class SidebarMenu extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           children: [
-            SidebarLogo(), // ✅ Add this here
+            const SidebarLogo(),
 
-            // Menu items below
-            buildMenuItem('All Staffs Dashboard', Icons.dashboard, () {}),
-            buildMenuItem('Projects', Icons.work_outline, () {}),
-            buildMenuItem('Reach Dashboard', Icons.people_outline, () {}),
-            buildMenuItem('Turnover', Icons.bar_chart, () {}),
-            buildMenuItem('Packages', Icons.card_giftcard, () {}),
-            buildMenuItem('Productivity', Icons.show_chart, () {}),
+            buildMenuItem(
+              context,
+              'All Staffs Dashboard',
+              Icons.dashboard,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Projects',
+              Icons.work_outline,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Reach Dashboard',
+              Icons.people_outline,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Turnover',
+              Icons.bar_chart,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Packages',
+              Icons.card_giftcard,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Productivity',
+              Icons.show_chart,
+                  () {},
+            ),
+
             const Divider(),
-            buildMenuItem('About', Icons.info_outline, () {}),
-            buildMenuItem('Feedback', Icons.feedback_outlined, () {}),
-            buildMenuItem('Share', Icons.share_outlined, () {}),
+
+            buildMenuItem(
+              context,
+              'About',
+              Icons.info_outline,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Feedback',
+              Icons.feedback_outlined,
+                  () {},
+            ),
+            buildMenuItem(
+              context,
+              'Share',
+              Icons.share_outlined,
+                  () {},
+            ),
+
             const Divider(),
-            buildMenuItem('App Gallery', Icons.apps, () {}),
 
-            // ✅ Only this item was updated
-            buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {
-            buildMenuItem('App Gallery', Icons.apps, () {
-              Navigator.pop(context); // close drawer
+            buildMenuItem(
+              context,
+              'App Gallery',
+              Icons.apps,
+                  () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const OrderDetailScreen(),
+                  ),
+                );
+              },
+            ),
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => UserRightsScreen(),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-}
-                  builder: (_) => OrderDetailScreen(),
-                ),
-              );
-            }),
-
-            // ✅ Only this item was updated
-            buildMenuItem('Add Shortcut', Icons.add_box_outlined, () {
-
-            }),
+            buildMenuItem(
+              context,
+              'Add Shortcut',
+              Icons.add_box_outlined,
+                  () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UserRightsScreen(),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
