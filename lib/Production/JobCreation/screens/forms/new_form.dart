@@ -144,7 +144,9 @@ class NewFormState extends State<NewForm> {
     'courierCharges': true,
     'autoCreasingStatus': true,
     'laserRate': true,
+    'laserdoneby':true,
     'laserCuttingStatus': true,
+    'autobendingdoneby': true,
     'invoiceToggle': true,
     'invoicePrintedBy': true,
     'createdBy': true,
@@ -252,7 +254,9 @@ class NewFormState extends State<NewForm> {
   final FemaleEmbossType = TextEditingController();
   final StrippingType = TextEditingController();
   final AutoCreasingStatus = TextEditingController();
+  final LaserDoneBy = TextEditingController();
   final LaserCuttingStatus = TextEditingController();
+  final AutoBendingDoneBy = TextEditingController();
   final InvoiceStatus = TextEditingController();
   final ParticularSlider = TextEditingController();
   //new
@@ -346,7 +350,9 @@ class NewFormState extends State<NewForm> {
       // Laser
       "LaserPunchNew": LaserPunchNew.text,
       "LaserRate": LaserRate.text,
+      "LaserDoneBy": LaserDoneBy.text,
       "LaserCuttingStatus": LaserCuttingStatus.text,
+      "AutoBendingDoneBy": AutoBendingDoneBy,
 
       // Address fields
       "FullAddress": AddressOutput.text,
@@ -482,7 +488,9 @@ class NewFormState extends State<NewForm> {
     CourierCharges.clear();
     LaserPunchNew.clear();
     LaserRate.clear();
+    LaserDoneBy.clear();
     LaserCuttingStatus.clear();
+
     DeliveryURL.clear();
     Unknown.clear();
     DesignSendBy.clear();
@@ -646,7 +654,9 @@ class NewFormState extends State<NewForm> {
     CourierCharges.dispose();
     LaserPunchNew.dispose();
     LaserRate.dispose();
+    LaserDoneBy.dispose();
     LaserCuttingStatus.dispose();
+    AutoBendingDoneBy.dispose();
     DeliveryURL.dispose();
     Unknown.dispose();
     DesignSendBy.dispose();
@@ -726,6 +736,8 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-4',
       '/jobform/designer-5',
       '/jobform/designer-6',
+      '/jobform/designer-7',
+      '/jobform/designer-8',
       '/jobform/auto-bending',
       '/jobform/manual-bending',
       '/jobform/laser',
@@ -750,6 +762,8 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-4',
       '/jobform/designer-5',
       '/jobform/designer-6',
+      '/jobform/designer-7',
+      '/jobform/designer-8',
       '/jobform/auto-bending',
       '/jobform/manual-bending',
       '/jobform/laser',

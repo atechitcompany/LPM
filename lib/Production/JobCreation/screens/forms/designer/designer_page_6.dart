@@ -37,7 +37,73 @@ class DesignerPage6 extends StatelessWidget {
               controller: form.Unknown,
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Capsule",
+              items: form.jobs,
+              onChanged: (v) {
+                form.CapsuleType.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Perforation",
+              items: form.jobs,
+              onChanged: (v) {},
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Zig Zag Blade",
+              items: form.jobs,
+              onChanged: (v) {
+                form.ZigZagBlade.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Rubber",
+              items: form.jobs,
+              onChanged: (v) {
+                form.RubberType.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
+
+            FlexibleToggle(
+              label: "Emboss",
+              inactiveText: "No",
+              activeText: "Yes",
+              onChanged: (v) {
+                form.EmbossStatus.text = v ? "Yes" : "No";
+              },
+            ),
+
+            const SizedBox(height: 26),
+
+            TextInput(
+              label: "Emboss Pcs",
+              hint: "No of Pcs",
+              controller: form.EmbossPcs,
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
 
 
           ],
