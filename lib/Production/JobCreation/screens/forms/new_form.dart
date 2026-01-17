@@ -253,6 +253,9 @@ class NewFormState extends State<NewForm> {
   final LaserCuttingStatus = TextEditingController();
   final InvoiceStatus = TextEditingController();
   final ParticularSlider = TextEditingController();
+  //new
+  final TextEditingController DesignedBy = TextEditingController();
+
   String HouseNo = "";
   String Appartment = "";
   String Street = "";
@@ -666,6 +669,9 @@ class NewFormState extends State<NewForm> {
     Amounts3.dispose();
     ParticularSlider.dispose();
     AddressOutput.dispose();
+    //new
+    DesignedBy.dispose();
+
 
     super.dispose();
   }
