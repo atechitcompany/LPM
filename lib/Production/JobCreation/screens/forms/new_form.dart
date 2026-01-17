@@ -70,6 +70,7 @@ class NewFormState extends State<NewForm> {
     'rubberDoneBy': true,
     'microSerrationHalfCut': true,
     'microSerrationCreasing': true,
+    'manualbendingfittingdoneby':true,
     'wpFile': true,
     'deliveryCreatedBy': true,
     'deliveryToggle': true,
@@ -227,6 +228,7 @@ class NewFormState extends State<NewForm> {
   final AccountsCreatedBy = TextEditingController();
   final EmbossCreatedBy = TextEditingController();
   final ManualBendingCreatedBy = TextEditingController();
+  final ManualBendingFittingDoneBy = TextEditingController();
   final GSTType = TextEditingController();
   final ParticularJobName = TextEditingController();
   final Priority = TextEditingController();
@@ -253,6 +255,9 @@ class NewFormState extends State<NewForm> {
   final LaserCuttingStatus = TextEditingController();
   final InvoiceStatus = TextEditingController();
   final ParticularSlider = TextEditingController();
+  //new
+  final TextEditingController DesignedBy = TextEditingController();
+
   String HouseNo = "";
   String Appartment = "";
   String Street = "";
@@ -369,6 +374,7 @@ class NewFormState extends State<NewForm> {
       "AccountsCreatedBy": AccountsCreatedBy.text,
       "EmbossCreatedBy": EmbossCreatedBy.text,
       "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
+      "ManualBendingFittingDoneBy": ManualBendingFittingDoneBy.text,
       "DeliveryCreatedBy": DeliveryCreatedBy.text,
 
       // Other
@@ -495,6 +501,7 @@ class NewFormState extends State<NewForm> {
     AccountsCreatedBy.clear();
     EmbossCreatedBy.clear();
     ManualBendingCreatedBy.clear();
+    ManualBendingFittingDoneBy.clear();
     DeliveryCreatedBy.clear();
     GSTType.clear();
     ParticularJobName.clear();
@@ -658,6 +665,7 @@ class NewFormState extends State<NewForm> {
     AccountsCreatedBy.dispose();
     EmbossCreatedBy.dispose();
     ManualBendingCreatedBy.dispose();
+    ManualBendingFittingDoneBy.dispose();
     DeliveryCreatedBy.dispose();
     GSTType.dispose();
     ParticularJobName.dispose();
@@ -666,6 +674,9 @@ class NewFormState extends State<NewForm> {
     Amounts3.dispose();
     ParticularSlider.dispose();
     AddressOutput.dispose();
+    //new
+    DesignedBy.dispose();
+
 
     super.dispose();
   }
@@ -712,6 +723,9 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-1',
       '/jobform/designer-2',
       '/jobform/designer-3',
+      '/jobform/designer-4',
+      '/jobform/designer-5',
+      '/jobform/designer-6',
       '/jobform/auto-bending',
       '/jobform/manual-bending',
       '/jobform/laser',
@@ -733,6 +747,9 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-1',
       '/jobform/designer-2',
       '/jobform/designer-3',
+      '/jobform/designer-4',
+      '/jobform/designer-5',
+      '/jobform/designer-6',
       '/jobform/auto-bending',
       '/jobform/manual-bending',
       '/jobform/laser',
