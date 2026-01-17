@@ -30,7 +30,72 @@ class DesignerPage4 extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Punch Report
+            TextInput(label: "Manual Bending Fitting Done By", hint: "Name", controller: form.ManualBendingFittingDoneBy),
+            const SizedBox(height: 26,),
+
+            SearchableDropdownWithInitial(
+              label: "Delivery Created By",
+              items: form.ply,
+              onChanged: (v) {
+                form.DeliveryCreatedBy.text = v ?? "";
+              },
+            ),
+
+            const SizedBox(height: 26),
+
+            FlexibleToggle(
+              label: "Delivery",
+              inactiveText: "Pending",
+              activeText: "Done",
+              initialValue: false,
+              onChanged: (val) {
+                form.DeliveryStatus.text = val ? "Done" : "Pending";
+              },
+            ),
+
+            const SizedBox(height: 26),
+
+            const Text(
+              "Die/Punch Image",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            FileUploadBox(
+              onFileSelected: (file) {},
+            ),
+
+            const SizedBox(height: 26),
+
+            const Text(
+              "Invoice Image",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            FileUploadBox(
+              onFileSelected: (file) {},
+            ),
+
+            const SizedBox(height: 26),
+
+            TextInput(
+              label: "Delivery URL",
+              hint: "URL",
+              controller: form.DeliveryURL,
+              initialValue: "URL",
+            ),
+
+            const SizedBox(height: 26),
+
+            FlexibleToggle(
+              label: "Job Done",
+              inactiveText: "No",
+              activeText: "Yes",
+              onChanged: (v) {
+                // Store toggle value if needed
+              },
+            ),
+
+            const SizedBox(height: 26),
 
           ],
         ),
