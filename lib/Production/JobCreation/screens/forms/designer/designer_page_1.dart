@@ -15,18 +15,28 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 
 import '../new_form_scope.dart';
 
-
-class DesignerPage1 extends StatelessWidget {
+class DesignerPage1 extends StatefulWidget {
   const DesignerPage1({super.key});
+
+  @override
+  State<DesignerPage1> createState() => _DesignerPage1State();
+}
+
+class _DesignerPage1State extends State<DesignerPage1> {
+  String? manualBendingCreatedBy;
+  bool manualBendingDone = false; // ✅ Toggle value
 
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Designer1"), backgroundColor: Colors.yellow,),
+      appBar: AppBar(
+        title: const Text("Designer1"),
+        backgroundColor: Colors.yellow,
+      ),
       body: SingleChildScrollView(
-
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,10 +70,33 @@ class DesignerPage1 extends StatelessWidget {
             SearchableDropdownWithInitial(
               label: "Manual Bending Created By",
               items: form.parties,
-              onChanged: (v) {},
+              onChanged: (v) {
+                setState(() {
+                  manualBendingCreatedBy = v;
+
+                  // ✅ Optional: reset toggle whenever new person selected
+                  manualBendingDone = false;
+                });
+              },
             ),
 
+            // ✅ Toggle appears only after dropdown selection
+            if (manualBendingCreatedBy != null &&
+                manualBendingCreatedBy!.isNotEmpty) ...[
+              const SizedBox(height: 15),
 
+              FlexibleToggle(
+                label: "Manual Bending Status",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue: manualBendingDone,
+                onChanged: (val) {
+                  setState(() {
+                    manualBendingDone = val;
+                  });
+                },
+              ),
+            ],
 
             const SizedBox(height: 30),
 
