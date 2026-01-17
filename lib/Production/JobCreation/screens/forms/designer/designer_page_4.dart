@@ -15,23 +15,37 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 
 import '../new_form_scope.dart';
 
-
-class DesignerPage4 extends StatelessWidget {
+class DesignerPage4 extends StatefulWidget {
   const DesignerPage4({super.key});
 
   @override
+  State<DesignerPage4> createState() => _DesignerPage4State();
+}
+
+class _DesignerPage4State extends State<DesignerPage4> {
+  @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Designer 4"), backgroundColor: Colors.yellow),
+      appBar: AppBar(
+        title: const Text("Designer 4"),
+        backgroundColor: Colors.yellow,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextInput(label: "Manual Bending Fitting Done By", hint: "Name", controller: form.ManualBendingFittingDoneBy),
-            const SizedBox(height: 26,),
+            TextInput(
+              label: "Manual Bending Fitting Done By",
+              hint: "Name",
+              controller: form.ManualBendingFittingDoneBy,
+            ),
+            const SizedBox(
+              height: 26,
+            ),
 
             SearchableDropdownWithInitial(
               label: "Delivery Created By",
@@ -96,7 +110,6 @@ class DesignerPage4 extends StatelessWidget {
             ),
 
             const SizedBox(height: 26),
-
           ],
         ),
       ),
