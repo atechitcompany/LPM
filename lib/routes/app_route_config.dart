@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/Features/Intro/screens/fill_profile_screen.dart';
+import 'package:lightatech/Features/Intro/screens/create_pin_screen.dart';
+import 'package:lightatech/Features/Intro/screens/biometric_screen.dart';
+
+import 'package:lightatech/Features/Intro/screens/fill_profile_screen.dart';
+import 'package:lightatech/Features/Intro/screens/create_pin_screen.dart';
 
 import 'package:lightatech/Login/Admin/Admin.dart';
+import 'package:lightatech/Features/Intro/auth/screens/lets_you_in_screen.dart';
 import 'package:lightatech/Login/LoginScreen.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_4.dart';
 // import 'package:lightatech/Production/JobCreation/screens/JobsForm.dart';
@@ -21,7 +28,6 @@ import 'package:lightatech/Production/JobCreation/screens/forms/emboss/emboss_pa
 import 'package:lightatech/Production/JobCreation/screens/forms/rubber/rubber_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/delivery/delivery_page.dart';
 
-
 import 'package:lightatech/Features/Dashboard/screens/dashboard_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/home.dart';
 
@@ -34,28 +40,13 @@ import 'package:lightatech/Features/Graph/widgets/graph_form.dart';
 import 'package:lightatech/Features/Graph/screens/graph_tasks_page.dart';
 import 'package:lightatech/Features/Target/screens/profile_screen.dart';
 
-
 import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
-import 'package:lightatech/Features/Payment/screens/home_screen.dart';
-import 'package:lightatech/Features/Payment/screens/payment_screen.dart';
-import 'package:lightatech/Features/Payment/screens/add_user_screen.dart';
-import 'package:lightatech/Features/Payment/screens/admin_alerts_screen.dart';
-import 'package:lightatech/Features/Payment/screens/admin_notifications_screen.dart';
-import 'package:lightatech/Features/Payment/screens/history_screen.dart';
-import 'package:lightatech/Features/Payment/screens/import_screen.dart';
-import 'package:lightatech/Features/Payment/screens/lead_detail_screen.dart';
-import 'package:lightatech/Features/Payment/screens/lead_form_screen.dart';
-import 'package:lightatech/Features/Payment/screens/manage_users_screen.dart';
-
-import 'package:lightatech/Features/Payment/screens/reports_screen.dart';
-import 'package:lightatech/Features/Payment/screens/request_access_screen.dart';
-import 'package:lightatech/Features/Payment/screens/settings_screen.dart';
-import 'package:lightatech/Features/Payment/screens/splash_screen.dart';
-
 
 import '../customer/intro/screens/order_detail_screen.dart';
 
-
+/// ✅ INTRO FEATURE IMPORTS (NEW)
+import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
+import 'package:lightatech/Features/Intro/screens/intro_screen.dart';
 
 
 /// 🔑 Navigator Keys (SINGLE INSTANCE)
@@ -64,6 +55,7 @@ GlobalKey<NavigatorState>();
 
 final GlobalKey<NavigatorState> _shellNavigatorKey =
 GlobalKey<NavigatorState>();
+
 
 /// ✅ SINGLETON ROUTER
 class AppRoutes {
@@ -85,6 +77,25 @@ class AppRoutes {
       ),
 
       GoRoute(
+        path: '/intro/biometric',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BiometricScreen(),
+      ),
+
+
+      GoRoute(
+        path: '/intro/fill-profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const FillProfileScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/create-pin',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CreatePinScreen(),
+      ),
+
+      GoRoute(
         path: '/',
         name: AppRoutesName.Loginroutename,
         builder: (context, state) => const LoginScreen(),
@@ -94,6 +105,19 @@ class AppRoutes {
         path: '/admin',
         name: AppRoutesName.Adminroutename,
         builder: (context, state) => const Admin(),
+      ),
+
+      /// ✅ INTRO ROUTES (ADDED SAFELY)
+      GoRoute(
+        path: '/intro/splash',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const IntroScreen(),
       ),
 
       ShellRoute(
@@ -106,6 +130,11 @@ class AppRoutes {
           GoRoute(
             path: '/jobform',
             redirect: (_, __) => '/jobform/designer-1',
+          ),
+
+          GoRoute(
+            path: '/auth/entry',
+            builder: (context, state) => const LetsYouInScreen(),
           ),
 
           GoRoute(
@@ -162,9 +191,6 @@ class AppRoutes {
         ],
       ),
 
-
-
-
       GoRoute(
         path: '/task',
         name: AppRoutesName.TaskDetail,
@@ -193,8 +219,6 @@ class AppRoutes {
         builder: (context, state) => const GraphTasksPage(),
       ),
 
-      //Payment routes
-
       /* ---------------- SHELL ROUTE ---------------- */
 
       ShellRoute(
@@ -205,7 +229,6 @@ class AppRoutes {
             location: state.uri.toString(),
           );
         },
-
         routes: [
 
           GoRoute(

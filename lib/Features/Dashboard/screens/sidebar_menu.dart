@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/sidebar_logo.dart';
+import 'package:go_router/go_router.dart';
+
 
 // Screens
 import '../../adminAccess/screens/user_rights_screen.dart';
@@ -85,7 +87,10 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Share',
               Icons.share_outlined,
-                  () {},
+                  () {
+                    Navigator.pop(context);
+                    context.go('/intro/splash');
+                  },
             ),
 
             const Divider(),
