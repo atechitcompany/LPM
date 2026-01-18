@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (selectedDepartments.length == 1 &&
           userDepartment.contains(selectedDepartments.first)) {
-        navigateDepartment(selectedDepartments);
+        navigateDepartment();
         return;
       }
 
@@ -119,12 +119,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void navigateDepartment(List<dynamic> departments) {
-    if (departments.contains("Admin")) {
-      context.go('/admin');
-    } else {
-      context.go('/dashboard', extra: departments);
-    }
+  /// 🔥 FORCE INTRO FLOW AFTER LOGIN (REVERTED)
+  void navigateDepartment() {
+    /// Always go to profile first
+    context.go('/intro/fill-profile');
   }
 
   Widget safeIcon(IconData icon) {
@@ -143,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 60),
 
-              /// 🔰 LOGO (BUILT-IN ICON, UI MAINTAINED)
               Center(
                 child: CircleAvatar(
                   radius: 45,
@@ -246,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 )),
                 const SizedBox(height: 20),
-                primaryButton("Log In", approve),
+                primaryButton("Continue", approve),
               ],
             ],
           ),
