@@ -40,19 +40,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AddableSearchDropdown(
-              label: "Particular Job Name *",
-              items: form.jobs,
-              onChanged: (v) {},
-              onAdd: (newJob) => form.jobs.add(newJob),
-            ),
-
-            const SizedBox(height: 30),
-
-            AutoIncrementField(value: 1004),
-
-            const SizedBox(height: 30),
-
             const Text(
               "Priority",
               style: TextStyle(
@@ -137,6 +124,35 @@ class _DesignerPage2State extends State<DesignerPage2> {
             ),
 
             const SizedBox(height: 30),
+
+            const Text(
+              "Punch Report",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            FileUploadBox(
+              onFileSelected: (file) {
+                print("Selected File: ${file.name}");
+                print("Size: ${file.size}");
+                print("Path: ${file.path}");
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            AddableSearchDropdown(
+              label: "Ply",
+              items: form.ply,
+              initialValue: "No",
+              onChanged: (v) {
+                form.PlyType.text = v ?? "";
+              },
+              onAdd: (v) => form.ply.add(v),
+            ),
+
+            const SizedBox(height: 30),
+
+
           ],
         ),
       ),

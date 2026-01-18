@@ -39,33 +39,6 @@ class _DesignerPage3State extends State<DesignerPage3> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Punch Report
-            const Text(
-              "Punch Report",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-
-            FileUploadBox(
-              onFileSelected: (file) {
-                print("Selected File: ${file.name}");
-                print("Size: ${file.size}");
-                print("Path: ${file.path}");
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            AddableSearchDropdown(
-              label: "Ply",
-              items: form.ply,
-              initialValue: "No",
-              onChanged: (v) {
-                form.PlyType.text = v ?? "";
-              },
-              onAdd: (v) => form.ply.add(v),
-            ),
-
-            const SizedBox(height: 30),
-
             SearchableDropdownWithInitial(
               label: "Blade",
               items: form.ply,
@@ -111,6 +84,26 @@ class _DesignerPage3State extends State<DesignerPage3> {
             ),
 
             const SizedBox(height: 30),
+
+            TextInput(
+              label: "Unknown",
+              hint: "Unknown",
+              controller: form.Unknown,
+            ),
+
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Capsule",
+              items: form.jobs,
+              onChanged: (v) {
+                form.CapsuleType.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
           ],
         ),
       ),

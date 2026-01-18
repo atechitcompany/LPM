@@ -155,6 +155,8 @@ class NewFormState extends State<NewForm> {
     'amount2': true,
     'amount3': true,
     'submitButton': true,
+    'rubberfixingdone': true,
+    'whiteprofilerubber': true,
   };
 
   List<String> parties = ["Tata", "Jindal", "Infosys"];
@@ -259,6 +261,8 @@ class NewFormState extends State<NewForm> {
   final AutoBendingDoneBy = TextEditingController();
   final InvoiceStatus = TextEditingController();
   final ParticularSlider = TextEditingController();
+  final RubberFixingDone = TextEditingController();
+  final WhiteProfileRubber = TextEditingController();
   //new
   final TextEditingController DesignedBy = TextEditingController();
 
@@ -391,6 +395,9 @@ class NewFormState extends State<NewForm> {
       "Amounts3": Amounts3.text,
       "ParticularSlider": ParticularSlider.text,
 
+      "RubberFixingDone": RubberFixingDone.text,
+      "WhiteProfileRubber": WhiteProfileRubber.text,
+
       "Timestamp": DateTime.now().toIso8601String(),
     };
   }
@@ -518,6 +525,8 @@ class NewFormState extends State<NewForm> {
     Amounts3.clear();
     ParticularSlider.clear();
     AddressOutput.clear();
+    RubberFixingDone.clear();
+    WhiteProfileRubber.clear();
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -684,6 +693,8 @@ class NewFormState extends State<NewForm> {
     Amounts3.dispose();
     ParticularSlider.dispose();
     AddressOutput.dispose();
+    RubberFixingDone.dispose();
+    WhiteProfileRubber.dispose();
     //new
     DesignedBy.dispose();
 
@@ -736,8 +747,6 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-4',
       '/jobform/designer-5',
       '/jobform/designer-6',
-      '/jobform/designer-7',
-      '/jobform/designer-8',
       '/jobform/auto-bending',
       '/jobform/manual-bending',
       '/jobform/laser',
@@ -762,8 +771,6 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-4',
       '/jobform/designer-5',
       '/jobform/designer-6',
-      '/jobform/designer-7',
-      '/jobform/designer-8',
       '/jobform/auto-bending',
       '/jobform/manual-bending',
       '/jobform/laser',

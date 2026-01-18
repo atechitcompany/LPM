@@ -31,87 +31,92 @@ class DesignerPage5 extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AddableSearchDropdown(
-              label: "Transport Name",
+              label: "Male Emboss",
               items: form.jobs,
               onChanged: (v) {
-                form.TransportName.text = v ?? "";
+                form.MaleEmbossType.text = v ?? "";
               },
               onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "X",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            NumberStepper(
+              step: 0.01,
+              onChanged: (val) {
+                form.X.text = val.toString();
+                form.calculateXY();
+              },
+              controller: form.X,
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Y",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            NumberStepper(
+              step: 0.01,
+              onChanged: (val) {
+                form.Y.text = val.toString();
+                form.calculateXY();
+              },
+              controller: form.Y,
             ),
 
             const SizedBox(height: 30),
 
             AddableSearchDropdown(
-              label: "House No",
-              items: form.HouseNoList,
+              label: "Female Emboss",
+              items: form.jobs,
               onChanged: (v) {
-                form.HouseNo = v;
-                form.updateAddress();
+                form.FemaleEmbossType.text = v ?? "";
               },
-              onAdd: (newValue) {
-                form.HouseNoList.add(newValue);
-                form.HouseNo = newValue;
-                form.updateAddress();
-              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
             ),
 
             const SizedBox(height: 30),
 
-            AddableSearchDropdown(
-              label: "Appartment",
-              items: form.AppartmentList,
-              onChanged: (v) {
-                form.Appartment = v;
-                form.updateAddress();
+            const Text(
+              "X2",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            NumberStepper(
+              step: 0.01,
+              onChanged: (val) {
+                form.X2.text = val.toString();
+                form.calculateXY();
               },
-              onAdd: (newValue) {
-                form.AppartmentList.add(newValue);
-                form.Appartment = newValue;
-                form.updateAddress();
-              },
+              controller: form.X2,
             ),
 
             const SizedBox(height: 30),
 
-            AddableSearchDropdown(
-              label: "Street",
-              items: form.StreetList,
-              onChanged: (v) {
-                form.Street = v;
-                form.updateAddress();
+            const Text(
+              "Y2",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+            NumberStepper(
+              step: 0.01,
+              onChanged: (val) {
+                form.Y2.text = val.toString();
+                form.calculateXY2();
               },
-              onAdd: (newValue) {
-                form.StreetList.add(newValue);
-                form.Street = newValue;
-                form.updateAddress();
-              },
+              controller: form.Y2,
             ),
 
             const SizedBox(height: 30),
-
-            AddableSearchDropdown(
-              label: "Pincode",
-              items: form.PincodeList,
-              onChanged: (v) {
-                form.Pincode = v;
-                form.updateAddress();
-              },
-              onAdd: (newValue) {
-                form.PincodeList.add(newValue);
-                form.Pincode = newValue;
-                form.updateAddress();
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            AutoCalcTextBox(
-              label: "Full Address",
-              controller: form.AddressOutput,
-            ),
-
-            const SizedBox(height: 30),
-
 
           ],
         ),

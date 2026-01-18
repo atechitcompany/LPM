@@ -38,78 +38,74 @@ class _DesignerPage4State extends State<DesignerPage4> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextInput(
-              label: "Manual Bending Fitting Done By",
-              hint: "Name",
-              controller: form.ManualBendingFittingDoneBy,
-            ),
-            const SizedBox(
-              height: 26,
+            AddableSearchDropdown(
+              label: "Perforation",
+              items: form.jobs,
+              onChanged: (v) {},
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
             ),
 
-            SearchableDropdownWithInitial(
-              label: "Delivery Created By",
-              items: form.ply,
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Zig Zag Blade",
+              items: form.jobs,
               onChanged: (v) {
-                form.DeliveryCreatedBy.text = v ?? "";
+                form.ZigZagBlade.text = v ?? "";
               },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
             ),
 
             const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Rubber",
+              items: form.jobs,
+              onChanged: (v) {
+                form.RubberType.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
+
+            AddableSearchDropdown(
+              label: "Hole",
+              items: form.jobs,
+              onChanged: (v) {
+                form.HoleType.text = v ?? "";
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 30),
 
             FlexibleToggle(
-              label: "Delivery",
-              inactiveText: "Pending",
-              activeText: "Done",
-              initialValue: false,
-              onChanged: (val) {
-                form.DeliveryStatus.text = val ? "Done" : "Pending";
-              },
-            ),
-
-            const SizedBox(height: 26),
-
-            const Text(
-              "Die/Punch Image",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-
-            FileUploadBox(
-              onFileSelected: (file) {},
-            ),
-
-            const SizedBox(height: 26),
-
-            const Text(
-              "Invoice Image",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-
-            FileUploadBox(
-              onFileSelected: (file) {},
-            ),
-
-            const SizedBox(height: 26),
-
-            TextInput(
-              label: "Delivery URL",
-              hint: "URL",
-              controller: form.DeliveryURL,
-              initialValue: "URL",
-            ),
-
-            const SizedBox(height: 26),
-
-            FlexibleToggle(
-              label: "Job Done",
+              label: "Emboss",
               inactiveText: "No",
               activeText: "Yes",
               onChanged: (v) {
-                // Store toggle value if needed
+                form.EmbossStatus.text = v ? "Yes" : "No";
               },
             ),
 
             const SizedBox(height: 26),
+
+            TextInput(
+              label: "Emboss Pcs",
+              hint: "No of Pcs",
+              controller: form.EmbossPcs,
+              initialValue: "No",
+            ),
+
+            const SizedBox(height: 26),
+
+
+
           ],
         ),
       ),
