@@ -27,6 +27,13 @@ class _DesignerPage3State extends State<DesignerPage3> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
+    bool isBladeSelected = form.Blade.text.trim().toLowerCase() != "no";
+    bool isCreasingSelected = form.Creasing.text.trim().toLowerCase() != "no";
+
+    String selectedByText() {
+      return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} at ${TimeOfDay.now().format(context)}";
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -38,37 +45,97 @@ class _DesignerPage3State extends State<DesignerPage3> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Punch Report
+            // ✅ Blade Dropdown
             SearchableDropdownWithInitial(
               label: "Blade",
               items: form.ply,
               initialValue: "No",
               onChanged: (v) {
-                form.Blade.text = v ?? "";
+                setState(() {
+                  form.Blade.text = v ?? "";
+                });
+
+                String selected = (v ?? "").trim();
+
+                if (selected.toLowerCase() == "no") {
+                  form.BladeSelectedBy.clear();
+                } else {
+                  form.BladeSelectedBy.text = selectedByText();
+                }
               },
             ),
 
+            /// ✅ Blade Selected By (only when Blade != No)
+            if (isBladeSelected) ...[
+              const SizedBox(height: 20),
+              const Text(
+                "Blade Selected By",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: form.BladeSelectedBy,
+                enabled: false,
+                decoration: InputDecoration(
+                  hintText: "Will be filled automatically",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 30),
 
+            // ✅ Creasing Dropdown
             SearchableDropdownWithInitial(
               label: "Creasing",
               items: form.ply,
               initialValue: "No",
               onChanged: (v) {
-                form.Creasing.text = v ?? "";
+                setState(() {
+                  form.Creasing.text = v ?? "";
+                });
+
+                String selected = (v ?? "").trim();
+
+                if (selected.toLowerCase() == "no") {
+                  form.CreasingSelectedBy.clear();
+                } else {
+                  form.CreasingSelectedBy.text = selectedByText();
+                }
               },
             ),
 
+            /// ✅ Creasing Selected By (only when Creasing != No)
+            if (isCreasingSelected) ...[
+              const SizedBox(height: 20),
+              const Text(
+                "Creasing Selected By",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: form.CreasingSelectedBy,
+                enabled: false,
+                decoration: InputDecoration(
+                  hintText: "Will be filled automatically",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 30),
 
+            // ✅ Toggles
             FlexibleToggle(
               label: "Micro sarration Half cut 23.60",
               inactiveText: "No",
               activeText: "Yes",
               initialValue: false,
-              onChanged: (val) {
-                // Store toggle value if needed
-              },
+              onChanged: (val) {},
             ),
 
             const SizedBox(height: 30),
@@ -78,9 +145,7 @@ class _DesignerPage3State extends State<DesignerPage3> {
               inactiveText: "No",
               activeText: "Yes",
               initialValue: false,
-              onChanged: (val) {
-                // Store toggle value if needed
-              },
+              onChanged: (val) {},
             ),
 
             const SizedBox(height: 30),
@@ -110,3 +175,4 @@ class _DesignerPage3State extends State<DesignerPage3> {
     );
   }
 }
+

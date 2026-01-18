@@ -263,8 +263,18 @@ class NewFormState extends State<NewForm> {
   final ParticularSlider = TextEditingController();
   final RubberFixingDone = TextEditingController();
   final WhiteProfileRubber = TextEditingController();
+  final Perforation = TextEditingController();
+
   //new
   final TextEditingController DesignedBy = TextEditingController();
+  final TextEditingController PlySelectedBy = TextEditingController();
+  final TextEditingController BladeSelectedBy = TextEditingController();
+  final TextEditingController CreasingSelectedBy = TextEditingController();
+  final TextEditingController PerforationSelectedBy = TextEditingController();
+  final TextEditingController ZigZagBladeSelectedBy = TextEditingController();
+  final TextEditingController RubberSelectedBy = TextEditingController();
+  final TextEditingController HoleSelectedBy = TextEditingController();
+
   bool AutoCreasing = false;
 
 
@@ -529,6 +539,19 @@ class NewFormState extends State<NewForm> {
     AddressOutput.clear();
     RubberFixingDone.clear();
     WhiteProfileRubber.clear();
+    //new
+    // ✅ clear new fields
+    DesignedBy.clear();
+    PlySelectedBy.clear();
+    BladeSelectedBy.clear();
+    CreasingSelectedBy.clear();
+    PerforationSelectedBy.clear();
+    ZigZagBladeSelectedBy.clear();
+    RubberSelectedBy.clear();
+    HoleSelectedBy.clear();
+    Perforation.clear();
+
+
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -700,6 +723,17 @@ class NewFormState extends State<NewForm> {
     WhiteProfileRubber.dispose();
     //new
     DesignedBy.dispose();
+    PlySelectedBy.dispose();
+    BladeSelectedBy.dispose();
+    CreasingSelectedBy.dispose();
+    PerforationSelectedBy.dispose();
+    ZigZagBladeSelectedBy.dispose();
+    RubberSelectedBy.dispose();
+    HoleSelectedBy.dispose();
+    Perforation.dispose();
+
+
+
 
 
     super.dispose();
