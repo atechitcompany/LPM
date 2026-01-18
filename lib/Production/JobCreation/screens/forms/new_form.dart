@@ -275,6 +275,7 @@ class NewFormState extends State<NewForm> {
   final TextEditingController RubberSelectedBy = TextEditingController();
   final TextEditingController HoleSelectedBy = TextEditingController();
 
+  bool AutoCreasing = false;
 
 
   String HouseNo = "";
@@ -572,6 +573,7 @@ class NewFormState extends State<NewForm> {
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
     LaserPunchNew.text = "No";
+
 
     // Dropdowns default
     PlyType.text = "No";
