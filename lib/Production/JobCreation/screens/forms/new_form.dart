@@ -265,6 +265,8 @@ class NewFormState extends State<NewForm> {
   final WhiteProfileRubber = TextEditingController();
   //new
   final TextEditingController DesignedBy = TextEditingController();
+  bool AutoCreasing = false;
+
 
   String HouseNo = "";
   String Appartment = "";
@@ -548,6 +550,7 @@ class NewFormState extends State<NewForm> {
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
     LaserPunchNew.text = "No";
+
 
     // Dropdowns default
     PlyType.text = "No";
