@@ -30,81 +30,41 @@ class DesignerPage6 extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            TextInput(
-              label: "Unknown",
-              hint: "Unknown",
-              controller: form.Unknown,
-            ),
-
-            const SizedBox(height: 26),
-
             AddableSearchDropdown(
-              label: "Capsule",
+              label: "Stripping",
               items: form.jobs,
               onChanged: (v) {
-                form.CapsuleType.text = v ?? "";
+                form.StrippingType.text = v ?? "";
               },
               onAdd: (newJob) => form.jobs.add(newJob),
               initialValue: "No",
             ),
 
-            const SizedBox(height: 26),
-
-            AddableSearchDropdown(
-              label: "Perforation",
-              items: form.jobs,
-              onChanged: (v) {},
-              onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: "No",
-            ),
-
-            const SizedBox(height: 26),
-
-            AddableSearchDropdown(
-              label: "Zig Zag Blade",
-              items: form.jobs,
-              onChanged: (v) {
-                form.ZigZagBlade.text = v ?? "";
-              },
-              onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: "No",
-            ),
-
-            const SizedBox(height: 26),
-
-            AddableSearchDropdown(
-              label: "Rubber",
-              items: form.jobs,
-              onChanged: (v) {
-                form.RubberType.text = v ?? "";
-              },
-              onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: "No",
-            ),
-
-            const SizedBox(height: 26),
+            const SizedBox(height: 30),
 
             FlexibleToggle(
-              label: "Emboss",
-              inactiveText: "No",
-              activeText: "Yes",
+              label: "Laser Cutting Status",
+              inactiveText: "Pending",
+              activeText: "Done",
               onChanged: (v) {
-                form.EmbossStatus.text = v ? "Yes" : "No";
+                form.LaserCuttingStatus.text = v ? "Done" : "Pending";
               },
             ),
 
-            const SizedBox(height: 26),
+            const SizedBox(height: 30),
+            FlexibleToggle(label: "Rubber Fixing Done", inactiveText: "No", activeText: "Yes", onChanged: (val) {
+              form.RubberFixingDone.text = val ? "Yes" : "No";
+            },),
 
-            TextInput(
-              label: "Emboss Pcs",
-              hint: "No of Pcs",
-              controller: form.EmbossPcs,
-              initialValue: "No",
+            const SizedBox(height: 30),
+            FlexibleToggle(label: "White Profile Rubber", inactiveText: "No", activeText: "Yes", onChanged: (val) {
+              form.WhiteProfileRubber.text = val ? "Yes" : "No";
+            },),
+
+
+            const SizedBox(
+              height: 30,
             ),
-
-            const SizedBox(height: 26),
-
 
           ],
         ),

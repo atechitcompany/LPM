@@ -33,7 +33,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Designer1"),
+        title: const Text("Designer 1"),
         backgroundColor: Colors.yellow,
       ),
       body: SingleChildScrollView(
@@ -59,46 +59,6 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
-            SearchableDropdownWithInitial(
-              label: "Emboss Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Manual Bending Created By",
-              items: form.parties,
-              onChanged: (v) {
-                setState(() {
-                  manualBendingCreatedBy = v;
-
-                  // ✅ Optional: reset toggle whenever new person selected
-                  manualBendingDone = false;
-                });
-              },
-            ),
-
-            // ✅ Toggle appears only after dropdown selection
-            if (manualBendingCreatedBy != null &&
-                manualBendingCreatedBy!.isNotEmpty) ...[
-              const SizedBox(height: 15),
-
-              FlexibleToggle(
-                label: "Manual Bending Status",
-                inactiveText: "Pending",
-                activeText: "Done",
-                initialValue: manualBendingDone,
-                onChanged: (val) {
-                  setState(() {
-                    manualBendingDone = val;
-                  });
-                },
-              ),
-            ],
-
-            const SizedBox(height: 30),
 
             TextInput(
               controller: form.DeliveryAt,
@@ -115,6 +75,22 @@ class _DesignerPage1State extends State<DesignerPage1> {
             ),
 
             const SizedBox(height: 30),
+
+            AddableSearchDropdown(
+              label: "Particular Job Name *",
+              items: form.jobs,
+              onChanged: (v) {},
+              onAdd: (newJob) => form.jobs.add(newJob),
+            ),
+
+            const SizedBox(height: 30),
+
+            AutoIncrementField(value: 1004),
+
+            const SizedBox(height: 30),
+
+
+
           ],
         ),
       ),
