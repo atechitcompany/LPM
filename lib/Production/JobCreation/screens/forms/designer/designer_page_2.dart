@@ -28,6 +28,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+    bool isPlySelected = form.PlyType.text.trim().toLowerCase() != "no";
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -85,27 +87,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               },
             ),
 
-            /// ✅ Show "Designed By" only when Designing is Done
-            if (isDesigningDone) ...[
-              const SizedBox(height: 20),
-
-              const Text(
-                "Designed By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-
-              TextField(
-                controller: form.DesignedBy,
-                enabled: false, // ✅ Not editable / not clickable
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ],
 
             const SizedBox(height: 30),
 
@@ -114,6 +95,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
               "Drawing Attachment",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
+            const SizedBox(height: 8),
 
             FileUploadBox(
               onFileSelected: (file) {
@@ -122,13 +104,33 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 print("Path: ${file.path}");
               },
             ),
-
             const SizedBox(height: 30),
+
+            /// ✅ Show "Designed By" only when Designing is Done
+            if (isDesigningDone) ...[
+
+              const Text(
+                "Rubber Report",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+
+              FileUploadBox(
+                onFileSelected: (file) {
+                  print("Selected File: ${file.name}");
+                  print("Size: ${file.size}");
+                  print("Path: ${file.path}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
 
             const Text(
               "Punch Report",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
+            const SizedBox(height: 8),
 
             FileUploadBox(
               onFileSelected: (file) {
@@ -145,12 +147,47 @@ class _DesignerPage2State extends State<DesignerPage2> {
               items: form.ply,
               initialValue: "No",
               onChanged: (v) {
-                form.PlyType.text = v ?? "";
+                setState(() {
+                  form.PlyType.text = v ?? "";
+                });
+
+                String selected = (v ?? "").trim();
+
+                // ✅ If Ply is "No" → hide & clear
+                if (selected.toLowerCase() == "no") {
+                  form.PlySelectedBy.clear();
+                  return;
+                }
+
+                // ✅ If Ply is selected (not No) → auto-fill PlySelectedBy
+                form.PlySelectedBy.text =
+                "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} at ${TimeOfDay.now().format(context)}";
               },
+
               onAdd: (v) => form.ply.add(v),
             ),
+            /// ✅ Show "Ply Selected By" only when Ply is selected (not "No")
+            if (isPlySelected) ...[
+              const SizedBox(height: 30),
 
-            const SizedBox(height: 30),
+              const Text(
+                "Ply Selected By",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+
+              TextField(
+                controller: form.PlySelectedBy,
+                enabled: false,
+                decoration: InputDecoration(
+                  hintText: "Will be filled automatically",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ],
+
 
 
           ],
