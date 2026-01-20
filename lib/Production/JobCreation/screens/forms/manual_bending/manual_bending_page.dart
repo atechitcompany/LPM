@@ -16,57 +16,37 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import '../new_form_scope.dart';
 
 
-class ManualBendingPage extends StatelessWidget {
+class ManualBendingPage extends StatefulWidget {
   const ManualBendingPage({super.key});
 
+  @override
+  State<ManualBendingPage> createState() => _ManualBendingPageState();
+}
+
+class _ManualBendingPageState extends State<ManualBendingPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Manual Bending")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text("Manual Bending"), backgroundColor: Colors.yellow,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             SearchableDropdownWithInitial(
-              label: "Party Name *",
+              label: "Manual Bending Created By",
               items: form.parties,
               onChanged: (v) {},
             ),
+            SizedBox(height: 30,),
 
-            const SizedBox(height: 30),
 
-            SearchableDropdownWithInitial(
-              label: "Designer Created By",
-              items: form.parties,
-              onChanged: (v) {
-                form.DesignerCreatedBy.text = v ?? "";
-              },
-            ),
+            //Party Name view access
 
-            const SizedBox(height: 30),
+            //Particular Job name view access
 
-            SearchableDropdownWithInitial(
-              label: "Auto Bending Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Laser Cutting Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Accounts Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //LPM view access
 
           ],
         ),

@@ -16,9 +16,14 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import '../new_form_scope.dart';
 
 
-class DeliveryPage extends StatelessWidget {
+class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key});
 
+  @override
+  State<DeliveryPage> createState() => _DeliveryPageState();
+}
+
+class _DeliveryPageState extends State<DeliveryPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);

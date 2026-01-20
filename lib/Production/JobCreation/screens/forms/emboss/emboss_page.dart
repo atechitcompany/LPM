@@ -16,57 +16,48 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import '../new_form_scope.dart';
 
 
-class EmbossPage extends StatelessWidget {
+class EmbossPage extends StatefulWidget {
   const EmbossPage({super.key});
 
+  @override
+  State<EmbossPage> createState() => _EmbossPageState();
+}
+
+class _EmbossPageState extends State<EmbossPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Emboss")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text("Emboss"), backgroundColor: Colors.yellow,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SearchableDropdownWithInitial(
-              label: "Party Name *",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //Party Name view access
 
-            const SizedBox(height: 30),
+            //Particular job name view access
 
-            SearchableDropdownWithInitial(
-              label: "Designer Created By",
-              items: form.parties,
-              onChanged: (v) {
-                form.DesignerCreatedBy.text = v ?? "";
-              },
-            ),
+            //LPM view access
 
-            const SizedBox(height: 30),
+            //Designing view access
 
-            SearchableDropdownWithInitial(
-              label: "Auto Bending Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            // Drawing attachment view access
 
-            const SizedBox(height: 30),
+            //Hole Amount View access
 
-            SearchableDropdownWithInitial(
-              label: "Laser Cutting Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //Emboss Edit access
 
-            const SizedBox(height: 30),
+            //Emboss pcs edit access
 
-            SearchableDropdownWithInitial(
-              label: "Accounts Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //Male Emboss edit access
+
+            //X Edit access
+
+            //Y Edit Access
+
+            //Female Embosse
+
 
           ],
         ),

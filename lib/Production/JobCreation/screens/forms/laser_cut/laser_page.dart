@@ -16,57 +16,45 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import '../new_form_scope.dart';
 
 
-class LaserPage extends StatelessWidget {
+class LaserPage extends StatefulWidget {
   const LaserPage({super.key});
 
+  @override
+  State<LaserPage> createState() => _LaserPageState();
+}
+
+class _LaserPageState extends State<LaserPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Lasercut")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text("Lasercut"), backgroundColor: Colors.yellow),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SearchableDropdownWithInitial(
-              label: "Party Name *",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Designer Created By",
-              items: form.parties,
-              onChanged: (v) {
-                form.DesignerCreatedBy.text = v ?? "";
+            FlexibleToggle(
+              label: "Laser Cutting Punch New",
+              inactiveText: "No",
+              activeText: "Yes",
+              initialValue: false,
+              onChanged: (val) {
+                form.LaserPunchNew.text = val ? "Yes" : "No";
               },
             ),
 
-            const SizedBox(height: 30),
+            //Particular Job name View access
 
-            SearchableDropdownWithInitial(
-              label: "Auto Bending Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //LPM View access
 
-            const SizedBox(height: 30),
+            SizedBox(height: 30,),
 
-            SearchableDropdownWithInitial(
-              label: "Laser Cutting Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //Ply View Access
 
-            const SizedBox(height: 30),
 
-            SearchableDropdownWithInitial(
-              label: "Accounts Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+
+
 
           ],
         ),
