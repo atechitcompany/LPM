@@ -368,7 +368,7 @@ class NewFormState extends State<NewForm> {
       "LaserRate": LaserRate.text,
       "LaserDoneBy": LaserDoneBy.text,
       "LaserCuttingStatus": LaserCuttingStatus.text,
-      "AutoBendingDoneBy": AutoBendingDoneBy,
+      "AutoBendingDoneBy": AutoBendingDoneBy.text,
 
       // Address fields
       "FullAddress": AddressOutput.text,
