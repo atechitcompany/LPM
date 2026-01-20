@@ -28,45 +28,11 @@ class RubberPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SearchableDropdownWithInitial(
-              label: "Party Name *",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //Party Name View access
 
-            const SizedBox(height: 30),
+            //Particular Job Name
 
-            SearchableDropdownWithInitial(
-              label: "Designer Created By",
-              items: form.parties,
-              onChanged: (v) {
-                form.DesignerCreatedBy.text = v ?? "";
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Auto Bending Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Laser Cutting Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Accounts Created By",
-              items: form.parties,
-              onChanged: (v) {},
-            ),
+            //LPM View Access
 
           ],
         ),

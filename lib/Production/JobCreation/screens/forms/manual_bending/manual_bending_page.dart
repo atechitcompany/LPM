@@ -16,9 +16,14 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import '../new_form_scope.dart';
 
 
-class ManualBendingPage extends StatelessWidget {
+class ManualBendingPage extends StatefulWidget {
   const ManualBendingPage({super.key});
 
+  @override
+  State<ManualBendingPage> createState() => _ManualBendingPageState();
+}
+
+class _ManualBendingPageState extends State<ManualBendingPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
