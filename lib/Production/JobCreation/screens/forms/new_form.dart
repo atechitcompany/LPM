@@ -797,6 +797,8 @@ class NewFormState extends State<NewForm> {
       '/jobform/laser',
       '/jobform/rubber',
       '/jobform/emboss',
+      '/jobform/account1',
+      '/jobform/account2',
       '/jobform/delivery',
     ];
 

@@ -16,14 +16,20 @@ import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import '../new_form_scope.dart';
 
 
-class RubberPage extends StatelessWidget {
+class RubberPage extends StatefulWidget {
   const RubberPage({super.key});
 
+  @override
+  State<RubberPage> createState() => _RubberPageState();
+}
+
+class _RubberPageState extends State<RubberPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Rubber")),
+      backgroundColor: Colors.yellow,
+      appBar: AppBar(title: const Text("Rubber"),backgroundColor: Colors.white,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

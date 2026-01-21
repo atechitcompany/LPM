@@ -10,6 +10,7 @@ import 'package:lightatech/Features/Intro/screens/create_pin_screen.dart';
 import 'package:lightatech/Login/Admin/Admin.dart';
 import 'package:lightatech/Features/Intro/auth/screens/lets_you_in_screen.dart';
 import 'package:lightatech/Login/LoginScreen.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_page1.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_4.dart';
 // import 'package:lightatech/Production/JobCreation/screens/JobsForm.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
@@ -186,6 +187,17 @@ class AppRoutes {
             path: '/jobform/emboss',
             builder: (context, state) => const EmbossPage(),
           ),
+
+          GoRoute(
+            path: '/jobform/account1',
+            builder: (context, state) => const AccountPage(),
+          ),
+
+          GoRoute(
+            path: '/jobform/account2',
+            builder: (context, state) => const EmbossPage(),
+          ),
+
           GoRoute(
             path: '/jobform/delivery',
             builder: (context, state) => const DeliveryPage(),
