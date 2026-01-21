@@ -51,8 +51,7 @@ class TrackingView extends StatelessWidget {
         return 'Auto Bending';
       case OrderStatus.manualBending:
         return 'Manual Bending';
-      case OrderStatus.outForDelivery:
-        return 'Out for Delivery';
+
       case OrderStatus.delivered:
         return 'Delivered';
     }
@@ -68,8 +67,7 @@ class TrackingView extends StatelessWidget {
         return 'Automatic bending is underway';
       case OrderStatus.manualBending:
         return 'Manual finishing is in progress';
-      case OrderStatus.outForDelivery:
-        return 'Order is on the way';
+
       case OrderStatus.delivered:
         return 'Order delivered successfully';
     }

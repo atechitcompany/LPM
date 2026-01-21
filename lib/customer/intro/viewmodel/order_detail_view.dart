@@ -14,15 +14,16 @@ class OrderDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Client Details'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      backgroundColor: const Color(0xFFF6F7F9),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           children: [
             ClientHeaderCard(),
@@ -35,7 +36,7 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             const DeliveryDetailsCard(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             const PriceDetailsCard(),
           ],

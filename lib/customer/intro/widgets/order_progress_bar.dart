@@ -70,8 +70,7 @@ class OrderProgressBar extends StatelessWidget {
         return 'Auto Bending';
       case OrderStatus.manualBending:
         return 'Manual Bending';
-      case OrderStatus.outForDelivery:
-        return 'Out for delivery';
+
       case OrderStatus.delivered:
         return 'Delivered';
     }
