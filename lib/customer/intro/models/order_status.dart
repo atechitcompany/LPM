@@ -3,6 +3,5 @@ enum OrderStatus {
   laserCutting,
   autoBending,
   manualBending,
-  outForDelivery,
   delivered,
 }
