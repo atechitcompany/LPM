@@ -23,16 +23,9 @@ class DesignerPage1 extends StatefulWidget {
 }
 
 class _DesignerPage1State extends State<DesignerPage1> {
-  String? manualBendingCreatedBy;
-  bool manualBendingDone = false; // ✅ Toggle value
-
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
-    if (form.LpmAutoIncrement.text.isEmpty) {
-      form.LpmAutoIncrement.text = "1004";
-    }
-
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -45,18 +38,13 @@ class _DesignerPage1State extends State<DesignerPage1> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ✅ Party Name stored properly
             SearchableDropdownWithInitial(
               label: "Party Name *",
               items: form.parties,
-              onChanged: (v) {},
-            ),
-
-            const SizedBox(height: 30),
-
-            SearchableDropdownWithInitial(
-              label: "Party Name *",
-              items: form.parties,
-              initialValue: form.PartyName.text.isEmpty ? "Select Party" : form.PartyName.text,
+              initialValue: form.PartyName.text.isEmpty
+                  ? "Select Party"
+                  : form.PartyName.text,
               onChanged: (v) {
                 setState(() {
                   form.PartyName.text = (v ?? "").trim();
@@ -64,9 +52,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
               },
             ),
 
-
             const SizedBox(height: 30),
-
 
             TextInput(
               controller: form.DeliveryAt,
@@ -84,6 +70,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
+            // ✅ Particular Job Name stored properly
             AddableSearchDropdown(
               label: "Particular Job Name *",
               items: form.jobs,
@@ -98,22 +85,26 @@ class _DesignerPage1State extends State<DesignerPage1> {
               onAdd: (newJob) => form.jobs.add(newJob),
             ),
 
-
             const SizedBox(height: 30),
 
-            AutoIncrementField(
-              value: int.tryParse(form.LpmAutoIncrement.text) ?? 0,
+            // ✅ LPM Auto Increment (from Firebase)
+            ValueListenableBuilder(
+              valueListenable: form.LpmAutoIncrement,
+              builder: (context, value, child) {
+                return AutoIncrementField(
+                  value: int.tryParse(form.LpmAutoIncrement.text) ?? 0,
+                );
+              },
             ),
 
 
 
+
             const SizedBox(height: 30),
-
-
-
           ],
         ),
       ),
     );
   }
 }
+
