@@ -10,9 +10,11 @@ class NewForm extends StatefulWidget {
 
   @override
   State<NewForm> createState() => NewFormState();
+
 }
 
 class NewFormState extends State<NewForm> {
+
   Map<String, bool> fieldAccess = {
     // Basic Info
     'partyName': true,
@@ -594,29 +596,90 @@ class NewFormState extends State<NewForm> {
     });
   }
 
+  Future<void> loadCurrentLpm() async {
+    try {
+      final counterRef =
+      FirebaseFirestore.instance.collection("counters").doc("jobCounter");
+
+      final snap = await counterRef.get();
+
+      int last = 1000;
+
+      if (snap.exists) {
+        final val = snap.data()?["lastLpm"];
+
+        if (val is int) {
+          last = val;
+        } else if (val is String) {
+          last = int.tryParse(val) ?? 1000;
+        }
+      } else {
+        await counterRef.set({"lastLpm": 1000});
+        last = 1000;
+      }
+
+      LpmAutoIncrement.text = (last + 1).toString();
+      setState(() {});
+    } catch (e) {
+      print("❌ loadCurrentLpm error: $e");
+      // ✅ fallback so UI doesn't spin forever
+      LpmAutoIncrement.text = "1001";
+      setState(() {});
+    }
+  }
+
+
+
+  Future<void> incrementLpmAfterSubmit() async {
+    final counterRef =
+    FirebaseFirestore.instance.collection("counters").doc("jobCounter");
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+
+      int last = 1000;
+      if (snap.exists) {
+        last = (snap.data()?["lastLpm"] ?? 1000);
+      }
+
+      transaction.set(counterRef, {"lastLpm": last + 1}, SetOptions(merge: true));
+    });
+  }
+
+
+
   Future<void> submitForm() async {
     final data = buildFormData();
 
     try {
+      // ✅ 1) Submit form
       await FirebaseFirestore.instance.collection("jobs").add(data);
 
-      // Clear the form after successful upload
+      // ✅ 2) Increment counter ONLY after success
+      await incrementLpmAfterSubmit();
+
+      // ✅ 3) Clear current form
       clearForm();
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Form submitted successfully!")));
+      // ✅ 4) Load next number for next form
+      await loadCurrentLpm();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Form submitted successfully!")),
+      );
     } catch (e) {
       print(e);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error submitting form")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error submitting form")),
+      );
     }
   }
+
 
   @override
   void initState() {
     super.initState();
+    loadCurrentLpm();
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -740,14 +803,11 @@ class NewFormState extends State<NewForm> {
     Perforation.dispose();
     PartyName.dispose();
 
-
-
-
-
     super.dispose();
   }
 
   @override
+
   Widget build(BuildContext context) {
     return NewFormScope(
       form: this,
