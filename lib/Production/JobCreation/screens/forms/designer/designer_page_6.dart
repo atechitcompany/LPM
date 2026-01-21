@@ -17,6 +17,13 @@ class _DesignerPage6State extends State<DesignerPage6> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
+    // ✅ Toggle initial states from controllers
+    bool laserDone = form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
+    bool rubberFixingDone =
+        form.RubberFixingDone.text.trim().toLowerCase() == "yes";
+    bool whiteProfileRubber =
+        form.WhiteProfileRubber.text.trim().toLowerCase() == "yes";
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -32,10 +39,14 @@ class _DesignerPage6State extends State<DesignerPage6> {
               label: "Stripping",
               items: form.jobs,
               onChanged: (v) {
-                form.StrippingType.text = v ?? "";
+                setState(() {
+                  form.StrippingType.text = (v ?? "No").trim();
+                });
               },
               onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: "No",
+              initialValue: form.StrippingType.text.isEmpty
+                  ? "No"
+                  : form.StrippingType.text,
             ),
 
             const SizedBox(height: 30),
@@ -44,8 +55,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
               label: "Laser Cutting Status",
               inactiveText: "Pending",
               activeText: "Done",
+              initialValue: laserDone,
               onChanged: (v) {
-                form.LaserCuttingStatus.text = v ? "Done" : "Pending";
+                setState(() {
+                  form.LaserCuttingStatus.text = v ? "Done" : "Pending";
+                });
               },
             ),
 
@@ -55,8 +69,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
               label: "Rubber Fixing Done",
               inactiveText: "No",
               activeText: "Yes",
+              initialValue: rubberFixingDone,
               onChanged: (val) {
-                form.RubberFixingDone.text = val ? "Yes" : "No";
+                setState(() {
+                  form.RubberFixingDone.text = val ? "Yes" : "No";
+                });
               },
             ),
 
@@ -66,14 +83,17 @@ class _DesignerPage6State extends State<DesignerPage6> {
               label: "White Profile Rubber",
               inactiveText: "No",
               activeText: "Yes",
+              initialValue: whiteProfileRubber,
               onChanged: (val) {
-                form.WhiteProfileRubber.text = val ? "Yes" : "No";
+                setState(() {
+                  form.WhiteProfileRubber.text = val ? "Yes" : "No";
+                });
               },
             ),
 
             const SizedBox(height: 30),
 
-            // ✅ Submit Button (inside UI below rubber)
+            // ✅ Submit Button
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -86,11 +106,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   });
 
                   try {
-                    // ✅ This submits ALL 6 pages data
                     await form.submitForm();
-
-                    // ✅ Snackbar already handled inside form.submitForm()
-                    // But just in case you want it here also, you can add again.
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

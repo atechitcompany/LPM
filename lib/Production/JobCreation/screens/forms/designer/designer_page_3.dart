@@ -49,15 +49,13 @@ class _DesignerPage3State extends State<DesignerPage3> {
             SearchableDropdownWithInitial(
               label: "Blade",
               items: form.ply,
-              initialValue: "No",
+              initialValue: form.Blade.text.isEmpty ? "No" : form.Blade.text,
               onChanged: (v) {
                 setState(() {
-                  form.Blade.text = v ?? "";
+                  form.Blade.text = (v ?? "No").trim();
                 });
 
-                String selected = (v ?? "").trim();
-
-                if (selected.toLowerCase() == "no") {
+                if (form.Blade.text.toLowerCase() == "no") {
                   form.BladeSelectedBy.clear();
                 } else {
                   form.BladeSelectedBy.text = selectedByText();
@@ -91,15 +89,14 @@ class _DesignerPage3State extends State<DesignerPage3> {
             SearchableDropdownWithInitial(
               label: "Creasing",
               items: form.ply,
-              initialValue: "No",
+              initialValue:
+              form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
               onChanged: (v) {
                 setState(() {
-                  form.Creasing.text = v ?? "";
+                  form.Creasing.text = (v ?? "No").trim();
                 });
 
-                String selected = (v ?? "").trim();
-
-                if (selected.toLowerCase() == "no") {
+                if (form.Creasing.text.toLowerCase() == "no") {
                   form.CreasingSelectedBy.clear();
                 } else {
                   form.CreasingSelectedBy.text = selectedByText();
