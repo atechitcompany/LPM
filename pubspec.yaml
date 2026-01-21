@@ -75,6 +75,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
+    - assets/LPM.jpg
     - assets/sidebar_logo.jpeg
     - assets/location.png
     - assets/user.png
