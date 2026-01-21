@@ -37,7 +37,17 @@ class OrderStatusCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           /// Progress Bar
-          OrderProgressBar(currentStatus: currentStatus),
+          /// Progress Bar
+          OrderProgressBar(
+            stepStatus: {
+              OrderStatus.designing: true,
+              OrderStatus.laserCutting: true,
+              OrderStatus.autoBending: true,
+              OrderStatus.manualBending: true,
+              OrderStatus.delivered: true,
+            },
+          ),
+
 
           const SizedBox(height: 12),
 

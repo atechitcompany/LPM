@@ -2,30 +2,34 @@ import 'package:flutter/material.dart';
 import '../models/order_status.dart';
 
 class OrderProgressBar extends StatelessWidget {
-  final OrderStatus currentStatus;
+  /// Each step’s completion state
+  /// true  -> completed (blue)
+  /// false -> pending (grey)
+  final Map<OrderStatus, bool> stepStatus;
 
   const OrderProgressBar({
     super.key,
-    required this.currentStatus,
+    required this.stepStatus,
   });
 
   @override
   Widget build(BuildContext context) {
-    final statuses = OrderStatus.values;
+    final statuses = stepStatus.keys.toList();
 
     return Column(
       children: [
         /// DOT + LINE
         Row(
           children: List.generate(statuses.length, (index) {
-            final isCompleted =
-                statuses[index].index <= currentStatus.index;
+            final status = statuses[index];
+            final isCompleted = stepStatus[status] ?? false;
             final isLast = index == statuses.length - 1;
 
             return Expanded(
               child: Row(
                 children: [
                   _StatusDot(isCompleted: isCompleted),
+
                   if (!isLast)
                     Expanded(
                       child: Container(
@@ -70,13 +74,13 @@ class OrderProgressBar extends StatelessWidget {
         return 'Auto Bending';
       case OrderStatus.manualBending:
         return 'Manual Bending';
-
       case OrderStatus.delivered:
         return 'Delivered';
     }
   }
 }
 
+/// ================= DOT =================
 class _StatusDot extends StatelessWidget {
   final bool isCompleted;
 
@@ -88,13 +92,15 @@ class _StatusDot extends StatelessWidget {
       width: 18,
       height: 18,
       decoration: BoxDecoration(
-        color: isCompleted
-            ? Colors.blue
-            : Colors.grey.shade300,
+        color: isCompleted ? Colors.blue : Colors.grey.shade300,
         shape: BoxShape.circle,
       ),
       child: isCompleted
-          ? const Icon(Icons.check, size: 12, color: Colors.white)
+          ? const Icon(
+        Icons.check,
+        size: 12,
+        color: Colors.white,
+      )
           : null,
     );
   }
