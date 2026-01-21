@@ -1,5 +1,6 @@
-package com.example.lightatech
+package com.example.lightatech   // ⚠️ keep your existing package name
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity: FlutterFragmentActivity() {
+}
