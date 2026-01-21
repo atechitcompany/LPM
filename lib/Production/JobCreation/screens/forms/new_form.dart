@@ -266,6 +266,7 @@ class NewFormState extends State<NewForm> {
   final Perforation = TextEditingController();
 
   //new
+  final PartyName = TextEditingController();
   final TextEditingController DesignedBy = TextEditingController();
   final TextEditingController PlySelectedBy = TextEditingController();
   final TextEditingController BladeSelectedBy = TextEditingController();
@@ -274,6 +275,8 @@ class NewFormState extends State<NewForm> {
   final TextEditingController ZigZagBladeSelectedBy = TextEditingController();
   final TextEditingController RubberSelectedBy = TextEditingController();
   final TextEditingController HoleSelectedBy = TextEditingController();
+  final LpmAutoIncrement = TextEditingController();
+
 
   bool AutoCreasing = false;
 
@@ -287,6 +290,8 @@ class NewFormState extends State<NewForm> {
   Map<String, dynamic> buildFormData() {
     return {
       // Basic Info
+      "LpmAutoIncrement": LpmAutoIncrement.text,
+
       "BuyerOrderNo": BuyerOrderNo.text,
       "DeliveryAt": DeliveryAt.text,
       "Orderby": Orderby.text,
@@ -401,6 +406,7 @@ class NewFormState extends State<NewForm> {
 
       // Other
       "GSTType": GSTType.text,
+      "PartyName": PartyName.text,
       "ParticularJobName": ParticularJobName.text,
       "Priority": Priority.text,
       "PlyType": PlyType.text,
@@ -550,6 +556,7 @@ class NewFormState extends State<NewForm> {
     RubberSelectedBy.clear();
     HoleSelectedBy.clear();
     Perforation.clear();
+    PartyName.clear();
 
 
 
@@ -731,6 +738,7 @@ class NewFormState extends State<NewForm> {
     RubberSelectedBy.dispose();
     HoleSelectedBy.dispose();
     Perforation.dispose();
+    PartyName.dispose();
 
 
 
@@ -794,31 +802,14 @@ class NewFormState extends State<NewForm> {
 
     final index = pages.indexOf(location);
     if (index != -1 && index < pages.length - 1) {
-      context.go(pages[index + 1]);
+      context.push(pages[index + 1]);
     }
   }
 
   void _goPrev() {
-    final location = GoRouterState.of(context).uri.toString();
-
-    const pages = [
-      '/jobform/designer-1',
-      '/jobform/designer-2',
-      '/jobform/designer-3',
-      '/jobform/designer-4',
-      '/jobform/designer-5',
-      '/jobform/designer-6',
-      '/jobform/auto-bending',
-      '/jobform/manual-bending',
-      '/jobform/laser',
-      '/jobform/rubber',
-      '/jobform/emboss',
-      '/jobform/delivery',
-    ];
-
-    final index = pages.indexOf(location);
-    if (index > 0) {
-      context.go(pages[index - 1]);
+    if (context.canPop()) {
+      context.pop(); // ✅ Goes back without rebuilding state
     }
   }
+
 }

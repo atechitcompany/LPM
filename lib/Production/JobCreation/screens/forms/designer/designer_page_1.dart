@@ -29,6 +29,10 @@ class _DesignerPage1State extends State<DesignerPage1> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+    if (form.LpmAutoIncrement.text.isEmpty) {
+      form.LpmAutoIncrement.text = "1004";
+    }
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -50,12 +54,16 @@ class _DesignerPage1State extends State<DesignerPage1> {
             const SizedBox(height: 30),
 
             SearchableDropdownWithInitial(
-              label: "Designer Created By",
+              label: "Party Name *",
               items: form.parties,
+              initialValue: form.PartyName.text.isEmpty ? "Select Party" : form.PartyName.text,
               onChanged: (v) {
-                form.DesignerCreatedBy.text = v ?? "";
+                setState(() {
+                  form.PartyName.text = (v ?? "").trim();
+                });
               },
             ),
+
 
             const SizedBox(height: 30),
 
@@ -79,13 +87,25 @@ class _DesignerPage1State extends State<DesignerPage1> {
             AddableSearchDropdown(
               label: "Particular Job Name *",
               items: form.jobs,
-              onChanged: (v) {},
+              initialValue: form.ParticularJobName.text.isEmpty
+                  ? "No"
+                  : form.ParticularJobName.text,
+              onChanged: (v) {
+                setState(() {
+                  form.ParticularJobName.text = (v ?? "").trim();
+                });
+              },
               onAdd: (newJob) => form.jobs.add(newJob),
             ),
 
+
             const SizedBox(height: 30),
 
-            AutoIncrementField(value: 1004),
+            AutoIncrementField(
+              value: int.tryParse(form.LpmAutoIncrement.text) ?? 0,
+            ),
+
+
 
             const SizedBox(height: 30),
 
