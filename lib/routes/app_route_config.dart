@@ -43,7 +43,7 @@ import 'package:lightatech/Features/Target/screens/profile_screen.dart';
 
 import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
 
-import '../customer/intro/screens/order_detail_screen.dart';
+import '../customer/intro/viewmodel/order_detail_view.dart';
 
 /// ✅ INTRO FEATURE IMPORTS (NEW)
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
@@ -74,7 +74,7 @@ class AppRoutes {
         path: '/order-details',
         name: 'orderDetails',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const OrderDetailScreen(),
+        builder: (context, state) =>  OrderDetailScreen(),
       ),
 
       GoRoute(

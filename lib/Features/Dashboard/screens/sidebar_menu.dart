@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 // Screens
 import '../../adminAccess/screens/user_rights_screen.dart';
-import 'package:lightatech/customer/intro/screens/order_detail_screen.dart';
+import 'package:lightatech/customer/intro/viewmodel/order_detail_view.dart';
 
 class SidebarMenu extends StatelessWidget {
   const SidebarMenu({Key? key}) : super(key: key);
@@ -104,7 +104,7 @@ class SidebarMenu extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const OrderDetailScreen(),
+                    builder: (_) =>  OrderDetailScreen(),
                   ),
                 );
               },

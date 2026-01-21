@@ -10,27 +10,30 @@ class DeliveryDetailsCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
-            Row(
-              children: [
-                Icon(Icons.location_on),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Home\n152, xyz apt, abc road, 451286',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
+            Text(
+              'Delivery Details',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.person),
+                Icon(Icons.location_on_outlined, size: 18),
                 SizedBox(width: 8),
-                Text('Abc Rst'),
-                Spacer(),
-                Text('4586237589'),
+                Expanded(
+                  child: Text(
+                    'Home    152, xyz apt, abc road, 451286',
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 18),
+                SizedBox(width: 8),
+                Text('Abc Rst    4586237589'),
               ],
             ),
           ],
