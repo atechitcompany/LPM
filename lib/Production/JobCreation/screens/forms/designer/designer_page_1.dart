@@ -1,18 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/GSTSelector.dart';
 import 'package:lightatech/FormComponents/AutoIncrementField.dart';
-import 'package:lightatech/FormComponents/PrioritySelector.dart';
-import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:lightatech/FormComponents/FileUploadBox.dart';
-import 'package:lightatech/FormComponents/FlexibleSlider.dart';
-import 'package:lightatech/FormComponents/NumberStepper.dart';
-import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
-
 import '../new_form_scope.dart';
 
 class DesignerPage1 extends StatefulWidget {
@@ -38,7 +28,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Party Name stored properly
+            /// ✅ Party Name *
             SearchableDropdownWithInitial(
               label: "Party Name *",
               items: form.parties,
@@ -54,6 +44,23 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
+            /// ✅ Designer Created By
+            SearchableDropdownWithInitial(
+              label: "Designer Created By",
+              items: form.parties,
+              initialValue: form.DesignerCreatedBy.text.isEmpty
+                  ? "Select"
+                  : form.DesignerCreatedBy.text,
+              onChanged: (v) {
+                setState(() {
+                  form.DesignerCreatedBy.text = (v ?? "").trim();
+                });
+              },
+            ),
+
+            const SizedBox(height: 30),
+
+            /// ✅ Delivery At
             TextInput(
               controller: form.DeliveryAt,
               label: "Delivery At",
@@ -62,6 +69,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
+            /// ✅ Order By
             TextInput(
               controller: form.Orderby,
               label: "Order By",
@@ -70,7 +78,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
-            // ✅ Particular Job Name stored properly
+            /// ✅ Particular Job Name *
             AddableSearchDropdown(
               label: "Particular Job Name *",
               items: form.jobs,
@@ -87,18 +95,19 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
-            // ✅ LPM Auto Increment (from Firebase)
+            /// ✅ LPM Auto Increment (auto refresh without hot reload)
             ValueListenableBuilder(
               valueListenable: form.LpmAutoIncrement,
               builder: (context, value, child) {
-                return AutoIncrementField(
-                  value: int.tryParse(form.LpmAutoIncrement.text) ?? 0,
-                );
+                final lpm = int.tryParse(form.LpmAutoIncrement.text) ?? 0;
+
+                if (lpm == 0) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return AutoIncrementField(value: lpm);
               },
             ),
-
-
-
 
             const SizedBox(height: 30),
           ],
