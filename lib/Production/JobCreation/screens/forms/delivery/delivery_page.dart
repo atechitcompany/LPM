@@ -28,7 +28,8 @@ class _DeliveryPageState extends State<DeliveryPage> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Delivery")),
+      backgroundColor: Colors.yellow,
+      appBar: AppBar(title: const Text("Delivery"), backgroundColor: Colors.white,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
