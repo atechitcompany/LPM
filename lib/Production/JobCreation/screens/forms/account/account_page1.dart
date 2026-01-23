@@ -28,7 +28,8 @@ class _AccountPageState extends State<AccountPage> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Account")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text("Account"), backgroundColor: Colors.yellow,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -166,7 +167,64 @@ class _AccountPageState extends State<AccountPage> {
 
             const SizedBox(height: 30),
 
-            //Currently working on this page
+            //Ply View Access
+
+            //Ply Rate View Access
+
+            const Text(
+              "Ply Length",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+
+              NumberStepper(
+                step: 0.1,
+                initialValue: 0.0,
+                controller: form.PlyLength,
+                onChanged: (val) {
+                  form.PlyLength.text = val.toString();
+                  setState(() {});
+                },
+              ),
+
+              const SizedBox(height: 30),
+
+              const Text(
+                "Ply Breadth",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+
+              NumberStepper(
+                step: 0.1,
+                initialValue: 0.0,
+                controller: form.PlyBreadth,
+                onChanged: (val) {
+                  form.PlyBreadth.text = val.toString();
+                  setState(() {});
+                },
+              ),
+
+              const SizedBox(height: 30),
+
+
+              AutoCalcTextBox(
+                label: "Ply Size",
+                value: (() {
+                  double length = double.tryParse(form.PlyLength.text) ?? 0;
+                  double breadth = double.tryParse(form.PlyBreadth.text) ?? 0;
+                  double totalArea = length * breadth;
+
+                  return totalArea.toStringAsFixed(1);
+                })(),
+              ),
+
+              const SizedBox(height: 30),
+
+
+              AutoCalcTextBox(label: "Ply Amount", value: "0"),
+
+
+              const SizedBox(height: 30),
+
 
 
           ],
