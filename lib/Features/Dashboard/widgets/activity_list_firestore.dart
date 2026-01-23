@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ActivityListFirestore extends StatelessWidget {
   final String searchText;
@@ -60,18 +61,31 @@ class ActivityListFirestore extends StatelessWidget {
               final particularJob =
               (data["ParticularJobName"] ?? "No Particular Job").toString();
 
+              // ✅ LPM Unique ID
+              final lpm = (data["LpmAutoIncrement"] ?? "").toString().trim();
+
               return Padding(
-                padding: const EdgeInsets.only(bottom: 4), // ✅ spacing
+                padding: const EdgeInsets.only(bottom: 4),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    if (lpm.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("LPM number missing for this job"),
+                        ),
+                      );
+                      return;
+                    }
+
+                    // ✅ Open summary using LPM number
+                    context.push('/job-summary/$lpm');
+                  },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-
-                      // ✅ no shadow, just border
                       border: Border.all(
                         color: Colors.grey.shade200,
                         width: 1,
@@ -86,8 +100,10 @@ class ActivityListFirestore extends StatelessWidget {
                             shape: BoxShape.circle,
                             color: Colors.grey.shade200,
                           ),
-                          child: const Icon(Icons.person_outline,
-                              color: Colors.grey),
+                          child: const Icon(
+                            Icons.person_outline,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

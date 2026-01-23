@@ -45,6 +45,10 @@ import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
 
 import '../customer/intro/screens/order_detail_screen.dart';
 
+// New
+import 'package:lightatech/Features/Dashboard/screens/job_summary_screen.dart';
+
+
 /// ✅ INTRO FEATURE IMPORTS (NEW)
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
 import 'package:lightatech/Features/Intro/screens/intro_screen.dart';
@@ -232,6 +236,15 @@ class AppRoutes {
           );
         },
         routes: [
+
+          GoRoute(
+            path: '/job-summary/:lpm',
+            builder: (context, state) {
+              final lpm = state.pathParameters['lpm']!;
+              return JobSummaryScreen(lpm: lpm);
+            },
+          ),
+
 
           GoRoute(
             path: '/dashboard',
