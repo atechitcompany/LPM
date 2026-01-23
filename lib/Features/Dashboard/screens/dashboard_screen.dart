@@ -47,42 +47,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Row(
                     children: [
                       const SizedBox(width: 12),
-
-                      ShadowWrapper(
-                        child: StatusCard(
+                        StatusCard(
                           status: 'Hot',
                           count: 0,
                           color: Colors.orange,
                           onTap: () {},
                         ),
-                      ),
 
-                      ShadowWrapper(
-                        child: StatusCard(
+                        StatusCard(
                           status: 'Paid',
                           count: 0,
                           color: Colors.blue,
                           onTap: () {},
                         ),
-                      ),
 
-                      ShadowWrapper(
-                        child: StatusCard(
+                        StatusCard(
                           status: 'Cold',
                           count: 0,
                           color: Colors.grey,
                           onTap: () {},
                         ),
-                      ),
-
-                      ShadowWrapper(
-                        child: StatusCard(
+                        StatusCard(
                           status: 'Done',
                           count: 0,
                           color: Colors.green,
                           onTap: () {},
                         ),
-                      ),
 
                       const SizedBox(width: 12),
                     ],
@@ -97,9 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Row(
                       children: [
                         const SizedBox(width: 12),
-
-                        ShadowWrapper(
-                          child: PaymentStatusCard(
+                          PaymentStatusCard(
                             label: 'Payments',
                             count: 4,
                             color: Colors.red,
@@ -110,10 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               );
                             },
                           ),
-                        ),
-
-                        ShadowWrapper(
-                          child: PaymentStatusCard(
+                          PaymentStatusCard(
                             label: 'Upcoming',
                             count: 4,
                             color: Colors.blue,
@@ -124,10 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               );
                             },
                           ),
-                        ),
-
-                        ShadowWrapper(
-                          child: PaymentStatusCard(
+                          PaymentStatusCard(
                             label: 'Done',
                             count: 4,
                             color: Colors.green,
@@ -138,7 +120,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               );
                             },
                           ),
-                        ),
 
                         const SizedBox(width: 12),
                       ],
@@ -147,8 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
 
                 // ✅ Search Bar (UI only for now)
-                ShadowWrapper(
-                  child: SearchBarWidget(
+                  SearchBarWidget(
                     controller: searchController,
                     onFilterTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -162,7 +142,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       setState(() {});
                     },
                   ),
-                ),
               ],
             ),
           ),
