@@ -2,7 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ActivityListFirestore extends StatelessWidget {
-  const ActivityListFirestore({super.key});
+  final String searchText;
+
+  const ActivityListFirestore({
+    super.key,
+    required this.searchText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,24 @@ class ActivityListFirestore extends StatelessWidget {
           return const Center(child: Text("No entries available"));
         }
 
-        final docs = snapshot.data!.docs;
+        final query = searchText.trim().toLowerCase();
+
+        // ✅ Filter docs by PartyName OR ParticularJobName
+        final docs = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          final partyName = (data["PartyName"] ?? "").toString().toLowerCase();
+          final particularJob =
+          (data["ParticularJobName"] ?? "").toString().toLowerCase();
+
+          if (query.isEmpty) return true;
+
+          return partyName.contains(query) || particularJob.contains(query);
+        }).toList();
+
+        if (docs.isEmpty) {
+          return const Center(child: Text("No matching entries"));
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -58,7 +80,6 @@ class ActivityListFirestore extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Left Circle Icon
                       Container(
                         width: 42,
                         height: 42,
@@ -74,7 +95,6 @@ class ActivityListFirestore extends StatelessWidget {
 
                       const SizedBox(width: 12),
 
-                      // Text Column
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +122,6 @@ class ActivityListFirestore extends StatelessWidget {
                         ),
                       ),
 
-                      // ✅ Right side empty (as per your requirement)
                       const SizedBox(width: 8),
                     ],
                   ),
