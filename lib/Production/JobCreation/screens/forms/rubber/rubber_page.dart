@@ -28,8 +28,8 @@ class _RubberPageState extends State<RubberPage> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
     return Scaffold(
-      backgroundColor: Colors.yellow,
-      appBar: AppBar(title: const Text("Rubber"),backgroundColor: Colors.white,),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text("Rubber"),backgroundColor: Colors.yellow,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
