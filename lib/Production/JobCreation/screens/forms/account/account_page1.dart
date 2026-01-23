@@ -205,7 +205,6 @@ class _AccountPageState extends State<AccountPage> {
 
               const SizedBox(height: 30),
 
-
               AutoCalcTextBox(
                 label: "Ply Size",
                 value: (() {
@@ -219,11 +218,11 @@ class _AccountPageState extends State<AccountPage> {
 
               const SizedBox(height: 30),
 
-
               AutoCalcTextBox(label: "Ply Amount", value: "0"),
 
-
               const SizedBox(height: 30),
+
+            //blade view access
 
 
 
