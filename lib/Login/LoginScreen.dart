@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (selectedDepartments.length == 1 &&
           userDepartment.contains(selectedDepartments.first)) {
-        navigateDepartment();
+        navigateDepartment(selectedDepartments.first);
         return;
       }
 
@@ -119,11 +119,16 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// 🔥 FORCE INTRO FLOW AFTER LOGIN (REVERTED)
-  void navigateDepartment() {
-    /// Always go to profile first
-    context.go('/intro/fill-profile');
+  void navigateDepartment(String department) {
+    context.go(
+      '/dashboard',
+      extra: {
+        'department': department,
+        'email': emailController.text.trim(),
+      },
+    );
   }
+
 
   Widget safeIcon(IconData icon) {
     return Icon(icon, size: 18, color: Colors.grey);

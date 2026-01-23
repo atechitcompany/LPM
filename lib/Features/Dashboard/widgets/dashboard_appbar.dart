@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
   final VoidCallback? onBack;
+  final String department;
 
   const DashboardAppBar({
     Key? key,
     this.showBack = false,
     this.onBack,
+    required this.department,
   }) : super(key: key);
 
   @override
@@ -25,7 +27,23 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      title: Text('Dashboard',style: TextStyle(fontWeight: FontWeight.bold),),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Dashboard',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            department,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+
       actions: [
         IconButton(
           icon: Icon(Icons.notifications_none),

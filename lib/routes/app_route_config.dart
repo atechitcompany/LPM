@@ -65,7 +65,7 @@ class AppRoutes {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/dashboard',
+    initialLocation: '/',
 
     routes: [
 
@@ -248,8 +248,18 @@ class AppRoutes {
           GoRoute(
             path: '/dashboard',
             name: AppRoutesName.DashboardScreen,
-            builder: (context, state) => const DashboardScreen(),
+            builder: (context, state) {
+              final data = state.extra as Map<String, dynamic>?;
+
+              return DashboardScreen(
+                department: data?['department'] ?? 'Unknown',
+                email: data?['email'] ?? '',
+              );
+            },
           ),
+
+
+
 
           GoRoute(
             path: '/map',

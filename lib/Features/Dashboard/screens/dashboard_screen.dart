@@ -11,7 +11,12 @@ import '../widgets/activity_list_firestore.dart';
 import 'package:lightatech/FormComponents/FLoatingButton.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String department;
+  final String email;
+
+  const DashboardScreen({super.key,
+    required this.department,
+    required this.email,});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -32,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: SidebarMenu(),
       appBar: DashboardAppBar(
         showBack: false,
+        department: widget.department,
         onBack: () {},
       ),
       body: Column(
