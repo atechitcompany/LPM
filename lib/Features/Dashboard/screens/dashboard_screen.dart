@@ -180,9 +180,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // ✅ Firebase Jobs List
-          const Expanded(
-            child: ActivityListFirestore(),
+          Expanded(
+            child: ActivityListFirestore(
+              searchText: searchController.text,
+            ),
           ),
+
         ],
       ),
 
