@@ -24,7 +24,6 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      /// ✅ USE SINGLETON ROUTER (VERY IMPORTANT)
       routerConfig: AppRoutes.router,
 
       debugShowCheckedModeBanner: false,
