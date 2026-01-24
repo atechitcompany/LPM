@@ -119,7 +119,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void navigateDepartment(String department) {
+  Future<void> navigateDepartment(String department) async {
+
+    await saveLoginLog(
+    email: emailController.text.trim(),
+    department: department,
+    );
+
     context.go(
       '/dashboard',
       extra: {
@@ -127,6 +133,17 @@ class _LoginScreenState extends State<LoginScreen> {
         'email': emailController.text.trim(),
       },
     );
+  }
+
+  Future<void> saveLoginLog({
+    required String email,
+    required String department,
+  }) async {
+    await FirebaseFirestore.instance.collection('LoginLogs').add({
+      'Email': email,
+      'Department': department,
+      'LoginTime': FieldValue.serverTimestamp(),
+    });
   }
 
 
