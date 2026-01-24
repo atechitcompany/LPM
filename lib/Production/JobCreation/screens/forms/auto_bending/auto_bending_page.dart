@@ -35,6 +35,7 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
+
         child: Column(
           children: [
 

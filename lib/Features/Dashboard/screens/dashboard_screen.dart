@@ -230,7 +230,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // ✅ Floating Add Button → open Job Form
       floatingActionButton: FloatingButton(
         onPressed: () {
-          context.push('/jobform');
+          context.push(
+            '/jobform',
+            extra: {
+              'department': widget.department,
+              'email': widget.email,
+            },
+          );
+
         },
       ),
     );

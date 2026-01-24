@@ -1,10 +1,29 @@
-﻿// lib/pages/graph_page.dart
+﻿//graph_page.txt
+
+// lib/pages/graph_page.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lightatech/FormComponents/FLoatingButton.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 import '../widgets/graph_form.dart' show TaskEntry;
+
+// 🎨 App UI Constants (matching existing app design)
+const Color kAppBg = Color(0xFFFFF7FB);
+const Color kCardBg = Colors.white;
+const Color kAccent = Color(0xFFFFD600);
+
+final BorderRadius kCardRadius = BorderRadius.circular(18);
+
+final List<BoxShadow> kCardShadow = [
+  BoxShadow(
+    color: Colors.black.withOpacity(0.06),
+    blurRadius: 10,
+    offset: const Offset(0, 6),
+  ),
+];
+
 
 const _storageKey = "task_entries_v1";
 const _customChartsKey = "custom_charts_v1";
@@ -86,7 +105,9 @@ class _GraphPageState extends State<GraphPage> {
     if (!mounted) return;
 
     final list = prefs.getStringList(_storageKey) ?? [];
-    final decoded = list.map((e) => TaskEntry.fromJson(json.decode(e))).toList();
+    final decoded = list
+        .map((e) => TaskEntry.fromJson(json.decode(e)))
+        .toList();
 
     final charts = prefs.getStringList(_customChartsKey) ?? [];
     final decodedCharts =
@@ -120,7 +141,8 @@ class _GraphPageState extends State<GraphPage> {
       final k = _employeeKey(e);
       if (k.isNotEmpty) set.add(k);
     }
-    final list = set.toList()..sort();
+    final list = set.toList()
+      ..sort();
     return list;
   }
 
@@ -132,7 +154,8 @@ class _GraphPageState extends State<GraphPage> {
       map[w] = (map[w] ?? 0) + 1;
     }
     final items =
-    map.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    map.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return items.map((e) => e.key).toList();
   }
 
@@ -149,7 +172,9 @@ class _GraphPageState extends State<GraphPage> {
   Map<String, int> _locationCounts(List<TaskEntry> list) {
     final map = <String, int>{};
     for (final e in list) {
-      final loc = e.location.trim().isEmpty ? "Unknown" : e.location.trim();
+      final loc = e.location
+          .trim()
+          .isEmpty ? "Unknown" : e.location.trim();
       map[loc] = (map[loc] ?? 0) + 1;
     }
     return map;
@@ -191,7 +216,8 @@ class _GraphPageState extends State<GraphPage> {
                   children: [
                     DropdownButtonFormField<ChartType>(
                       value: selectedType,
-                      decoration: const InputDecoration(labelText: "Chart type"),
+                      decoration: const InputDecoration(
+                          labelText: "Chart type"),
                       items: const [
                         DropdownMenuItem(
                             value: ChartType.workSingleBar,
@@ -211,7 +237,8 @@ class _GraphPageState extends State<GraphPage> {
                             Text("Deadline performance (pie)")),
                       ],
                       onChanged: (v) =>
-                          setStateSB(() => selectedType = v ?? ChartType.workSingleBar),
+                          setStateSB(() =>
+                          selectedType = v ?? ChartType.workSingleBar),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -238,7 +265,8 @@ class _GraphPageState extends State<GraphPage> {
                         decoration:
                         const InputDecoration(labelText: "Select employee"),
                         items: _employeeNames
-                            .map((n) => DropdownMenuItem(value: n, child: Text(n)))
+                            .map((n) =>
+                            DropdownMenuItem(value: n, child: Text(n)))
                             .toList(),
                         onChanged: (v) => setStateSB(() => employee = v),
                       ),
@@ -246,7 +274,8 @@ class _GraphPageState extends State<GraphPage> {
                     if (selectedType == ChartType.workCompareBar) ...[
                       Align(
                           alignment: Alignment.centerLeft,
-                          child: const Text("Select up to 3 works to compare:")),
+                          child: const Text(
+                              "Select up to 3 works to compare:")),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
@@ -317,7 +346,8 @@ class _GraphPageState extends State<GraphPage> {
                     if (selectedType == ChartType.deadlinePie) ...[
                       const Align(
                           alignment: Alignment.centerLeft,
-                          child: Text("Shows On-time / Late / Overdue Pending")),
+                          child: Text(
+                              "Shows On-time / Late / Overdue Pending")),
                     ],
                   ],
                 ),
@@ -337,7 +367,8 @@ class _GraphPageState extends State<GraphPage> {
                   if (selectedType == ChartType.workCompareBar &&
                       selectedKeys.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Choose at least 1 work to compare")));
+                        const SnackBar(content: Text(
+                            "Choose at least 1 work to compare")));
                     return;
                   }
                   final cfg = GraphTileConfig(
@@ -380,12 +411,14 @@ class _GraphPageState extends State<GraphPage> {
     final now = DateTime.now();
     final nowDate = _onlyDate(now);
 
-    int onTime = 0, late = 0;
+    int onTime = 0,
+        late = 0;
     for (final e in completed) {
       if (e.deadline == null || e.completedAt == null) continue;
       final completedDate = _onlyDate(e.completedAt!);
       final deadlineDate = _onlyDate(e.deadline!);
-      if (completedDate.compareTo(deadlineDate) <= 0) onTime++;
+      if (completedDate.compareTo(deadlineDate) <= 0)
+        onTime++;
       else
         late++;
     }
@@ -403,13 +436,19 @@ class _GraphPageState extends State<GraphPage> {
     final doneCount = completed.length;
 
     return Scaffold(
+      backgroundColor: kAppBg,
       appBar: AppBar(title: const Text("Performance Graphs")),
       body: SafeArea(
         child: Scrollbar(
           controller: _scrollController,
           thumbVisibility: true,
+          interactive: true,
+          child: RefreshIndicator(
+            color: kAccent,
+            onRefresh: _load,
           child: ListView(
             controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 92),
             children: [
               // Overall vs By Employee selection
@@ -420,12 +459,14 @@ class _GraphPageState extends State<GraphPage> {
                     selected: !_employeeMode,
                     onSelected: (v) {
                       if (v) {
+                        HapticFeedback.selectionClick();
                         setState(() {
                           _employeeMode = false;
                           _selectedEmployee = null;
                         });
                       }
                     },
+
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
@@ -436,7 +477,9 @@ class _GraphPageState extends State<GraphPage> {
                         setState(() {
                           _employeeMode = true;
                           _selectedEmployee ??=
-                          _employeeNames.isNotEmpty ? _employeeNames.first : null;
+                          _employeeNames.isNotEmpty
+                              ? _employeeNames.first
+                              : null;
                         });
                       }
                     },
@@ -452,7 +495,8 @@ class _GraphPageState extends State<GraphPage> {
                             isDense: true,
                             border: OutlineInputBorder()),
                         items: _employeeNames
-                            .map((w) => DropdownMenuItem(value: w, child: Text(w)))
+                            .map((w) =>
+                            DropdownMenuItem(value: w, child: Text(w)))
                             .toList(),
                         onChanged: (v) => setState(() => _selectedEmployee = v),
                       ),
@@ -504,13 +548,12 @@ class _GraphPageState extends State<GraphPage> {
 
               // Custom charts from admin
               if (_addedCharts.isNotEmpty) ...[
-                const Text("Custom charts",
-                    style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                _sectionHeader("Custom charts"),
                 const SizedBox(height: 8),
                 ..._addedCharts.map((cfg) {
                   final used =
-                  _filterEntries(byEmployee: cfg.byEmployee, employee: cfg.employeeName);
+                  _filterEntries(
+                      byEmployee: cfg.byEmployee, employee: cfg.employeeName);
                   return Card(
                     elevation: 3,
                     margin: const EdgeInsets.symmetric(vertical: 8),
@@ -523,20 +566,25 @@ class _GraphPageState extends State<GraphPage> {
                               Expanded(
                                   child: Text(_chartTitle(cfg),
                                       style:
-                                      const TextStyle(fontWeight: FontWeight.bold),
+                                      const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                       overflow: TextOverflow.ellipsis)),
                               if (cfg.byEmployee && cfg.employeeName != null)
                                 Flexible(
                                     child: Text(cfg.employeeName!,
-                                        style: const TextStyle(color: Colors.grey),
+                                        style: const TextStyle(
+                                            color: Colors.grey),
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.right)),
                               IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () async {
-                                    setState(() => _addedCharts.remove(cfg));
-                                    await _saveCustomCharts();
-                                  }),
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () async {
+                                  HapticFeedback.lightImpact();
+                                  setState(() => _addedCharts.remove(cfg));
+                                  await _saveCustomCharts();
+                                },
+                              ),
+
                             ]),
                             const SizedBox(height: 8),
                             if (cfg.keys != null && cfg.keys!.isNotEmpty) ...[
@@ -556,9 +604,12 @@ class _GraphPageState extends State<GraphPage> {
                                   }).toList()),
                               const SizedBox(height: 8),
                             ],
-                            SizedBox(
+                            RepaintBoundary(
+                              child: SizedBox(
                                 height: 220,
-                                child: _buildChartForConfig(cfg, used)),
+                                child: _buildChartForConfig(cfg, used),
+                              ),
+                            ),
                           ]),
                     ),
                   );
@@ -566,50 +617,139 @@ class _GraphPageState extends State<GraphPage> {
                 const SizedBox(height: 12),
               ],
 
-              // Original charts kept as before
-              const Text("Work distribution",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              if (workMap.isEmpty)
-                const Text("No work data yet.")
-              else
-                SizedBox(height: 260, child: _buildWorkBarChart(workMap)),
+// Original charts kept as before
 
-              const SizedBox(height: 24),
+              if (workMap.isNotEmpty) ...[
+                _sectionHeader("Work distribution"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                        height: 260, child: _buildWorkBarChart(workMap)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
 
-              const Text("Location distribution (Home vs Office)",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              SizedBox(height: 220, child: _buildLocationPie(locationMap)),
+              if (locationMap.isNotEmpty) ...[
+                _sectionHeader("Location distribution"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                        height: 220, child: _buildLocationPie(locationMap)),
+                  ),
+                ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
 
-              const Text("Status (Pending vs Done)",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              SizedBox(height: 220, child: _buildStatusPieChart(pendingCount, doneCount)),
+              if ((pendingCount + doneCount) > 0) ...[
+                _sectionHeader("Status charts"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 220,
+                      child: _buildStatusPieChart(pendingCount, doneCount),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
 
-              const SizedBox(height: 24),
+              if ((onTime + late + overduePending) > 0) ...[
+                _sectionHeader("Deadline performance charts"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 220,
+                      child: _buildDeadlinePieChart(
+                        onTime: onTime,
+                        late: late,
+                        overduePending: overduePending,
+                      ),
+                    ),
+                  ),
+                ),
 
-              const Text("Deadline performance",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              SizedBox(
-                  height: 220,
-                  child: _buildDeadlinePieChart(
-                      onTime: onTime, late: late, overduePending: overduePending)),
+              ],
 
               const SizedBox(height: 32),
 
-              if (totalTasks == 0)
-                const Center(
-                    child: Text("No tasks yet. Add entries from the form to see graphs.",
-                        style: TextStyle(color: Colors.grey))),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 350),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: _addedCharts.isEmpty
+                    ? Center(
+                  key: const ValueKey("empty"),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      children: const [
+                        Icon(Icons.insert_chart_outlined,
+                            size: 42, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text(
+                          "No charts yet.\nAdd charts from the + button to see graphs.",
+                          style: TextStyle(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                    : const SizedBox(
+                  key: ValueKey("filled"),
+                ),
+              ),
+
             ],
+          ),
           ),
         ),
       ),
-      floatingActionButton: FloatingButton(onPressed: _openAddChartDialog)
+      floatingActionButton: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.9, end: 1),
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeInOut,
+        builder: (context, scale, child) {
+          return Transform.scale(scale: scale, child: child);
+        },
+        child: FloatingButton(
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            _openAddChartDialog();
+          },
+        ),
+      ),
+
     );
   }
 
@@ -626,7 +766,8 @@ class _GraphPageState extends State<GraphPage> {
     return base;
   }
 
-  Widget _buildChartForConfig(GraphTileConfig cfg, List<TaskEntry> usedEntries) {
+  Widget _buildChartForConfig(GraphTileConfig cfg,
+      List<TaskEntry> usedEntries) {
     switch (cfg.type) {
       case ChartType.workSingleBar:
         return _buildWorkBarChart(_workCounts(usedEntries));
@@ -645,11 +786,17 @@ class _GraphPageState extends State<GraphPage> {
         }
         return _buildLocationPie(map);
       case ChartType.statusPie:
-        final p = usedEntries.where((e) => e.status == "Pending").length;
-        final d = usedEntries.where((e) => e.status == "Done").length;
+        final p = usedEntries
+            .where((e) => e.status == "Pending")
+            .length;
+        final d = usedEntries
+            .where((e) => e.status == "Done")
+            .length;
         return _buildStatusPieChart(p, d);
       case ChartType.deadlinePie:
-        int onTime = 0, late = 0, overduePending = 0;
+        int onTime = 0,
+            late = 0,
+            overduePending = 0;
         final done = usedEntries.where((e) => e.status == "Done").toList();
         final pend = usedEntries.where((e) => e.status == "Pending").toList();
         final now = DateTime.now();
@@ -674,17 +821,21 @@ class _GraphPageState extends State<GraphPage> {
   }
 
   // grouped bar comparing up to 3 selected works across employees
-  Widget _buildGroupedBarForWorks(List<TaskEntry> entries, List<String> selectedWorks) {
+  Widget _buildGroupedBarForWorks(List<TaskEntry> entries,
+      List<String> selectedWorks) {
     final employees = <String>{};
     for (final e in entries) {
       final k = _employeeKey(e);
       if (k.isNotEmpty) employees.add(k);
     }
-    final employeeList = employees.toList()..sort();
-    if (employeeList.isEmpty) return const Center(child: Text("No employee data"));
+    final employeeList = employees.toList()
+      ..sort();
+    if (employeeList.isEmpty)
+      return const Center(child: Text("No employee data"));
 
     final Map<String, List<int>> counts = {};
-    for (final emp in employeeList) counts[emp] = List.filled(selectedWorks.length, 0);
+    for (final emp in employeeList)
+      counts[emp] = List.filled(selectedWorks.length, 0);
 
     for (final e in entries) {
       final emp = _employeeKey(e);
@@ -696,7 +847,8 @@ class _GraphPageState extends State<GraphPage> {
 
     int maxY = 1;
     for (final v in counts.values) {
-      for (final c in v) if (c > maxY) maxY = c;
+      for (final c in v)
+        if (c > maxY) maxY = c;
     }
 
     final groups = <BarChartGroupData>[];
@@ -706,7 +858,9 @@ class _GraphPageState extends State<GraphPage> {
       final rods = <BarChartRodData>[];
       for (var s = 0; s < row.length; s++) {
         rods.add(BarChartRodData(
-            toY: row[s].toDouble(), width: 8, color: _seriesColors[s % _seriesColors.length]));
+            toY: row[s].toDouble(),
+            width: 8,
+            color: _seriesColors[s % _seriesColors.length]));
       }
       groups.add(BarChartGroupData(x: i, barRods: rods));
     }
@@ -724,13 +878,15 @@ class _GraphPageState extends State<GraphPage> {
                 maxY: maxY + 1.0,
                 barGroups: groups,
                 titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+                  leftTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: true)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final idx = value.toInt();
-                        if (idx < 0 || idx >= employeeList.length) return const SizedBox();
+                        if (idx < 0 || idx >= employeeList.length)
+                          return const SizedBox();
                         final name = employeeList[idx];
                         return Padding(
                           padding: const EdgeInsets.only(top: 4),
@@ -747,28 +903,35 @@ class _GraphPageState extends State<GraphPage> {
                 gridData: FlGridData(show: true),
                 borderData: FlBorderData(show: true),
               ),
+              swapAnimationDuration: const Duration(milliseconds: 400),
             ),
           ),
         ),
         const SizedBox(height: 6),
-        Text("X: Employees — Y: number of tasks. Showing: ${selectedWorks.join(', ')}",
+        Text("X: Employees — Y: number of tasks. Showing: ${selectedWorks.join(
+            ', ')}",
             style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
 
   Widget _buildWorkBarChart(Map<String, int> data) {
-    final entries = data.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = data.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final top = entries.take(8).toList();
     if (top.isEmpty) return const Center(child: Text("No work data yet."));
 
-    final maxVal = top.map((e) => e.value).reduce((a, b) => a > b ? a : b).toDouble();
+    final maxVal = top
+        .map((e) => e.value)
+        .reduce((a, b) => a > b ? a : b)
+        .toDouble();
     final groups = <BarChartGroupData>[];
 
     for (var i = 0; i < top.length; i++) {
       final e = top[i];
       groups.add(BarChartGroupData(x: i, barRods: [
-        BarChartRodData(toY: e.value.toDouble(), width: 18, color: Colors.blueAccent),
+        BarChartRodData(
+            toY: e.value.toDouble(), width: 18, color: Colors.blueAccent),
       ]));
     }
 
@@ -787,7 +950,9 @@ class _GraphPageState extends State<GraphPage> {
                 final idx = value.toInt();
                 if (idx < 0 || idx >= top.length) return const SizedBox();
                 final label = top[idx].key;
-                final short = label.length > 10 ? label.substring(0, 10) + "…" : label;
+                final short = label.length > 10
+                    ? label.substring(0, 10) + "…"
+                    : label;
                 return Padding(
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(short, style: const TextStyle(fontSize: 10)));
@@ -798,12 +963,14 @@ class _GraphPageState extends State<GraphPage> {
         gridData: FlGridData(show: true),
         borderData: FlBorderData(show: true),
       ),
+      swapAnimationDuration: const Duration(milliseconds: 500),
     );
   }
 
   Widget _buildLocationPie(Map<String, int> data) {
     if (data.isEmpty) return const Center(child: Text("No location data yet."));
-    final entries = data.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = data.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final sections = <PieChartSectionData>[];
     for (var i = 0; i < entries.length; i++) {
       final e = entries[i];
@@ -813,10 +980,13 @@ class _GraphPageState extends State<GraphPage> {
         radius: 55,
         color: i == 0 ? Colors.indigo : Colors.deepPurple,
         titleStyle:
-        const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+        const TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
       ));
     }
-    return PieChart(PieChartData(sections: sections, sectionsSpace: 2, centerSpaceRadius: 40));
+    return PieChart(PieChartData(
+        sections: sections, sectionsSpace: 2, centerSpaceRadius: 40)
+    );
   }
 
   Widget _buildStatusPieChart(int pending, int done) {
@@ -830,7 +1000,8 @@ class _GraphPageState extends State<GraphPage> {
           title: "Pending\n$pending",
           radius: 55,
           titleStyle:
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
+          const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
     if (done > 0)
       sections.add(PieChartSectionData(
           value: done.toDouble(),
@@ -838,14 +1009,17 @@ class _GraphPageState extends State<GraphPage> {
           title: "Done\n$done",
           radius: 55,
           titleStyle:
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
-    return PieChart(PieChartData(sections: sections, sectionsSpace: 2, centerSpaceRadius: 40));
+          const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
+    return PieChart(PieChartData(
+        sections: sections, sectionsSpace: 2, centerSpaceRadius: 40));
   }
 
   Widget _buildDeadlinePieChart(
       {required int onTime, required int late, required int overduePending}) {
     final total = onTime + late + overduePending;
-    if (total == 0) return const Center(child: Text("No deadline/Completion data yet."));
+    if (total == 0)
+      return const Center(child: Text("No deadline/Completion data yet."));
     final sections = <PieChartSectionData>[];
     if (onTime > 0)
       sections.add(PieChartSectionData(
@@ -854,7 +1028,8 @@ class _GraphPageState extends State<GraphPage> {
           title: "On time\n$onTime",
           radius: 55,
           titleStyle:
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
+          const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
     if (late > 0)
       sections.add(PieChartSectionData(
           value: late.toDouble(),
@@ -862,7 +1037,8 @@ class _GraphPageState extends State<GraphPage> {
           title: "Late done\n$late",
           radius: 55,
           titleStyle:
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
+          const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
     if (overduePending > 0)
       sections.add(PieChartSectionData(
           value: overduePending.toDouble(),
@@ -870,25 +1046,96 @@ class _GraphPageState extends State<GraphPage> {
           title: "Overdue\n$overduePending",
           radius: 55,
           titleStyle:
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
-    return PieChart(PieChartData(sections: sections, sectionsSpace: 2, centerSpaceRadius: 40));
+          const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)));
+    return PieChart(PieChartData(
+        sections: sections, sectionsSpace: 2, centerSpaceRadius: 40));
   }
+
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 22,
+            decoration: BoxDecoration(
+              color: kAccent,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _summaryCard(
       {required String title, required String value, required Color color}) {
-    return SizedBox(
-      width: 165,
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
-            const SizedBox(height: 6),
-            Text(value,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          ]),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.94, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: child,
+        );
+      },
+      child: SizedBox(
+        width: 165,
+        child: Container(
+          decoration: BoxDecoration(
+            color: kCardBg,
+            borderRadius: kCardRadius,
+            boxShadow: kCardShadow,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
