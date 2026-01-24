@@ -712,330 +712,347 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       appBar: AppBar(
         title: const Text("Task"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            // ---------- main title row ----------
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      task.isDone = !task.isDone;
-                    });
-                    widget.onChanged();
-                  },
-                  child: Icon(
-                    task.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _isEditingTitle
-                      ? TextField(
-                    controller: _titleController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                    ),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    onSubmitted: _saveTitle,
-                  )
-                      : GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _isEditingTitle = true;
-                        _titleController.text = task.title;
-                      });
-                    },
-                    child: Text(
-                      task.title,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        decoration: task.isDone ? TextDecoration.lineThrough : TextDecoration.none,
-                      ),
-                    ),
-                  ),
-                ),
-                _priorityBadgeHeader(),
-              ],
-            ),
-            const SizedBox(height: 10),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth >= 1024;
 
-            // ---------- steps ----------
-            if (task.steps.isNotEmpty)
-              ...task.steps.asMap().entries.map((e) => _buildStepTile(e.value, e.key)),
-
-            if (_isAddingStep)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWeb ? 900 : double.infinity,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView(
                   children: [
-                    const Icon(
-                      Icons.radio_button_unchecked,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _stepController,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          hintText: "Add step",
-                          border: InputBorder.none,
-                        ),
-                        onSubmitted: _saveStep,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: () {
-                        setState(() {
-                          _isAddingStep = false;
-                          _stepController.clear();
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              )
-            else
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _editingStepIndex = null;
-                    _isAddingStep = true;
-                    _stepController.clear();
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.add, color: Colors.blue, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Add step",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 8),
-
-            // ---------- Priority / Remind / Assign / Deadline / Work Type ----------
-            Builder(
-              builder: (buttonContext) => _borderedTile(
-                child: ListTile(
-                  leading: const Icon(Icons.flag_sharp, color: Colors.brown),
-                  title: const Text("Priority"),
-                  trailing: _infoTrailing(task.priority),
-                  selected: _isSelected(task.priority),
-                  onTap: () => _showOverlay(
-                    buttonContext,
-                    FloatingSheetType.priority,
-                  ),
-                ),
-              ),
-            ),
-            Builder(
-              builder: (buttonContext) => _borderedTile(
-                child: ListTile(
-                  leading: const Icon(Icons.notifications_active, color: Colors.brown),
-                  title: const Text("Remind Me"),
-                  trailing: _infoTrailing(task.reminder),
-                  selected: _isSelected(task.reminder),
-                  onTap: () => _showOverlay(
-                    buttonContext,
-                    FloatingSheetType.remind,
-                  ),
-                ),
-              ),
-            ),
-            Builder(
-              builder: (buttonContext) => _borderedTile(
-                child: ListTile(
-                  leading: const Icon(Icons.checklist, color: Colors.brown),
-                  title: const Text("Assign"),
-                  trailing: _infoTrailing(task.assignee),
-                  selected: _isSelected(task.assignee),
-                  onTap: () => _showOverlay(
-                    buttonContext,
-                    FloatingSheetType.assign,
-                  ),
-                ),
-              ),
-            ),
-            Builder(
-              builder: (buttonContext) => _borderedTile(
-                child: ListTile(
-                  leading: const Icon(Icons.alarm, color: Colors.brown),
-                  title: const Text("Deadline"),
-                  trailing: _infoTrailing(task.deadline),
-                  selected: _isSelected(task.deadline),
-                  onTap: () => _showOverlay(
-                    buttonContext,
-                    FloatingSheetType.deadline,
-                  ),
-                ),
-              ),
-            ),
-            Builder(
-              builder: (buttonContext) => _borderedTile(
-                child: ListTile(
-                  leading: const Icon(Icons.insert_drive_file, color: Colors.brown),
-                  title: const Text("Work Type"),
-                  trailing: _infoTrailing(task.workType),
-                  selected: _isSelected(task.workType),
-                  onTap: () => _showOverlay(
-                    buttonContext,
-                    FloatingSheetType.deadline,
-                    fieldKey: 'workType',
-                  ),
-                ),
-              ),
-            ),
-
-            // ---------- FILES ----------
-            if (task.files.isNotEmpty)
-              Column(
-                children: task.files.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final file = entry.value;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
+                    // ---------- main title row ----------
+                    Row(
                       children: [
-                        const Icon(Icons.image, color: Colors.blue),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              task.isDone = !task.isDone;
+                            });
+                            widget.onChanged();
+                          },
+                          child: Icon(
+                            task.isDone
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 26,
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                file.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
+                          child: _isEditingTitle
+                              ? TextField(
+                            controller: _titleController,
+                            autofocus: true,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            onSubmitted: _saveTitle,
+                          )
+                              : GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isEditingTitle = true;
+                                _titleController.text = task.title;
+                              });
+                            },
+                            child: Text(
+                              task.title,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                decoration: task.isDone
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "${(file.size / 1024).toStringAsFixed(1)} KB · Image",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                        _priorityBadgeHeader(),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ---------- steps ----------
+                    if (task.steps.isNotEmpty)
+                      ...task.steps
+                          .asMap()
+                          .entries
+                          .map((e) => _buildStepTile(e.value, e.key)),
+
+                    if (_isAddingStep)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.radio_button_unchecked, size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _stepController,
+                                autofocus: true,
+                                decoration: const InputDecoration(
+                                  hintText: "Add step",
+                                  border: InputBorder.none,
                                 ),
+                                onSubmitted: _saveStep,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () {
+                                setState(() {
+                                  _isAddingStep = false;
+                                  _stepController.clear();
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _editingStepIndex = null;
+                            _isAddingStep = true;
+                            _stepController.clear();
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.add, color: Colors.blue, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                "Add step",
+                                style: TextStyle(color: Colors.blue, fontSize: 15),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () {
+                      ),
+
+                    const SizedBox(height: 8),
+
+                    // ---------- Priority / Remind / Assign / Deadline / Work Type ----------
+                    Builder(
+                      builder: (buttonContext) => _borderedTile(
+                        child: ListTile(
+                          leading:
+                          const Icon(Icons.flag_sharp, color: Colors.brown),
+                          title: const Text("Priority"),
+                          trailing: _infoTrailing(task.priority),
+                          selected: _isSelected(task.priority),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.priority,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (buttonContext) => _borderedTile(
+                        child: ListTile(
+                          leading: const Icon(Icons.notifications_active,
+                              color: Colors.brown),
+                          title: const Text("Remind Me"),
+                          trailing: _infoTrailing(task.reminder),
+                          selected: _isSelected(task.reminder),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.remind,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (buttonContext) => _borderedTile(
+                        child: ListTile(
+                          leading:
+                          const Icon(Icons.checklist, color: Colors.brown),
+                          title: const Text("Assign"),
+                          trailing: _infoTrailing(task.assignee),
+                          selected: _isSelected(task.assignee),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.assign,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (buttonContext) => _borderedTile(
+                        child: ListTile(
+                          leading: const Icon(Icons.alarm, color: Colors.brown),
+                          title: const Text("Deadline"),
+                          trailing: _infoTrailing(task.deadline),
+                          selected: _isSelected(task.deadline),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.deadline,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (buttonContext) => _borderedTile(
+                        child: ListTile(
+                          leading: const Icon(Icons.insert_drive_file,
+                              color: Colors.brown),
+                          title: const Text("Work Type"),
+                          trailing: _infoTrailing(task.workType),
+                          selected: _isSelected(task.workType),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.deadline,
+                            fieldKey: 'workType',
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ---------- FILES ----------
+                    if (task.files.isNotEmpty)
+                      Column(
+                        children: task.files.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final file = entry.value;
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.image, color: Colors.blue),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        file.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "${(file.size / 1024).toStringAsFixed(1)} KB · Image",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 20),
+                                  onPressed: () {
+                                    setState(() {
+                                      task.files.removeAt(index);
+                                    });
+                                    widget.onChanged();
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                    // ---------- ADD FILE ----------
+                    _borderedTile(
+                      child: Padding(
+                        padding:
+                        const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: FileUploadBox(
+                          onFileSelected: (PlatformFile file) {
                             setState(() {
-                              task.files.removeAt(index);
+                              task.files.add(
+                                TaskFile(
+                                  name: file.name,
+                                  size: file.size,
+                                  path: file.path,
+                                ),
+                              );
                             });
                             widget.onChanged();
                           },
                         ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    const Text(
+                      "Add note",
+                      style:
+                      TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _noteController,
+                      maxLines: 12,
+                      onChanged: (value) {
+                        task.note = value;
+                        widget.onChanged();
+                      },
+                      decoration: const InputDecoration(
+                        hintText: "Add note",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // ---------- Created + delete ----------
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Created: ${task.createdDate}",
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.brown, size: 28),
+                          onPressed: () {
+                            widget.onDelete();
+                            context.pop();
+                          },
+                        ),
                       ],
                     ),
-                  );
-                }).toList(),
-              ),
-
-            /// ---------- ADD FILE BUTTON ----------
-            _borderedTile(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: FileUploadBox(
-                  onFileSelected: (PlatformFile file) {
-                    setState(() {
-                      task.files.add(
-                        TaskFile(
-                          name: file.name,
-                          size: file.size,
-                          path: file.path,
-                        ),
-                      );
-                    });
-                    widget.onChanged();
-                  },
+                  ],
                 ),
               ),
             ),
-
-
-            const SizedBox(height: 15),
-
-            const Text(
-              "Add note",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _noteController,
-              maxLines: 12,
-              onChanged: (value) {
-                task.note = value;
-                widget.onChanged();
-              },
-              decoration: const InputDecoration(
-                hintText: "Add note",
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            // ---------- Created + delete ----------
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Created: ${task.createdDate}",
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 14,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.brown,
-                    size: 28,
-                  ),
-                  onPressed: () {
-                    widget.onDelete();
-                    context.pop();
-                  },
-
-                ),
-              ],
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
+
