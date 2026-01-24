@@ -48,42 +48,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               children: [
                 // ✅ Status Cards (static for now)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                        StatusCard(
-                          status: 'Hot',
-                          count: 0,
-                          color: Colors.orange,
-                          onTap: () {},
-                        ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
 
-                        StatusCard(
-                          status: 'Paid',
-                          count: 0,
-                          color: Colors.blue,
-                          onTap: () {},
-                        ),
+                      // 📱 MOBILE → KEEP OLD UI (NO CHANGE)
+                      if (width < 600) {
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              StatusCard(
+                                status: 'Hot',
+                                count: 0,
+                                color: Colors.orange,
+                                onTap: () {},
+                              ),
+                              StatusCard(
+                                status: 'Paid',
+                                count: 0,
+                                color: Colors.blue,
+                                onTap: () {},
+                              ),
+                              StatusCard(
+                                status: 'Cold',
+                                count: 0,
+                                color: Colors.grey,
+                                onTap: () {},
+                              ),
+                              StatusCard(
+                                status: 'Done',
+                                count: 0,
+                                color: Colors.green,
+                                onTap: () {},
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                          ),
+                        );
+                      }
 
-                        StatusCard(
-                          status: 'Cold',
-                          count: 0,
-                          color: Colors.grey,
-                          onTap: () {},
-                        ),
-                        StatusCard(
-                          status: 'Done',
-                          count: 0,
-                          color: Colors.green,
-                          onTap: () {},
-                        ),
+                      // 🖥 TABLET / WEB → GRID VIEW
+                      int crossAxisCount = 2;
+                      if (width > 1024) crossAxisCount = 4;
 
-                      const SizedBox(width: 12),
-                    ],
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: width > 1024 ? 1.6 : 1.8,
+                          children: [
+                            StatusCard(
+                              status: 'Hot',
+                              count: 0,
+                              color: Colors.orange,
+                              onTap: () {},
+                            ),
+                            StatusCard(
+                              status: 'Paid',
+                              count: 0,
+                              color: Colors.blue,
+                              onTap: () {},
+                            ),
+                            StatusCard(
+                              status: 'Cold',
+                              count: 0,
+                              color: Colors.grey,
+                              onTap: () {},
+                            ),
+                            StatusCard(
+                              status: 'Done',
+                              count: 0,
+                              color: Colors.green,
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
+
                 ),
+
 
                 // ✅ Payment Chips
                 SizedBox(
