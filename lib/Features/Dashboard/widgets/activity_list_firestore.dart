@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ActivityListFirestore extends StatelessWidget {
   final String searchText;
+  final String department;
 
   const ActivityListFirestore({
     super.key,
     required this.searchText,
+    required this.department,
   });
 
   @override
@@ -14,7 +17,8 @@ class ActivityListFirestore extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection("jobs")
-          .orderBy("Timestamp", descending: true)
+          .where("currentDepartment", isEqualTo: department)
+          .orderBy("updatedAt", descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -63,7 +67,16 @@ class ActivityListFirestore extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4), // ✅ spacing
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    context.push(
+                      '/jobform',
+                      extra: {
+                        'department': department,
+                        'lpm': docs[index].id, // 🔥 THIS IS THE JOB ID
+                      },
+                    );
+                  },
+
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.all(14),
