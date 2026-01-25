@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:async/async.dart';
 
 class ActivityListFirestore extends StatefulWidget {
   final String searchText;
@@ -18,94 +19,92 @@ class ActivityListFirestore extends StatefulWidget {
 }
 
 class _ActivityListFirestoreState extends State<ActivityListFirestore> {
-  late final Stream<QuerySnapshot> _jobsStream;
+  Stream<QuerySnapshot>? _currentDeptStream;
+  Stream<QuerySnapshot>? _submittedByMeStream;
 
   @override
   void initState() {
     super.initState();
 
-    // 🔥 Firestore stream (NO orderBy → web safe)
-    _jobsStream = FirebaseFirestore.instance
+    if (!_isValidDepartment(widget.department)) return;
+
+    final deptKey = _deptKey(widget.department);
+
+    _currentDeptStream = FirebaseFirestore.instance
         .collection("jobs")
         .where("currentDepartment", isEqualTo: widget.department)
+        .snapshots();
+
+    _submittedByMeStream = FirebaseFirestore.instance
+        .collection("jobs")
+        .where("$deptKey.submitted", isEqualTo: true)
         .snapshots();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _jobsStream,
+    if (!_isValidDepartment(widget.department)) {
+      return const Center(child: Text("Invalid department"));
+    }
+
+    return StreamBuilder<List<QuerySnapshot>>(
+      stream: StreamZip([
+        _currentDeptStream!,
+        _submittedByMeStream!,
+      ]),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.hasError) {
-          return const Center(child: Text("Error loading activities"));
+        final Map<String, QueryDocumentSnapshot> merged = {};
+
+        for (final snap in snapshot.data!) {
+          for (final doc in snap.docs) {
+            merged[doc.id] = doc;
+          }
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        final docs = merged.values.toList();
+
+        if (docs.isEmpty) {
           return const Center(child: Text("No entries available"));
         }
 
-        final search = widget.searchText.trim().toLowerCase();
+        final query = widget.searchText.trim().toLowerCase();
 
-        // 🔥 Filter safely from nested designer.data
-        final docs = snapshot.data!.docs.where((doc) {
+        final filteredDocs = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
+          final designerData = data["designer"]?["data"] ?? {};
 
-          final designerData =
-          data["designer"]?["data"] as Map<String, dynamic>?;
+          final party =
+          (designerData["PartyName"] ?? "").toString().toLowerCase();
+          final job =
+          (designerData["ParticularJobName"] ?? "").toString().toLowerCase();
 
-          final partyName =
-          (designerData?["PartyName"] ?? "").toString().toLowerCase();
-
-          final particularJob =
-          (designerData?["ParticularJobName"] ?? "")
-              .toString()
-              .toLowerCase();
-
-          if (search.isEmpty) return true;
-
-          return partyName.contains(search) ||
-              particularJob.contains(search);
+          if (query.isEmpty) return true;
+          return party.contains(query) || job.contains(query);
         }).toList();
 
-        if (docs.isEmpty) {
+        if (filteredDocs.isEmpty) {
           return const Center(child: Text("No matching entries"));
         }
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          itemCount: docs.length,
+          itemCount: filteredDocs.length,
           itemBuilder: (context, index) {
-            final doc = docs[index];
-            final data = doc.data() as Map<String, dynamic>;
-
-            final designerData =
-            data["designer"]?["data"] as Map<String, dynamic>?;
-
-            final partyName =
-            (designerData?["PartyName"] ?? "No Party Name").toString();
-
-            final particularJob =
-            (designerData?["ParticularJobName"] ??
-                "No Particular Job")
-                .toString();
+            final data =
+            filteredDocs[index].data() as Map<String, dynamic>;
+            final designerData = data["designer"]?["data"] ?? {};
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: InkWell(
-                borderRadius: BorderRadius.circular(16),
                 onTap: () {
-                  context.push(
-                    '/jobform',
-                    extra: {
-                      'department': widget.department,
-                      'lpm': doc.id, // 🔥 job ID
-                    },
-                  );
+                  context.push('/job-summary/${filteredDocs[index].id}');
                 },
+                borderRadius: BorderRadius.circular(16),
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -118,7 +117,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                       CircleAvatar(
                         backgroundColor: Colors.grey.shade200,
                         child: const Icon(
-                          Icons.work_outline,
+                          Icons.assignment_outlined,
                           color: Colors.grey,
                         ),
                       ),
@@ -128,7 +127,9 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              partyName,
+                              (designerData["PartyName"] ??
+                                  "No Party Name")
+                                  .toString(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -138,7 +139,9 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              particularJob,
+                              (designerData["ParticularJobName"] ??
+                                  "No Particular Job")
+                                  .toString(),
                               style: TextStyle(
                                 color: Colors.grey.shade700,
                                 fontSize: 13,
@@ -158,5 +161,43 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
         );
       },
     );
+  }
+
+  // ---------------- HELPERS ----------------
+
+  bool _isValidDepartment(String dept) {
+    return const [
+      "Designer",
+      "AutoBending",
+      "ManualBending",
+      "Lasercut",
+      "Emboss",
+      "Rubber",
+      "Account",
+      "Delivery",
+    ].contains(dept);
+  }
+
+  String _deptKey(String dept) {
+    switch (dept) {
+      case "Designer":
+        return "designer";
+      case "AutoBending":
+        return "autoBending";
+      case "ManualBending":
+        return "manualBending";
+      case "Lasercut":
+        return "laserCut";
+      case "Emboss":
+        return "emboss";
+      case "Rubber":
+        return "rubber";
+      case "Account":
+        return "account";
+      case "Delivery":
+        return "delivery";
+      default:
+        return "";
+    }
   }
 }

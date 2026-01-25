@@ -17,11 +17,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    // ✅ Toggle initial states from controllers
-    bool laserDone = form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
-    bool rubberFixingDone =
+    final bool laserDone =
+        form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
+    final bool rubberFixingDone =
         form.RubberFixingDone.text.trim().toLowerCase() == "yes";
-    bool whiteProfileRubber =
+    final bool whiteProfileRubber =
         form.WhiteProfileRubber.text.trim().toLowerCase() == "yes";
 
     return Scaffold(
@@ -35,112 +35,129 @@ class _DesignerPage6State extends State<DesignerPage6> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AddableSearchDropdown(
-              label: "Stripping",
-              items: form.jobs,
-              onChanged: (v) {
-                setState(() {
-                  form.StrippingType.text = (v ?? "No").trim();
-                });
-              },
-              onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: form.StrippingType.text.isEmpty
-                  ? "No"
-                  : form.StrippingType.text,
-            ),
 
-            const SizedBox(height: 30),
-
-            FlexibleToggle(
-              label: "Laser Cutting Status",
-              inactiveText: "Pending",
-              activeText: "Done",
-              initialValue: laserDone,
-              onChanged: (v) {
-                setState(() {
-                  form.LaserCuttingStatus.text = v ? "Done" : "Pending";
-                });
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            FlexibleToggle(
-              label: "Rubber Fixing Done",
-              inactiveText: "No",
-              activeText: "Yes",
-              initialValue: rubberFixingDone,
-              onChanged: (val) {
-                setState(() {
-                  form.RubberFixingDone.text = val ? "Yes" : "No";
-                });
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            FlexibleToggle(
-              label: "White Profile Rubber",
-              inactiveText: "No",
-              activeText: "Yes",
-              initialValue: whiteProfileRubber,
-              onChanged: (val) {
-                setState(() {
-                  form.WhiteProfileRubber.text = val ? "Yes" : "No";
-                });
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            // ✅ Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
+            /// ✅ Stripping
+            if (form.canView("StrippingType")) ...[
+              AddableSearchDropdown(
+                label: "Stripping",
+                items: form.jobs,
+                initialValue: form.StrippingType.text.isEmpty
+                    ? "No"
+                    : form.StrippingType.text,
+                onAdd: (newJob) => form.jobs.add(newJob),
+                onChanged: (v) {
                   setState(() {
-                    isSubmitting = true;
+                    form.StrippingType.text = (v ?? "No").trim();
                   });
-
-                  try {
-                    await form.submitForm();
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Error submitting form"),
-                      ),
-                    );
-                  } finally {
-                    setState(() {
-                      isSubmitting = false;
-                    });
-                  }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8D94B),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Laser Cutting Status
+            if (form.canView("LaserCuttingStatus")) ...[
+              FlexibleToggle(
+                label: "Laser Cutting Status",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue: laserDone,
+                onChanged: (v) {
+                  setState(() {
+                    form.LaserCuttingStatus.text =
+                    v ? "Done" : "Pending";
+                  });
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Rubber Fixing Done
+            if (form.canView("RubberFixingDone")) ...[
+              FlexibleToggle(
+                label: "Rubber Fixing Done",
+                inactiveText: "No",
+                activeText: "Yes",
+                initialValue: rubberFixingDone,
+                onChanged: (val) {
+                  setState(() {
+                    form.RubberFixingDone.text =
+                    val ? "Yes" : "No";
+                  });
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ White Profile Rubber
+            if (form.canView("WhiteProfileRubber")) ...[
+              FlexibleToggle(
+                label: "White Profile Rubber",
+                inactiveText: "No",
+                activeText: "Yes",
+                initialValue: whiteProfileRubber,
+                onChanged: (val) {
+                  setState(() {
+                    form.WhiteProfileRubber.text =
+                    val ? "Yes" : "No";
+                  });
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Submit Button
+            if (form.canView("submitButton")) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                    setState(() {
+                      isSubmitting = true;
+                    });
+
+                    try {
+                      await form.submitForm();
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                          Text("Error submitting form"),
+                        ),
+                      );
+                    } finally {
+                      setState(() {
+                        isSubmitting = false;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF8D94B),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 4,
                   ),
-                  elevation: 4,
-                ),
-                child: isSubmitting
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Text(
-                  "Submit",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
+                  child: isSubmitting
+                      ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Text(
+                    "Submit",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

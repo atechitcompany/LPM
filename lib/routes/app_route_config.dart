@@ -222,10 +222,12 @@ class AppRoutes {
               GoRoute(
                 path: '/job-summary/:lpm',
                 builder: (context, state) {
-                  final lpm = state.pathParameters['lpm']!;
-                  return JobSummaryScreen(lpm: lpm);
+                  return JobSummaryScreen(
+                    lpm: state.pathParameters['lpm']!,
+                  );
                 },
               ),
+
               GoRoute(
                 path: '/map',
                 name: AppRoutesName.MapScreen,

@@ -24,19 +24,28 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
 
-        // 🌍 GLOBAL COLORS → PURE WHITE
+        // ✅ FIX: primary must NOT be white
         colorScheme: const ColorScheme.light(
-          primary: Colors.white,
+          primary: Color(0xFFF8D94B), // used by checkbox & cursor
+          onPrimary: Colors.black,
+
           background: Colors.white,
           surface: Colors.white,
+          onSurface: Colors.black,
         ),
 
         scaffoldBackgroundColor: Colors.white,
 
-        // 🎯 ONLY APPBAR YELLOW
+        // ✅ FIX: cursor + selection visibility
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Colors.black,
+          selectionHandleColor: Colors.black,
+        ),
+
+        // 🎯 ONLY APPBAR YELLOW (unchanged)
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFFF8D94B),
-          surfaceTintColor: Colors.transparent, // 🚨 removes dull overlay
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
 
           iconTheme: IconThemeData(color: Colors.black),
