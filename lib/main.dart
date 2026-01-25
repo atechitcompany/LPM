@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      /// 👇 THIS IS THE KEY CHANGE
+      /// 👇 THIS IS THE KEYCHANGE
       routerConfig: AppRoutes.router,
 
       debugShowCheckedModeBanner: false,
