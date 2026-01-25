@@ -60,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
-                              const SizedBox(width: 12),
+                              // const SizedBox(width: 12),
                               StatusCard(
                                 status: 'Hot',
                                 count: 0,
