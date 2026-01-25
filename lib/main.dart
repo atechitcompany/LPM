@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: Color(0xFFF8D94B),
           surfaceTintColor: Colors.transparent, // 🚨 removes dull overlay
           elevation: 0,
-          centerTitle: true,
+
           iconTheme: IconThemeData(color: Colors.black),
           titleTextStyle: TextStyle(
             color: Colors.black,

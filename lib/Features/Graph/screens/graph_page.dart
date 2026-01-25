@@ -520,27 +520,27 @@ class _GraphPageState extends State<GraphPage> {
                   _summaryCard(
                       title: "Total tasks",
                       value: totalTasks.toString(),
-                      color: Colors.black45),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Completed",
                       value: doneCount.toString(),
-                      color: Colors.black45),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Pending",
                       value: pendingCount.toString(),
-                      color: Colors.black45),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "On time",
                       value: onTime.toString(),
-                      color: Colors.black45),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Late done",
                       value: late.toString(),
-                      color: Colors.black45),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Overdue pending",
                       value: overduePending.toString(),
-                      color: Colors.black45),
+                      color: Colors.black54),
                 ],
               ),
 
