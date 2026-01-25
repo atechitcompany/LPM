@@ -22,26 +22,44 @@ class OrderDetailScreen extends StatelessWidget {
         foregroundColor: Colors.black,
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            ClientHeaderCard(),
-            const SizedBox(height: 16),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth >= 1024;
 
-            OrderStatusCard(currentStatus: currentStatus),
-            const SizedBox(height: 16),
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWeb ? 900 : double.infinity, // 👈 web width only
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isWeb ? 24 : 20, // 👈 web spacing only
+                  vertical: 10,
+                ),
+                child: Column(
+                  children: [
+                    ClientHeaderCard(),
+                    const SizedBox(height: 16),
 
-            const RatingCard(),
-            const SizedBox(height: 16),
+                    OrderStatusCard(currentStatus: currentStatus),
+                    const SizedBox(height: 16),
 
-            const DeliveryDetailsCard(),
-            const SizedBox(height: 20),
+                    const RatingCard(),
+                    const SizedBox(height: 16),
 
-            const PriceDetailsCard(),
-          ],
-        ),
+                    const DeliveryDetailsCard(),
+                    const SizedBox(height: 20),
+
+                    const PriceDetailsCard(),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
+
     );
   }
 }

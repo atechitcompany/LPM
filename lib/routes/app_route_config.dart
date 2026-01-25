@@ -69,7 +69,7 @@ class AppRoutes {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/dashboard',
 
     /// 🌍 GLOBAL RESPONSIVE WRAPPER (FOR ENTIRE APP)
     routes: [
