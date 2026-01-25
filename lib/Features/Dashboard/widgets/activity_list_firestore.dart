@@ -24,11 +24,11 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
   void initState() {
     super.initState();
 
+    // 🔥 Firestore stream (NO orderBy → web safe)
     _jobsStream = FirebaseFirestore.instance
         .collection("jobs")
         .where("currentDepartment", isEqualTo: widget.department)
         .snapshots();
-
   }
 
   @override
@@ -48,20 +48,27 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
           return const Center(child: Text("No entries available"));
         }
 
-        final query = widget.searchText.trim().toLowerCase();
+        final search = widget.searchText.trim().toLowerCase();
 
+        // 🔥 Filter safely from nested designer.data
         final docs = snapshot.data!.docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
 
+          final designerData =
+          data["designer"]?["data"] as Map<String, dynamic>?;
+
           final partyName =
-          (data["PartyName"] ?? "").toString().toLowerCase();
+          (designerData?["PartyName"] ?? "").toString().toLowerCase();
+
           final particularJob =
-          (data["ParticularJobName"] ?? "").toString().toLowerCase();
+          (designerData?["ParticularJobName"] ?? "")
+              .toString()
+              .toLowerCase();
 
-          if (query.isEmpty) return true;
+          if (search.isEmpty) return true;
 
-          return partyName.contains(query) ||
-              particularJob.contains(query);
+          return partyName.contains(search) ||
+              particularJob.contains(search);
         }).toList();
 
         if (docs.isEmpty) {
@@ -72,36 +79,48 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           itemCount: docs.length,
           itemBuilder: (context, index) {
-            final data = docs[index].data() as Map<String, dynamic>;
+            final doc = docs[index];
+            final data = doc.data() as Map<String, dynamic>;
+
+            final designerData =
+            data["designer"]?["data"] as Map<String, dynamic>?;
+
+            final partyName =
+            (designerData?["PartyName"] ?? "No Party Name").toString();
+
+            final particularJob =
+            (designerData?["ParticularJobName"] ??
+                "No Particular Job")
+                .toString();
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: InkWell(
+                borderRadius: BorderRadius.circular(16),
                 onTap: () {
                   context.push(
                     '/jobform',
                     extra: {
                       'department': widget.department,
-                      'lpm': docs[index].id,
+                      'lpm': doc.id, // 🔥 job ID
                     },
                   );
                 },
-                borderRadius: BorderRadius.circular(16),
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.grey.shade200,
-                    ),
+                    border: Border.all(color: Colors.grey.shade200),
                   ),
                   child: Row(
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.grey.shade200,
-                        child: const Icon(Icons.person_outline,
-                            color: Colors.grey),
+                        child: const Icon(
+                          Icons.work_outline,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -109,8 +128,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (data["PartyName"] ?? "No Party Name")
-                                  .toString(),
+                              partyName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -120,9 +138,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              (data["ParticularJobName"] ??
-                                  "No Particular Job")
-                                  .toString(),
+                              particularJob,
                               style: TextStyle(
                                 color: Colors.grey.shade700,
                                 fontSize: 13,

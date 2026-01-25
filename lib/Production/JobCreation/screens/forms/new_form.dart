@@ -38,6 +38,11 @@ class NewFormState extends State<NewForm> {
     return location == '/jobform/designer-6';
   }
 
+  bool get isJobFormRoute {
+    final location = GoRouterState.of(context).uri.toString();
+    return location.startsWith('/jobform');
+  }
+
 
   Map<String, bool> fieldAccess = {
     // Basic Info
@@ -889,24 +894,25 @@ class NewFormState extends State<NewForm> {
             Expanded(child: widget.child),
 
             // 🔹 PREV / NEXT BUTTONS
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: _goPrev,
-                    child: const Text("Previous"),
-                  ),
-
-                  if (!(department == "Designer" && isLastDesignerPage))
+            if (isJobFormRoute)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     ElevatedButton(
-                      onPressed: _goNext,
-                      child: const Text("Next"),
+                      onPressed: _goPrev,
+                      child: const Text("Previous"),
                     ),
-                ],
+
+                    if (!(department == "Designer" && isLastDesignerPage))
+                      ElevatedButton(
+                        onPressed: _goNext,
+                        child: const Text("Next"),
+                      ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -988,6 +994,5 @@ class NewFormState extends State<NewForm> {
         throw Exception("Unknown department: $dept");
     }
   }
-
 
 }
