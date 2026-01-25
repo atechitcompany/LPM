@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
-import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
+import '../../../../../FormComponents/AddableSearchDropdown.dart';
+import '../../../../../FormComponents/AutoIncrementField.dart';
+import '../../../../../FormComponents/TextInput.dart';
 import '../new_form_scope.dart';
 
 class DesignerPage1 extends StatefulWidget {
@@ -13,6 +14,38 @@ class DesignerPage1 extends StatefulWidget {
 }
 
 class _DesignerPage1State extends State<DesignerPage1> {
+  List<String> userNames = ["Loading..."];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserNames();
+  }
+
+  Future<void> fetchUserNames() async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('Onboarding')
+          .get();
+
+      final names = query.docs
+          .map((doc) => doc['Username']?.toString() ?? 'Unknown')
+          .toList();
+
+      setState(() {
+        userNames = names;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("❌ Error fetching usernames: $e");
+      setState(() {
+        userNames = [];
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
@@ -29,9 +62,11 @@ class _DesignerPage1State extends State<DesignerPage1> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// ✅ Party Name *
-            SearchableDropdownWithInitial(
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SearchableDropdownWithInitial(
               label: "Party Name *",
-              items: form.parties,
+              items: userNames,
               initialValue: form.PartyName.text.isEmpty
                   ? "Select Party"
                   : form.PartyName.text,
@@ -47,7 +82,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
             /// ✅ Designer Created By
             SearchableDropdownWithInitial(
               label: "Designer Created By",
-              items: form.parties,
+              items: userNames,
               initialValue: form.DesignerCreatedBy.text.isEmpty
                   ? "Select"
                   : form.DesignerCreatedBy.text,
@@ -95,7 +130,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
-            /// ✅ LPM Auto Increment (auto refresh without hot reload)
+            /// ✅ LPM Auto Increment
             ValueListenableBuilder(
               valueListenable: form.LpmAutoIncrement,
               builder: (context, value, child) {
@@ -116,4 +151,3 @@ class _DesignerPage1State extends State<DesignerPage1> {
     );
   }
 }
-
