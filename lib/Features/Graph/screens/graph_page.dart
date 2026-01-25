@@ -248,12 +248,16 @@ class _GraphPageState extends State<GraphPage> {
                         ChoiceChip(
                           label: const Text("Overall"),
                           selected: !byEmployee,
+                          selectedColor: const Color(0xFFF8D94B),
+                          labelStyle: const TextStyle(color: Colors.black),
                           onSelected: (s) => setStateSB(() => byEmployee = !s),
                         ),
                         const SizedBox(width: 8),
                         ChoiceChip(
                           label: const Text("By Employee"),
                           selected: byEmployee,
+                          selectedColor: kAccent,
+                          labelStyle: const TextStyle(color: Colors.black),
                           onSelected: (s) => setStateSB(() => byEmployee = s),
                         ),
                       ],
@@ -457,6 +461,8 @@ class _GraphPageState extends State<GraphPage> {
                   ChoiceChip(
                     label: const Text("Overall"),
                     selected: !_employeeMode,
+                    selectedColor: kAccent,
+                    labelStyle: const TextStyle(color: Colors.black),
                     onSelected: (v) {
                       if (v) {
                         HapticFeedback.selectionClick();
@@ -472,6 +478,8 @@ class _GraphPageState extends State<GraphPage> {
                   ChoiceChip(
                     label: const Text("By Employee"),
                     selected: _employeeMode,
+                    selectedColor: kAccent, // ✅ ADD THIS
+                    labelStyle: const TextStyle(color: Colors.black),
                     onSelected: (v) {
                       if (v) {
                         setState(() {
@@ -484,6 +492,7 @@ class _GraphPageState extends State<GraphPage> {
                       }
                     },
                   ),
+
                   const SizedBox(width: 12),
                   if (_employeeMode)
                     Expanded(
