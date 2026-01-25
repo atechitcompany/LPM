@@ -1,19 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
-import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
-import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/GSTSelector.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
-import 'package:lightatech/FormComponents/PrioritySelector.dart';
-import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:lightatech/FormComponents/FileUploadBox.dart';
-import 'package:lightatech/FormComponents/FlexibleSlider.dart';
-import 'package:lightatech/FormComponents/NumberStepper.dart';
-import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
-
 import '../new_form_scope.dart';
+import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
+import 'package:lightatech/FormComponents/FlexibleToggle.dart';
+import 'package:lightatech/FormComponents/TextInput.dart';
 
 class DesignerPage4 extends StatefulWidget {
   const DesignerPage4({super.key});
@@ -24,23 +13,21 @@ class DesignerPage4 extends StatefulWidget {
 
 class _DesignerPage4State extends State<DesignerPage4> {
   String selectedByText(BuildContext context) {
-    return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} at ${TimeOfDay.now().format(context)}";
+    return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
+        "at ${TimeOfDay.now().format(context)}";
   }
 
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    bool isPerforationSelected =
+    final bool isPerforationSelected =
         form.Perforation.text.trim().toLowerCase() != "no";
-
-    bool isZigZagBladeSelected =
+    final bool isZigZagBladeSelected =
         form.ZigZagBlade.text.trim().toLowerCase() != "no";
-
-    bool isRubberSelected =
+    final bool isRubberSelected =
         form.RubberType.text.trim().toLowerCase() != "no";
-
-    bool isHoleSelected =
+    final bool isHoleSelected =
         form.HoleType.text.trim().toLowerCase() != "no";
 
     return Scaffold(
@@ -54,29 +41,32 @@ class _DesignerPage4State extends State<DesignerPage4> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Perforation
-            AddableSearchDropdown(
-              label: "Perforation",
-              items: form.jobs,
-              onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: "No",
-              onChanged: (v) {
-                setState(() {
-                  form.Perforation.text = v ?? "";
-                });
 
-                String selected = (v ?? "").trim();
+            /// ✅ Perforation
+            if (form.canView("Perforation")) ...[
+              AddableSearchDropdown(
+                label: "Perforation",
+                items: form.jobs,
+                initialValue: "No",
+                onAdd: (newJob) => form.jobs.add(newJob),
+                onChanged: (v) {
+                  setState(() {
+                    form.Perforation.text = v ?? "";
+                  });
 
-                if (selected.toLowerCase() == "no") {
-                  form.PerforationSelectedBy.clear();
-                } else {
-                  form.PerforationSelectedBy.text = selectedByText(context);
-                }
-              },
-            ),
+                  if ((v ?? "").trim().toLowerCase() == "no") {
+                    form.PerforationSelectedBy.clear();
+                  } else {
+                    form.PerforationSelectedBy.text =
+                        selectedByText(context);
+                  }
+                },
+              ),
+            ],
 
-            // ✅ Perforation Done By
-            if (isPerforationSelected) ...[
+            /// ✅ Perforation Selected By
+            if (isPerforationSelected &&
+                form.canView("PerforationSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Perforation Done By",
@@ -95,31 +85,33 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
             ],
 
-            const SizedBox(height: 26),
+            if (form.canView("Perforation")) const SizedBox(height: 26),
 
-            // ✅ Zig Zag Blade
-            AddableSearchDropdown(
-              label: "Zig Zag Blade",
-              items: form.jobs,
-              initialValue: "No",
-              onAdd: (newJob) => form.jobs.add(newJob),
-              onChanged: (v) {
-                setState(() {
-                  form.ZigZagBlade.text = v ?? "";
-                });
+            /// ✅ Zig Zag Blade
+            if (form.canView("ZigZagBlade")) ...[
+              AddableSearchDropdown(
+                label: "Zig Zag Blade",
+                items: form.jobs,
+                initialValue: "No",
+                onAdd: (newJob) => form.jobs.add(newJob),
+                onChanged: (v) {
+                  setState(() {
+                    form.ZigZagBlade.text = v ?? "";
+                  });
 
-                String selected = (v ?? "").trim();
+                  if ((v ?? "").trim().toLowerCase() == "no") {
+                    form.ZigZagBladeSelectedBy.clear();
+                  } else {
+                    form.ZigZagBladeSelectedBy.text =
+                        selectedByText(context);
+                  }
+                },
+              ),
+            ],
 
-                if (selected.toLowerCase() == "no") {
-                  form.ZigZagBladeSelectedBy.clear();
-                } else {
-                  form.ZigZagBladeSelectedBy.text = selectedByText(context);
-                }
-              },
-            ),
-
-            // ✅ Zig Zag Blade Selected By
-            if (isZigZagBladeSelected) ...[
+            /// ✅ Zig Zag Blade Selected By
+            if (isZigZagBladeSelected &&
+                form.canView("ZigZagBladeSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Zig Zag Blade Selected By",
@@ -138,31 +130,33 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
             ],
 
-            const SizedBox(height: 26),
+            if (form.canView("ZigZagBlade")) const SizedBox(height: 26),
 
-            // ✅ Rubber
-            AddableSearchDropdown(
-              label: "Rubber",
-              items: form.jobs,
-              initialValue: "No",
-              onAdd: (newJob) => form.jobs.add(newJob),
-              onChanged: (v) {
-                setState(() {
-                  form.RubberType.text = v ?? "";
-                });
+            /// ✅ Rubber
+            if (form.canView("RubberType")) ...[
+              AddableSearchDropdown(
+                label: "Rubber",
+                items: form.jobs,
+                initialValue: "No",
+                onAdd: (newJob) => form.jobs.add(newJob),
+                onChanged: (v) {
+                  setState(() {
+                    form.RubberType.text = v ?? "";
+                  });
 
-                String selected = (v ?? "").trim();
+                  if ((v ?? "").trim().toLowerCase() == "no") {
+                    form.RubberSelectedBy.clear();
+                  } else {
+                    form.RubberSelectedBy.text =
+                        selectedByText(context);
+                  }
+                },
+              ),
+            ],
 
-                if (selected.toLowerCase() == "no") {
-                  form.RubberSelectedBy.clear();
-                } else {
-                  form.RubberSelectedBy.text = selectedByText(context);
-                }
-              },
-            ),
-
-            // ✅ Rubber Selected By
-            if (isRubberSelected) ...[
+            /// ✅ Rubber Selected By
+            if (isRubberSelected &&
+                form.canView("RubberSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Rubber Selected By",
@@ -181,31 +175,33 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
             ],
 
-            const SizedBox(height: 26),
+            if (form.canView("RubberType")) const SizedBox(height: 26),
 
-            // ✅ Hole
-            AddableSearchDropdown(
-              label: "Hole",
-              items: form.jobs,
-              initialValue: "No",
-              onAdd: (newJob) => form.jobs.add(newJob),
-              onChanged: (v) {
-                setState(() {
-                  form.HoleType.text = v ?? "";
-                });
+            /// ✅ Hole
+            if (form.canView("HoleType")) ...[
+              AddableSearchDropdown(
+                label: "Hole",
+                items: form.jobs,
+                initialValue: "No",
+                onAdd: (newJob) => form.jobs.add(newJob),
+                onChanged: (v) {
+                  setState(() {
+                    form.HoleType.text = v ?? "";
+                  });
 
-                String selected = (v ?? "").trim();
+                  if ((v ?? "").trim().toLowerCase() == "no") {
+                    form.HoleSelectedBy.clear();
+                  } else {
+                    form.HoleSelectedBy.text =
+                        selectedByText(context);
+                  }
+                },
+              ),
+            ],
 
-                if (selected.toLowerCase() == "no") {
-                  form.HoleSelectedBy.clear();
-                } else {
-                  form.HoleSelectedBy.text = selectedByText(context);
-                }
-              },
-            ),
-
-            // ✅ Hole Selected By
-            if (isHoleSelected) ...[
+            /// ✅ Hole Selected By
+            if (isHoleSelected &&
+                form.canView("HoleSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Hole Selected By",
@@ -224,28 +220,31 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
             ],
 
-            const SizedBox(height: 30),
+            if (form.canView("HoleType")) const SizedBox(height: 30),
 
-            // ✅ Emboss Toggle
-            FlexibleToggle(
-              label: "Emboss",
-              inactiveText: "No",
-              activeText: "Yes",
-              onChanged: (v) {
-                form.EmbossStatus.text = v ? "Yes" : "No";
-              },
-            ),
+            /// ✅ Emboss Toggle
+            if (form.canView("EmbossStatus")) ...[
+              FlexibleToggle(
+                label: "Emboss",
+                inactiveText: "No",
+                activeText: "Yes",
+                onChanged: (v) {
+                  form.EmbossStatus.text = v ? "Yes" : "No";
+                },
+              ),
+              const SizedBox(height: 26),
+            ],
 
-            const SizedBox(height: 26),
-
-            TextInput(
-              label: "Emboss Pcs",
-              hint: "No of Pcs",
-              controller: form.EmbossPcs,
-              initialValue: "No",
-            ),
-
-            const SizedBox(height: 26),
+            /// ✅ Emboss Pcs
+            if (form.canView("EmbossPcs")) ...[
+              TextInput(
+                label: "Emboss Pcs",
+                hint: "No of Pcs",
+                controller: form.EmbossPcs,
+                initialValue: "No",
+              ),
+              const SizedBox(height: 26),
+            ],
           ],
         ),
       ),
