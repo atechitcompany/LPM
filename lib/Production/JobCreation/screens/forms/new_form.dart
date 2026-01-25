@@ -3,6 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'new_form_scope.dart';
 
+enum Department {
+  Designer,
+  AutoBending,
+  ManualBending,
+  Lasercut,
+  Emboss,
+  Rubber,
+  Account,
+  Delivery,
+}
+
 class NewForm extends StatefulWidget {
   final Widget child;
   final String department;
@@ -20,6 +31,13 @@ class NewForm extends StatefulWidget {
 
 class NewFormState extends State<NewForm> {
   late String department;
+  bool get isLastDesignerPage {
+    if (department != "Designer") return false;
+
+    final location = GoRouterState.of(context).uri.toString();
+    return location == '/jobform/designer-6';
+  }
+
 
   Map<String, bool> fieldAccess = {
     // Basic Info
@@ -880,10 +898,12 @@ class NewFormState extends State<NewForm> {
                     onPressed: _goPrev,
                     child: const Text("Previous"),
                   ),
-                  ElevatedButton(
-                    onPressed: _goNext,
-                    child: const Text("Next"),
-                  ),
+
+                  if (!(department == "Designer" && isLastDesignerPage))
+                    ElevatedButton(
+                      onPressed: _goNext,
+                      child: const Text("Next"),
+                    ),
                 ],
               ),
             ),
@@ -895,31 +915,31 @@ class NewFormState extends State<NewForm> {
 
   // -------- Navigation Logic --------
 
-  void _goNext() {
+  void _goDesignerNext() {
     final location = GoRouterState.of(context).uri.toString();
 
-    const pages = [
+    const designerPages = [
       '/jobform/designer-1',
       '/jobform/designer-2',
       '/jobform/designer-3',
       '/jobform/designer-4',
       '/jobform/designer-5',
       '/jobform/designer-6',
-      '/jobform/auto-bending',
-      '/jobform/manual-bending',
-      '/jobform/laser',
-      '/jobform/rubber',
-      '/jobform/emboss',
-      '/jobform/account1',
-      '/jobform/account2',
-      '/jobform/delivery',
     ];
 
-    final index = pages.indexOf(location);
-    if (index != -1 && index < pages.length - 1) {
-      context.push(pages[index + 1]);
+    final index = designerPages.indexOf(location);
+    if (index != -1 && index < designerPages.length - 1) {
+      context.push(designerPages[index + 1]);
     }
   }
+
+
+  void _goNext() {
+    if (department == "Designer") {
+      _goDesignerNext();
+    }
+  }
+
 
   void _goPrev() {
     if (context.canPop()) {
