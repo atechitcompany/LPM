@@ -75,7 +75,13 @@ class AppRoutes {
     routes: [
       ShellRoute(
         builder: (context, state, child) {
-          return ResponsiveShell(child: child);
+          final extra = state.extra as Map<String, dynamic>?;
+
+          return NewForm(
+            department: extra?['department'] ?? 'Designer',
+            lpm: extra?['lpm'],
+            child: child,
+          );
         },
         routes: [
 
