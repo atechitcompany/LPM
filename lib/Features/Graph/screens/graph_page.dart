@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import '../widgets/graph_form.dart' show TaskEntry;
 
 // 🎨 App UI Constants (matching existing app design)
-const Color kAppBg = Color(0xFFFFF7FB);
+const Color kAppBg = Colors.white;
 const Color kCardBg = Colors.white;
 const Color kAccent = Color(0xFFFFD600);
 
@@ -468,6 +468,67 @@ class _GraphPageState extends State<GraphPage> {
                       children: [
                         // Overall vs By Employee selection
                         Row(
+                    ),
+                ],
+              ),
+
+              if (_employeeMode && _selectedEmployee != null) ...[
+                const SizedBox(height: 8),
+                Text("Showing data for: $_selectedEmployee",
+                    style: const TextStyle(
+                        fontStyle: FontStyle.italic, color: Colors.grey)),
+              ],
+
+              const SizedBox(height: 20),
+
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _summaryCard(
+                      title: "Total tasks",
+                      value: totalTasks.toString(),
+                      color: Colors.black54),
+                  _summaryCard(
+                      title: "Completed",
+                      value: doneCount.toString(),
+                      color: Colors.black54),
+                  _summaryCard(
+                      title: "Pending",
+                      value: pendingCount.toString(),
+                      color: Colors.black54),
+                  _summaryCard(
+                      title: "On time",
+                      value: onTime.toString(),
+                      color: Colors.black54),
+                  _summaryCard(
+                      title: "Late done",
+                      value: late.toString(),
+                      color: Colors.black54),
+                  _summaryCard(
+                      title: "Overdue pending",
+                      value: overduePending.toString(),
+                      color: Colors.black54),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Custom charts from admin
+              if (_addedCharts.isNotEmpty) ...[
+                _sectionHeader("Custom charts"),
+                const SizedBox(height: 8),
+                ..._addedCharts.map((cfg) {
+                  final used =
+                  _filterEntries(
+                      byEmployee: cfg.byEmployee, employee: cfg.employeeName);
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ChoiceChip(
                               label: const Text("Overall"),
