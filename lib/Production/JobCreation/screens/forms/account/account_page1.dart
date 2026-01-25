@@ -568,6 +568,42 @@ class _AccountPageState extends State<AccountPage> {
 
             AutoCalcTextBox(label: "Hole Amount", value: "0"),
             const SizedBox(height: 30),
+
+            //Emboss view/edit access
+
+            //Emboss Pcs view access
+
+            TextInput(
+              label: "Total Size",
+              hint: "",
+              controller: form.TotalSize,
+              initialValue: "NO",
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Minimum Charges Apply",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10,),
+
+            NumberStepper(
+              step: 1,
+              initialValue: 0,
+              controller: form.MinimumChargeApply,
+              onChanged: (val) {
+                form.MinimumChargeApply.text = val.toString();
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: 30),
+
+            //Male emboss view access
+
+
+
+
           ],
         ),
       ),
