@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/department_field_access.dart';
+
 import 'new_form_scope.dart';
 
 enum Department {
@@ -18,11 +20,14 @@ class NewForm extends StatefulWidget {
   final Widget child;
   final String department;
   final String? lpm;
+  final String? mode;
 
   const NewForm({super.key,
     required this.child,
     required this.department,
-    this.lpm,});
+    this.lpm,
+    this.mode,
+  });
 
   @override
   State<NewForm> createState() => NewFormState();
@@ -31,6 +36,7 @@ class NewForm extends StatefulWidget {
 
 class NewFormState extends State<NewForm> {
   late String department;
+  late bool isEditMode;
   bool get isLastDesignerPage {
     if (department != "Designer") return false;
 
@@ -43,152 +49,17 @@ class NewFormState extends State<NewForm> {
     return location.startsWith('/jobform');
   }
 
+  String fieldPermission(String key) {
+    final access = DepartmentFieldAccess.access(department);
+    return access[key] ?? "hide";
+  }
 
-  Map<String, bool> fieldAccess = {
-    // Basic Info
-    'partyName': true,
-    'designerCreatedBy': true,
-    'autoBendingCreatedBy': true,
-    'laserCuttingCreatedBy': true,
-    'accountsCreatedBy': true,
-    'embossCreatedBy': true,
-    'manualBendingCreatedBy': true,
-    'gst': true,
-    'buyerOrderNo': true,
-    'deliveryAt': true,
-    'Orderby': true,
-    'particularJobName': true,
-    'lpmAutoIncrement': true,
-    'priority': true,
-    'remark': true,
-    'designingToggle': true,
-    'DrawingAttachment': true,
-    'punchReport': true,
-    'ups': true,
-    'partyWorkName': true,
-    'size': true,
-    'size2': true,
-    'size3': true,
-    'size4': true,
-    'size5': true,
-    'sizesSlider': true,
-    'ups32Stepper': true,
-    'laserCuttingPunchNew': true,
+  bool canView(String key) => fieldPermission(key) != "hide";
 
-    // Ply
-    'plyDropdown': true,
-    'plyLength': true,
-    'plyBreadth': true,
-    'plySize': true,
-    'plyAmount': true,
+  bool canEdit(String key) =>
+      fieldPermission(key) == "edit" && isEditMode;
 
-    // Blade
-    'blade': true,
-    'bladeSize': true,
-    'bladeAmount': true,
 
-    // Extra
-    'extra': true,
-
-    // Capsule Rate
-    'capsuleRate': true,
-
-    // Creasing
-    'creasing': true,
-    'creasingSize': true,
-    'creasingAmount': true,
-    'creasingSlider': true,
-    'rubberDoneBy': true,
-    'microSerrationHalfCut': true,
-    'microSerrationCreasing': true,
-    'manualbendingfittingdoneby':true,
-    'wpFile': true,
-    'deliveryCreatedBy': true,
-    'deliveryToggle': true,
-    'receiverName': true,
-    'diePunchImage': true,
-    'invoiceImage': true,
-    'courierReceivingImage': true,
-    'deliveryUrl': true,
-    'jobDone': true,
-    'transportName': true,
-
-    // Address
-    'houseNo': true,
-    'appartment': true,
-    'street': true,
-    'pincode': true,
-    'fullAddress': true,
-    'unknown': true,
-    'designSendBy': true,
-
-    // Capsule
-    'capsule': true,
-    'capsulePcs': true,
-    'capsuleRateField': true,
-    'capsuleAmt': true,
-
-    // Perforation
-    'perforationDropdown': true,
-    'perforationSize': true,
-    'perforationAmount': true,
-    'ZigZagBlade': true,
-
-    // Zig Zag
-    'zigZagBladeSize': true,
-    'zigZagBladeAmount': true,
-
-    // Rubber
-    'rubber': true,
-    'rubberSize': true,
-    'rubberAmount': true,
-
-    // Hole
-    'hole': true,
-    'holes': true,
-    'holeAmount': true,
-
-    // Emboss
-    'embossToggle': true,
-    'embossPcs': true,
-    'embossPcsField': true,
-    'minimumChargeApply': true,
-    'maleEmboss': true,
-    'maleRate': true,
-    'xField': true,
-    'yField': true,
-    'xySize': true,
-    'maleAmount': true,
-    'femaleEmboss': true,
-    'femaleRate': true,
-    'x2Field': true,
-    'y2Field': true,
-    'xy2Size': true,
-    'femaleAmount': true,
-
-    // Stripping
-    'stripping': true,
-    'strippingSize': true,
-    'strippingAmount': true,
-
-    // Courier & Laser
-    'courierCharges': true,
-    'autoCreasingStatus': true,
-    'laserRate': true,
-    'laserdoneby':true,
-    'laserCuttingStatus': true,
-    'autobendingdoneby': true,
-    'invoiceToggle': true,
-    'invoicePrintedBy': true,
-    'createdBy': true,
-    'particular': true,
-    'amount1': true,
-    'amount2': true,
-    'amount3': true,
-    'submitButton': true,
-    'rubberfixingdone': true,
-    'whiteprofilerubber': true,
-  };
 
   List<String> parties = ["Tata", "Jindal", "Infosys"];
   List<String> jobs = ["Laser", "Bending", "Cutting"];
@@ -748,12 +619,30 @@ class NewFormState extends State<NewForm> {
     }
   }
 
+  Future<void> _loadJob(String lpm) async {
+    final doc = await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .get();
+
+    final data = doc.data()!;
+    final designer = data["designer"]?["data"] ?? {};
+    final autobending = data["autoBending"]?["data"] ?? {};
+
+    PartyName.text = designer["PartyName"] ?? "";
+    DeliveryAt.text = designer["DeliveryAt"] ?? "";
+    ParticularJobName.text = designer["ParticularJobName"] ?? "";
+
+    AutoCreasingStatus.text =
+        autobending["AutoCreasingStatus"] ?? "";
+  }
+
 
 
   @override
   void initState() {
     super.initState();
-
+    isEditMode = widget.mode == 'edit';
     department = widget.department;
 
     if (widget.lpm != null) {
@@ -762,6 +651,10 @@ class NewFormState extends State<NewForm> {
     } else {
       // 🔥 New job (Designer only)
       loadCurrentLpm();
+    }
+
+    if (widget.lpm != null) {
+      _loadJob(widget.lpm!);
     }
 
     // defaults

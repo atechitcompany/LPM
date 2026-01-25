@@ -1,19 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
+import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/GSTSelector.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
-import 'package:lightatech/FormComponents/PrioritySelector.dart';
-import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:lightatech/FormComponents/FileUploadBox.dart';
-import 'package:lightatech/FormComponents/FlexibleSlider.dart';
-import 'package:lightatech/FormComponents/NumberStepper.dart';
-import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
-
-import '../new_form_scope.dart';
 
 class DesignerPage3 extends StatefulWidget {
   const DesignerPage3({super.key});
@@ -27,11 +17,14 @@ class _DesignerPage3State extends State<DesignerPage3> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    bool isBladeSelected = form.Blade.text.trim().toLowerCase() != "no";
-    bool isCreasingSelected = form.Creasing.text.trim().toLowerCase() != "no";
+    final bool isBladeSelected =
+        form.Blade.text.trim().toLowerCase() != "no";
+    final bool isCreasingSelected =
+        form.Creasing.text.trim().toLowerCase() != "no";
 
     String selectedByText() {
-      return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} at ${TimeOfDay.now().format(context)}";
+      return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
+          "at ${TimeOfDay.now().format(context)}";
     }
 
     return Scaffold(
@@ -45,26 +38,30 @@ class _DesignerPage3State extends State<DesignerPage3> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Blade Dropdown
-            SearchableDropdownWithInitial(
-              label: "Blade",
-              items: form.ply,
-              initialValue: form.Blade.text.isEmpty ? "No" : form.Blade.text,
-              onChanged: (v) {
-                setState(() {
-                  form.Blade.text = (v ?? "No").trim();
-                });
 
-                if (form.Blade.text.toLowerCase() == "no") {
-                  form.BladeSelectedBy.clear();
-                } else {
-                  form.BladeSelectedBy.text = selectedByText();
-                }
-              },
-            ),
+            /// ✅ Blade
+            if (form.canView("Blade")) ...[
+              SearchableDropdownWithInitial(
+                label: "Blade",
+                items: form.ply,
+                initialValue:
+                form.Blade.text.isEmpty ? "No" : form.Blade.text,
+                onChanged: (v) {
+                  setState(() {
+                    form.Blade.text = (v ?? "No").trim();
+                  });
 
-            /// ✅ Blade Selected By (only when Blade != No)
-            if (isBladeSelected) ...[
+                  if (form.Blade.text.toLowerCase() == "no") {
+                    form.BladeSelectedBy.clear();
+                  } else {
+                    form.BladeSelectedBy.text = selectedByText();
+                  }
+                },
+              ),
+            ],
+
+            /// ✅ Blade Selected By
+            if (isBladeSelected && form.canView("BladeSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Blade Selected By",
@@ -83,29 +80,31 @@ class _DesignerPage3State extends State<DesignerPage3> {
               ),
             ],
 
-            const SizedBox(height: 30),
+            if (form.canView("Blade")) const SizedBox(height: 30),
 
-            // ✅ Creasing Dropdown
-            SearchableDropdownWithInitial(
-              label: "Creasing",
-              items: form.ply,
-              initialValue:
-              form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
-              onChanged: (v) {
-                setState(() {
-                  form.Creasing.text = (v ?? "No").trim();
-                });
+            /// ✅ Creasing
+            if (form.canView("Creasing")) ...[
+              SearchableDropdownWithInitial(
+                label: "Creasing",
+                items: form.ply,
+                initialValue:
+                form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
+                onChanged: (v) {
+                  setState(() {
+                    form.Creasing.text = (v ?? "No").trim();
+                  });
 
-                if (form.Creasing.text.toLowerCase() == "no") {
-                  form.CreasingSelectedBy.clear();
-                } else {
-                  form.CreasingSelectedBy.text = selectedByText();
-                }
-              },
-            ),
+                  if (form.Creasing.text.toLowerCase() == "no") {
+                    form.CreasingSelectedBy.clear();
+                  } else {
+                    form.CreasingSelectedBy.text = selectedByText();
+                  }
+                },
+              ),
+            ],
 
-            /// ✅ Creasing Selected By (only when Creasing != No)
-            if (isCreasingSelected) ...[
+            /// ✅ Creasing Selected By
+            if (isCreasingSelected && form.canView("CreasingSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Creasing Selected By",
@@ -124,52 +123,58 @@ class _DesignerPage3State extends State<DesignerPage3> {
               ),
             ],
 
-            const SizedBox(height: 30),
+            if (form.canView("Creasing")) const SizedBox(height: 30),
 
-            // ✅ Toggles
-            FlexibleToggle(
-              label: "Micro sarration Half cut 23.60",
-              inactiveText: "No",
-              activeText: "Yes",
-              initialValue: false,
-              onChanged: (val) {},
-            ),
+            /// ✅ Micro Serration – Half Cut
+            if (form.canView("MicroSerrationHalfCut")) ...[
+              FlexibleToggle(
+                label: "Micro serration Half cut 23.60",
+                inactiveText: "No",
+                activeText: "Yes",
+                initialValue: false,
+                onChanged: (val) {},
+              ),
+              const SizedBox(height: 30),
+            ],
 
-            const SizedBox(height: 30),
+            /// ✅ Micro Serration – Creasing
+            if (form.canView("MicroSerrationCreasing")) ...[
+              FlexibleToggle(
+                label: "Micro serration Creasing 23.60",
+                inactiveText: "No",
+                activeText: "Yes",
+                initialValue: false,
+                onChanged: (val) {},
+              ),
+              const SizedBox(height: 30),
+            ],
 
-            FlexibleToggle(
-              label: "Micro sarration Creasing 23.60",
-              inactiveText: "No",
-              activeText: "Yes",
-              initialValue: false,
-              onChanged: (val) {},
-            ),
+            /// ✅ Unknown
+            if (form.canView("Unknown")) ...[
+              TextInput(
+                label: "Unknown",
+                hint: "Unknown",
+                controller: form.Unknown,
+              ),
+              const SizedBox(height: 26),
+            ],
 
-            const SizedBox(height: 30),
-
-            TextInput(
-              label: "Unknown",
-              hint: "Unknown",
-              controller: form.Unknown,
-            ),
-
-            const SizedBox(height: 26),
-
-            AddableSearchDropdown(
-              label: "Capsule",
-              items: form.jobs,
-              onChanged: (v) {
-                form.CapsuleType.text = v ?? "";
-              },
-              onAdd: (newJob) => form.jobs.add(newJob),
-              initialValue: "No",
-            ),
-
-            const SizedBox(height: 26),
+            /// ✅ Capsule
+            if (form.canView("CapsuleType")) ...[
+              AddableSearchDropdown(
+                label: "Capsule",
+                items: form.jobs,
+                initialValue: "No",
+                onChanged: (v) {
+                  form.CapsuleType.text = v ?? "";
+                },
+                onAdd: (newJob) => form.jobs.add(newJob),
+              ),
+              const SizedBox(height: 26),
+            ],
           ],
         ),
       ),
     );
   }
 }
-

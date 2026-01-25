@@ -1,19 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
-import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
-import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/GSTSelector.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
+import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/PrioritySelector.dart';
+import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/FileUploadBox.dart';
-import 'package:lightatech/FormComponents/FlexibleSlider.dart';
-import 'package:lightatech/FormComponents/NumberStepper.dart';
-import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
-
-import '../new_form_scope.dart';
+import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 
 class DesignerPage2 extends StatefulWidget {
   const DesignerPage2({super.key});
@@ -28,8 +19,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
-    bool isPlySelected = form.PlyType.text.trim().toLowerCase() != "no";
-
+    final bool isPlySelected =
+        form.PlyType.text.trim().toLowerCase() != "no";
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,140 +33,133 @@ class _DesignerPage2State extends State<DesignerPage2> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Priority",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
 
-            PrioritySelector(
-              onChanged: (v) {
-                form.Priority.text = v ?? "";
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            TextInput(
-              label: "Remark",
-              hint: "Remark",
-              controller: form.Remark,
-              initialValue: "NO REMARK",
-            ),
-
-            const SizedBox(height: 30),
-
-            /// ✅ Designing Toggle
-            FlexibleToggle(
-              label: "Designing *",
-              inactiveText: "Pending",
-              activeText: "Done",
-              initialValue: isDesigningDone,
-              onChanged: (val) {
-                setState(() {
-                  isDesigningDone = val;
-                });
-
-                form.DesigningStatus.text = val ? "Done" : "Pending";
-
-                // ✅ Keep DesignedBy empty for now when set back to pending
-                if (!val) {
-                  form.DesignedBy.clear();
-                }
-              },
-            ),
-
-
-            const SizedBox(height: 30),
-
-            // Drawing Attachment
-            const Text(
-              "Drawing Attachment",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-
-            FileUploadBox(
-              onFileSelected: (file) {
-                print("Selected File: ${file.name}");
-                print("Size: ${file.size}");
-                print("Path: ${file.path}");
-              },
-            ),
-            const SizedBox(height: 30),
-
-            /// ✅ Show "Designed By" only when Designing is Done
-            if (isDesigningDone) ...[
-
+            /// ✅ Priority
+            if (form.canView("Priority")) ...[
               const Text(
-                "Rubber Report",
+                "Priority",
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: 8),
-
-              FileUploadBox(
-                onFileSelected: (file) {
-                  print("Selected File: ${file.name}");
-                  print("Size: ${file.size}");
-                  print("Path: ${file.path}");
+              PrioritySelector(
+                onChanged: (v) {
+                  form.Priority.text = v ?? "";
                 },
               ),
               const SizedBox(height: 30),
             ],
 
-
-            const Text(
-              "Punch Report",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-
-            FileUploadBox(
-              onFileSelected: (file) {
-                print("Selected File: ${file.name}");
-                print("Size: ${file.size}");
-                print("Path: ${file.path}");
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            AddableSearchDropdown(
-              label: "Ply",
-              items: form.ply,
-              initialValue: "No",
-              onChanged: (v) {
-                setState(() {
-                  form.PlyType.text = v ?? "";
-                });
-
-                String selected = (v ?? "").trim();
-
-                // ✅ If Ply is "No" → hide & clear
-                if (selected.toLowerCase() == "no") {
-                  form.PlySelectedBy.clear();
-                  return;
-                }
-
-                // ✅ If Ply is selected (not No) → auto-fill PlySelectedBy
-                form.PlySelectedBy.text =
-                "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} at ${TimeOfDay.now().format(context)}";
-              },
-
-              onAdd: (v) => form.ply.add(v),
-            ),
-            /// ✅ Show "Ply Selected By" only when Ply is selected (not "No")
-            if (isPlySelected) ...[
+            /// ✅ Remark
+            if (form.canView("Remark")) ...[
+              TextInput(
+                label: "Remark",
+                hint: "Remark",
+                controller: form.Remark,
+                initialValue: "NO REMARK",
+              ),
               const SizedBox(height: 30),
+            ],
 
+            /// ✅ Designing Toggle
+            if (form.canView("DesigningStatus")) ...[
+              FlexibleToggle(
+                label: "Designing *",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue: isDesigningDone,
+                onChanged: (val) {
+                  setState(() {
+                    isDesigningDone = val;
+                  });
+
+                  form.DesigningStatus.text =
+                  val ? "Done" : "Pending";
+
+                  if (!val) {
+                    form.DesignedBy.clear();
+                  }
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Drawing Attachment
+            if (form.canView("DrawingAttachment")) ...[
+              const Text(
+                "Drawing Attachment",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              FileUploadBox(
+                onFileSelected: (file) {
+                  debugPrint("Drawing: ${file.name}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Rubber Report (only when designing done)
+            if (isDesigningDone && form.canView("RubberReport")) ...[
+              const Text(
+                "Rubber Report",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              FileUploadBox(
+                onFileSelected: (file) {
+                  debugPrint("Rubber Report: ${file.name}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Punch Report
+            if (form.canView("PunchReport")) ...[
+              const Text(
+                "Punch Report",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              FileUploadBox(
+                onFileSelected: (file) {
+                  debugPrint("Punch Report: ${file.name}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Ply
+            if (form.canView("PlyType")) ...[
+              AddableSearchDropdown(
+                label: "Ply",
+                items: form.ply,
+                initialValue: "No",
+                onChanged: (v) {
+                  setState(() {
+                    form.PlyType.text = v ?? "";
+                  });
+
+                  final selected = (v ?? "").trim().toLowerCase();
+                  if (selected == "no") {
+                    form.PlySelectedBy.clear();
+                    return;
+                  }
+
+                  form.PlySelectedBy.text =
+                  "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
+                      "at ${TimeOfDay.now().format(context)}";
+                },
+                onAdd: (v) => form.ply.add(v),
+              ),
+            ],
+
+            /// ✅ Ply Selected By (auto-filled, view-only logically)
+            if (isPlySelected && form.canView("PlySelectedBy")) ...[
+              const SizedBox(height: 30),
               const Text(
                 "Ply Selected By",
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-
               TextField(
                 controller: form.PlySelectedBy,
                 enabled: false,
@@ -187,9 +171,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 ),
               ),
             ],
-
-
-
           ],
         ),
       ),
