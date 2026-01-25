@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import '../widgets/graph_form.dart' show TaskEntry;
 
 // 🎨 App UI Constants (matching existing app design)
-const Color kAppBg = Color(0xFFFFF7FB);
+const Color kAppBg = Colors.white;
 const Color kCardBg = Colors.white;
 const Color kAccent = Color(0xFFFFD600);
 
@@ -520,27 +520,27 @@ class _GraphPageState extends State<GraphPage> {
                   _summaryCard(
                       title: "Total tasks",
                       value: totalTasks.toString(),
-                      color: Colors.blue),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Completed",
                       value: doneCount.toString(),
-                      color: Colors.green),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Pending",
                       value: pendingCount.toString(),
-                      color: Colors.orange),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "On time",
                       value: onTime.toString(),
-                      color: Colors.teal),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Late done",
                       value: late.toString(),
-                      color: Colors.redAccent),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Overdue pending",
                       value: overduePending.toString(),
-                      color: Colors.deepOrange),
+                      color: Colors.black54),
                 ],
               ),
 
