@@ -45,6 +45,34 @@ class DepartmentFieldAccess {
     "MicroSerrationCreasing": "edit",
     "Unknown": "edit",
     "CapsuleType": "edit",
+
+    // ===== PAGE 4 =====
+    "Perforation": "edit",
+    "PerforationSelectedBy": "edit",
+    "ZigZagBlade": "edit",
+    "ZigZagBladeSelectedBy": "edit",
+    "RubberType": "edit",
+    "RubberSelectedBy": "edit",
+    "HoleType": "edit",
+    "HoleSelectedBy": "edit",
+    "EmbossStatus": "edit",
+    "EmbossPcs": "edit",
+
+    // ===== PAGE 5 =====
+    "MaleEmbossType": "edit",
+    "X": "edit",
+    "Y": "edit",
+    "FemaleEmbossType": "edit",
+    "X2": "edit",
+    "Y2": "edit",
+
+    // ===== PAGE 6 =====
+    "StrippingType": "edit",
+    "LaserCuttingStatus": "edit",
+    "RubberFixingDone": "edit",
+    "WhiteProfileRubber": "edit",
+    "submitButton": "edit",
+
   };
 
 
