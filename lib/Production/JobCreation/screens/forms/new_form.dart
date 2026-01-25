@@ -307,6 +307,8 @@ class NewFormState extends State<NewForm> {
   final TextEditingController RubberSelectedBy = TextEditingController();
   final TextEditingController HoleSelectedBy = TextEditingController();
   final LpmAutoIncrement = TextEditingController();
+  final JobDone = TextEditingController();
+
 
 
   bool AutoCreasing = false;
