@@ -36,18 +36,18 @@ class OrderStatusCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          /// Progress Bar
-          /// Progress Bar
-          OrderProgressBar(
-            stepStatus: {
-              OrderStatus.designing: true,
-              OrderStatus.laserCutting: true,
-              OrderStatus.autoBending: true,
-              OrderStatus.manualBending: true,
-              OrderStatus.delivered: true,
-            },
+          /// ✅ ONLY Progress Bar Centered
+          Center(
+            child: OrderProgressBar(
+              stepStatus: {
+                OrderStatus.designing: true,
+                OrderStatus.laserCutting: true,
+                OrderStatus.autoBending: true,
+                OrderStatus.manualBending: true,
+                OrderStatus.delivered: true,
+              },
+            ),
           ),
-
 
           const SizedBox(height: 12),
 
@@ -85,4 +85,6 @@ class OrderStatusCard extends StatelessWidget {
       ),
     );
   }
+
+
 }
