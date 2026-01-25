@@ -26,7 +26,7 @@ class ClientHeaderCard extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text(
-                'Desc 1',
+                'Desc1',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 13,
