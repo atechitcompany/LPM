@@ -601,6 +601,126 @@ class _AccountPageState extends State<AccountPage> {
 
             //Male emboss view access
 
+            const Text(
+              "Male Rate",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10,),
+
+            NumberStepper(
+              step: 0.01,
+              initialValue: 0,
+              controller: form.MaleRate,
+              onChanged: (val) {
+                form.MaleRate.text = val.toString();
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: 30),
+
+            //X,Y view/edit access
+
+            //add formula using X,Y values from above comment
+            AutoCalcTextBox(label: "XY Size", value: "0"),
+            const SizedBox(height: 30),
+
+            AutoCalcTextBox(label: "Male Amount", value: "0"),
+            const SizedBox(height: 30),
+
+            //Female Emboss View access
+
+            const Text(
+              "Female Rate",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10,),
+
+            NumberStepper(
+              step: 0.01,
+              initialValue: 0,
+              controller: form.FemaleRate,
+              onChanged: (val) {
+                form.FemaleRate.text = val.toString();
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: 30),
+
+            //X2,Y2 view/edit access
+
+            //add formula using X2,Y2 values from above comment
+            AutoCalcTextBox(label: "XY Size2", value: "0"),
+            const SizedBox(height: 30),
+
+            AutoCalcTextBox(label: "Female Amount", value: "0"),
+            const SizedBox(height: 30),
+
+            //Stripping view access
+
+            AutoCalcTextBox(label: "Stripping Amount", value: "0"),
+            const SizedBox(height: 30),
+
+            const Text(
+              "Courier Charges",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10,),
+
+            NumberStepper(
+              step: 0.01,
+              initialValue: 0,
+              controller: form.CourierCharges,
+              onChanged: (val) {
+                form.CourierCharges.text = val.toString();
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: 30),
+
+            //Laser Cutting Status view/edit access
+
+            FlexibleToggle(
+              label: "Invoice",
+              inactiveText: "No",
+              activeText: "Yes",
+              initialValue: false,
+              onChanged: (val) {
+                form.InvoiceStatus.text = val ? "Yes" : "No";
+              },
+            ),
+            const SizedBox(height: 30),
+
+            TextInput(
+              label: "Invoice Printed By",
+              hint: "Name",
+              controller: form.InvoicePrintedBy,
+              initialValue: "",
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Particular",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10,),
+
+            FlexibleSlider(
+              max: 10,
+              onChanged: (v) {},
+            ),
+
+            const SizedBox(height: 30),
+
+
+
+
+
+
+
+
+
+
 
 
 
