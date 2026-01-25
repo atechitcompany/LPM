@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:lightatech/routes/app_route_config.dart';
 import 'firebase_options.dart';
-import 'Features/Intro/router/app_router.dart';
+import 'common/responsive_shell.dart'; // 👈 ADD THIS
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +24,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
+      /// 👇 THIS IS THE KEYCHANGE
       routerConfig: AppRoutes.router,
 
       debugShowCheckedModeBanner: false,

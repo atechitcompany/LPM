@@ -1244,10 +1244,25 @@ class _MapScreenState extends State<MapScreen> {
             children.add(_thinHairline(indent: 15, endIndent: 15, opacity: 0.05));
           }
 
-          return ListView(
-            padding: const EdgeInsets.only(top: 8),
-            children: children,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isWeb = constraints.maxWidth >= 1024;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWeb ? 900 : double.infinity,
+                  ),
+                  child: ListView(
+                    padding: const EdgeInsets.only(top: 8),
+                    children: children,
+                  ),
+                ),
+              );
+            },
           );
+
         },
       ),
       floatingActionButton: selectionActive
