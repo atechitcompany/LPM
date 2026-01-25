@@ -221,6 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: ActivityListFirestore(
               searchText: searchController.text,
+              department: widget.department,
             ),
           ),
 
@@ -228,18 +229,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
 
       // ✅ Floating Add Button → open Job Form
-      floatingActionButton: FloatingButton(
+      floatingActionButton:
+      widget.department == 'Designer'
+          ? FloatingButton(
         onPressed: () {
           context.push(
             '/jobform',
             extra: {
-              'department': widget.department,
+              'department': 'Designer',
               'email': widget.email,
             },
           );
-
         },
-      ),
+      )
+          : null,
+
     );
   }
 }

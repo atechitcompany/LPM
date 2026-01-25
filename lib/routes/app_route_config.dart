@@ -69,13 +69,19 @@ class AppRoutes {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/dashboard',
+    initialLocation: '/',
 
     /// 🌍 GLOBAL RESPONSIVE WRAPPER (FOR ENTIRE APP)
     routes: [
       ShellRoute(
         builder: (context, state, child) {
-          return ResponsiveShell(child: child);
+          final extra = state.extra as Map<String, dynamic>?;
+
+          return NewForm(
+            department: extra?['department'] ?? 'Designer',
+            lpm: extra?['lpm'],
+            child: child,
+          );
         },
         routes: [
 
@@ -131,68 +137,64 @@ class AppRoutes {
 
           /* ---------------- JOB FORM FLOW ---------------- */
 
-          ShellRoute(
-            builder: (context, state, child) {
-              return NewForm(child: child);
-            },
-            routes: [
-              GoRoute(
-                path: '/jobform',
-                redirect: (_, __) => '/jobform/designer-1',
-              ),
-              GoRoute(
-                path: '/jobform/designer-1',
-                builder: (context, state) => const DesignerPage1(),
-              ),
-              GoRoute(
-                path: '/jobform/designer-2',
-                builder: (context, state) => const DesignerPage2(),
-              ),
-              GoRoute(
-                path: '/jobform/designer-3',
-                builder: (context, state) => const DesignerPage3(),
-              ),
-              GoRoute(
-                path: '/jobform/designer-4',
-                builder: (context, state) => const DesignerPage4(),
-              ),
-              GoRoute(
-                path: '/jobform/designer-5',
-                builder: (context, state) => const DesignerPage5(),
-              ),
-              GoRoute(
-                path: '/jobform/designer-6',
-                builder: (context, state) => const DesignerPage6(),
-              ),
-              GoRoute(
-                path: '/jobform/auto-bending',
-                builder: (context, state) => const AutoBendingPage(),
-              ),
-              GoRoute(
-                path: '/jobform/manual-bending',
-                builder: (context, state) => const ManualBendingPage(),
-              ),
-              GoRoute(
-                path: '/jobform/laser',
-                builder: (context, state) => const LaserPage(),
-              ),
-              GoRoute(
-                path: '/jobform/rubber',
-                builder: (context, state) => const RubberPage(),
-              ),
-              GoRoute(
-                path: '/jobform/emboss',
-                builder: (context, state) => const EmbossPage(),
-              ),
-              GoRoute(
-                path: '/jobform/account1',
-                builder: (context, state) => const AccountPage(),
-              ),
-              GoRoute(
-                path: '/jobform/delivery',
-                builder: (context, state) => const DeliveryPage(),
-              ),
-            ],
+          /* ---------------- JOB FORM FLOW ---------------- */
+
+          GoRoute(
+            path: '/jobform',
+            redirect: (_, __) => '/jobform/designer-1',
+          ),
+
+          GoRoute(
+            path: '/jobform/designer-1',
+            builder: (context, state) => const DesignerPage1(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-2',
+            builder: (context, state) => const DesignerPage2(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-3',
+            builder: (context, state) => const DesignerPage3(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-4',
+            builder: (context, state) => const DesignerPage4(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-5',
+            builder: (context, state) => const DesignerPage5(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-6',
+            builder: (context, state) => const DesignerPage6(),
+          ),
+          GoRoute(
+            path: '/jobform/auto-bending',
+            builder: (context, state) => const AutoBendingPage(),
+          ),
+          GoRoute(
+            path: '/jobform/manual-bending',
+            builder: (context, state) => const ManualBendingPage(),
+          ),
+          GoRoute(
+            path: '/jobform/laser',
+            builder: (context, state) => const LaserPage(),
+          ),
+          GoRoute(
+            path: '/jobform/rubber',
+            builder: (context, state) => const RubberPage(),
+          ),
+          GoRoute(
+            path: '/jobform/emboss',
+            builder: (context, state) => const EmbossPage(),
+          ),
+          GoRoute(
+            path: '/jobform/account1',
+            builder: (context, state) => const AccountPage(),
+          ),
+          GoRoute(
+            path: '/jobform/delivery',
+            builder: (context, state) => const DeliveryPage(),
           ),
 
           /* ---------------- DASHBOARD SHELL ---------------- */
