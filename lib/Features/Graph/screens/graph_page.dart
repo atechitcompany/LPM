@@ -439,156 +439,302 @@ class _GraphPageState extends State<GraphPage> {
       backgroundColor: kAppBg,
       appBar: AppBar(title: const Text("Performance Graphs")),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWeb = constraints.maxWidth >= 1024;
+        child: Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: true,
+          interactive: true,
+          child: RefreshIndicator(
+            color: kAccent,
+            onRefresh: _load,
+          child: ListView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 92),
+            children: [
+              // Overall vs By Employee selection
+              Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text("Overall"),
+                    selected: !_employeeMode,
+                    onSelected: (v) {
+                      if (v) {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _employeeMode = false;
+                          _selectedEmployee = null;
+                        });
+                      }
+                    },
 
-            return Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: isWeb ? 1200 : double.infinity,
-                ),
-                child: Scrollbar(
-                  controller: _scrollController,
-                  thumbVisibility: true,
-                  interactive: true,
-                  child: RefreshIndicator(
-                    color: kAccent,
-                    onRefresh: _load,
-                    child: ListView(
-                      controller: _scrollController,
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        isWeb ? 24 : 16,
-                        16,
-                        isWeb ? 24 : 16,
-                        92,
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text("By Employee"),
+                    selected: _employeeMode,
+                    onSelected: (v) {
+                      if (v) {
+                        setState(() {
+                          _employeeMode = true;
+                          _selectedEmployee ??=
+                          _employeeNames.isNotEmpty
+                              ? _employeeNames.first
+                              : null;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  if (_employeeMode)
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: _selectedEmployee,
+                        decoration: const InputDecoration(
+                            labelText: "Select employee",
+                            isDense: true,
+                            border: OutlineInputBorder()),
+                        items: _employeeNames
+                            .map((w) =>
+                            DropdownMenuItem(value: w, child: Text(w)))
+                            .toList(),
+                        onChanged: (v) => setState(() => _selectedEmployee = v),
                       ),
-                      children: [
-                        // Overall vs By Employee selection
-                        Row(
+                    ),
+                ],
+              ),
+
+              if (_employeeMode && _selectedEmployee != null) ...[
+                const SizedBox(height: 8),
+                Text("Showing data for: $_selectedEmployee",
+                    style: const TextStyle(
+                        fontStyle: FontStyle.italic, color: Colors.grey)),
+              ],
+
+              const SizedBox(height: 20),
+
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _summaryCard(
+                      title: "Total tasks",
+                      value: totalTasks.toString(),
+                      color: Colors.blue),
+                  _summaryCard(
+                      title: "Completed",
+                      value: doneCount.toString(),
+                      color: Colors.green),
+                  _summaryCard(
+                      title: "Pending",
+                      value: pendingCount.toString(),
+                      color: Colors.orange),
+                  _summaryCard(
+                      title: "On time",
+                      value: onTime.toString(),
+                      color: Colors.teal),
+                  _summaryCard(
+                      title: "Late done",
+                      value: late.toString(),
+                      color: Colors.redAccent),
+                  _summaryCard(
+                      title: "Overdue pending",
+                      value: overduePending.toString(),
+                      color: Colors.deepOrange),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Custom charts from admin
+              if (_addedCharts.isNotEmpty) ...[
+                _sectionHeader("Custom charts"),
+                const SizedBox(height: 8),
+                ..._addedCharts.map((cfg) {
+                  final used =
+                  _filterEntries(
+                      byEmployee: cfg.byEmployee, employee: cfg.employeeName);
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ChoiceChip(
-                              label: const Text("Overall"),
-                              selected: !_employeeMode,
-                              onSelected: (v) {
-                                if (v) {
-                                  HapticFeedback.selectionClick();
-                                  setState(() {
-                                    _employeeMode = false;
-                                    _selectedEmployee = null;
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text("By Employee"),
-                              selected: _employeeMode,
-                              onSelected: (v) {
-                                if (v) {
-                                  setState(() {
-                                    _employeeMode = true;
-                                    _selectedEmployee ??=
-                                    _employeeNames.isNotEmpty
-                                        ? _employeeNames.first
-                                        : null;
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            if (_employeeMode)
+                            Row(children: [
                               Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  isExpanded: true,
-                                  value: _selectedEmployee,
-                                  decoration: const InputDecoration(
-                                    labelText: "Select employee",
-                                    isDense: true,
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  items: _employeeNames
-                                      .map(
-                                        (w) => DropdownMenuItem(
-                                      value: w,
-                                      child: Text(w),
-                                    ),
-                                  )
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedEmployee = v),
-                                ),
+                                  child: Text(_chartTitle(cfg),
+                                      style:
+                                      const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis)),
+                              if (cfg.byEmployee && cfg.employeeName != null)
+                                Flexible(
+                                    child: Text(cfg.employeeName!,
+                                        style: const TextStyle(
+                                            color: Colors.grey),
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.right)),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () async {
+                                  HapticFeedback.lightImpact();
+                                  setState(() => _addedCharts.remove(cfg));
+                                  await _saveCustomCharts();
+                                },
                               ),
-                          ],
-                        ),
 
-                        if (_employeeMode && _selectedEmployee != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            "Showing data for: $_selectedEmployee",
-                            style: const TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
+                            ]),
+                            const SizedBox(height: 8),
+                            if (cfg.keys != null && cfg.keys!.isNotEmpty) ...[
+                              Wrap(
+                                  spacing: 8,
+                                  children: cfg.keys!
+                                      .asMap()
+                                      .entries
+                                      .map((entry) {
+                                    final idx = entry.key;
+                                    final key = entry.value;
+                                    return Chip(
+                                        avatar: CircleAvatar(
+                                            backgroundColor: _seriesColors[
+                                            idx % _seriesColors.length]),
+                                        label: Text(key));
+                                  }).toList()),
+                              const SizedBox(height: 8),
+                            ],
+                            RepaintBoundary(
+                              child: SizedBox(
+                                height: 220,
+                                child: _buildChartForConfig(cfg, used),
+                              ),
                             ),
-                          ),
-                        ],
+                          ]),
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 12),
+              ],
 
-                        const SizedBox(height: 20),
+// Original charts kept as before
 
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            _summaryCard(
-                              title: "Total tasks",
-                              value: totalTasks.toString(),
-                              color: Colors.blue,
-                            ),
-                            _summaryCard(
-                              title: "Completed",
-                              value: doneCount.toString(),
-                              color: Colors.green,
-                            ),
-                            _summaryCard(
-                              title: "Pending",
-                              value: pendingCount.toString(),
-                              color: Colors.orange,
-                            ),
-                            _summaryCard(
-                              title: "On time",
-                              value: onTime.toString(),
-                              color: Colors.teal,
-                            ),
-                            _summaryCard(
-                              title: "Late done",
-                              value: late.toString(),
-                              color: Colors.redAccent,
-                            ),
-                            _summaryCard(
-                              title: "Overdue pending",
-                              value: overduePending.toString(),
-                              color: Colors.deepOrange,
-                            ),
-                          ],
-                        ),
+              if (workMap.isNotEmpty) ...[
+                _sectionHeader("Work distribution"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                        height: 260, child: _buildWorkBarChart(workMap)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
 
-                        const SizedBox(height: 24),
+              if (locationMap.isNotEmpty) ...[
+                _sectionHeader("Location distribution"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                        height: 220, child: _buildLocationPie(locationMap)),
+                  ),
+                ),
 
-                        // 🔽 EVERYTHING BELOW IS UNCHANGED 🔽
-                        // Custom charts, original charts, animated switcher, etc.
-                        // (keep exactly as you already have)
-                      ],
+                const SizedBox(height: 24),
+              ],
+
+              if ((pendingCount + doneCount) > 0) ...[
+                _sectionHeader("Status charts"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 220,
+                      child: _buildStatusPieChart(pendingCount, doneCount),
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+              ],
+
+              if ((onTime + late + overduePending) > 0) ...[
+                _sectionHeader("Deadline performance charts"),
+                const SizedBox(height: 8),
+                RepaintBoundary(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: kCardBg,
+                      borderRadius: kCardRadius,
+                      boxShadow: kCardShadow,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 220,
+                      child: _buildDeadlinePieChart(
+                        onTime: onTime,
+                        late: late,
+                        overduePending: overduePending,
+                      ),
+                    ),
+                  ),
+                ),
+
+              ],
+
+              const SizedBox(height: 32),
+
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 350),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: _addedCharts.isEmpty
+                    ? Center(
+                  key: const ValueKey("empty"),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      children: const [
+                        Icon(Icons.insert_chart_outlined,
+                            size: 42, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text(
+                          "No charts yet.\nAdd charts from the + button to see graphs.",
+                          style: TextStyle(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                    : const SizedBox(
+                  key: ValueKey("filled"),
+                ),
               ),
-            );
-          },
+
+            ],
+          ),
+          ),
         ),
       ),
-
       floatingActionButton: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.9, end: 1),
         duration: const Duration(milliseconds: 900),
