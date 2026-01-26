@@ -29,14 +29,30 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: false,
       child: Container(
-        margin: const EdgeInsets.all(8),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+        width: double.infinity,
+
+        // ✅ Removed margin so it touches screen edges
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          // ❌ Shadow removed for clean professional look
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(26),
+            topRight: Radius.circular(26),
+          ),
+
+          // ✅ Subtle top border so curve becomes visible
+          border: Border(
+            top: BorderSide(
+              color: Colors.black12,
+              width: 1,
+            ),
+          ),
         ),
+
+
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: List.generate(_icons.length, (index) {
@@ -53,7 +69,7 @@ class BottomNavBar extends StatelessWidget {
                     : const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Colors.yellow.withOpacity(0.85)
+                      ? Colors.yellowAccent.withOpacity(0.8)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
