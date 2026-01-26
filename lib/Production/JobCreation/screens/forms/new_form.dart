@@ -619,24 +619,6 @@ class NewFormState extends State<NewForm> {
     }
   }
 
-  Future<void> _loadJob(String lpm) async {
-    final doc = await FirebaseFirestore.instance
-        .collection("jobs")
-        .doc(lpm)
-        .get();
-
-    final data = doc.data()!;
-    final designer = data["designer"]?["data"] ?? {};
-    final autobending = data["autoBending"]?["data"] ?? {};
-
-    PartyName.text = designer["PartyName"] ?? "";
-    DeliveryAt.text = designer["DeliveryAt"] ?? "";
-    ParticularJobName.text = designer["ParticularJobName"] ?? "";
-
-    AutoCreasingStatus.text =
-        autobending["AutoCreasingStatus"] ?? "";
-  }
-
 
 
   @override
@@ -651,10 +633,6 @@ class NewFormState extends State<NewForm> {
     } else {
       // 🔥 New job (Designer only)
       loadCurrentLpm();
-    }
-
-    if (widget.lpm != null) {
-      _loadJob(widget.lpm!);
     }
 
     // defaults
@@ -677,6 +655,9 @@ class NewFormState extends State<NewForm> {
     PlyType.text = "No";
     Creasing.text = "No";
   }
+
+
+
 
   // Dispose controllers to prevent memory leaks
   @override
@@ -780,6 +761,13 @@ class NewFormState extends State<NewForm> {
   @override
 
   Widget build(BuildContext context) {
+    debugPrint(
+      'NEWFORM BUILD → '
+          'dept=${widget.department}, '
+          'lpm=${widget.lpm}, '
+          'mode=${widget.mode}, '
+          'uri=${GoRouterState.of(context).uri}',
+    );
     return NewFormScope(
       form: this,
       child: Scaffold(

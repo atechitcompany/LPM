@@ -5,13 +5,15 @@ class TextInput extends StatefulWidget {
   final String hint;
   final String? initialValue;
   final TextEditingController controller;
+  final bool readOnly;
 
   const TextInput({
     super.key,
     required this.label,
     required this.hint,
-    this.initialValue,
     required this.controller,
+    this.initialValue,
+    this.readOnly = false,
   });
 
   @override
@@ -19,18 +21,18 @@ class TextInput extends StatefulWidget {
 }
 
 class _TextInputState extends State<TextInput> {
-  late TextEditingController controller;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    controller = TextEditingController(text: widget.initialValue ?? "");
-  }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
+    // ✅ Apply initialValue ONLY ONCE
+    if (!_initialized && widget.initialValue != null && widget.controller.text.isEmpty) {
+      widget.controller.text = widget.initialValue!;
+    }
+
+    _initialized = true;
   }
 
   @override
@@ -38,15 +40,21 @@ class _TextInputState extends State<TextInput> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),),
+        Text(
+          widget.label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         const SizedBox(height: 5),
         TextField(
-          controller: controller,
+          controller: widget.controller,
+          readOnly: widget.readOnly,
           decoration: InputDecoration(
+            hintText: widget.hint,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            hintText: widget.hint,
+            filled: widget.readOnly,
+            fillColor: widget.readOnly ? Colors.grey.shade100 : null,
           ),
         ),
       ],
