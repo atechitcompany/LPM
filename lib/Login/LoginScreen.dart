@@ -2,6 +2,8 @@ import 'dart:core';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/core/session/session_manager.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -120,10 +122,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> navigateDepartment(String department) async {
-
     await saveLoginLog(
-    email: emailController.text.trim(),
-    department: department,
+      email: emailController.text.trim(),
+      department: department,
+    );
+
+    // ✅ Save Session permanently
+    await SessionManager.saveSession(
+      email: emailController.text.trim(),
+      department: department,
     );
 
     context.go(
@@ -134,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
       },
     );
   }
+
 
   Future<void> saveLoginLog({
     required String email,

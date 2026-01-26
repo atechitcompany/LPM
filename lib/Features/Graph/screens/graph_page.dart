@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import '../widgets/graph_form.dart' show TaskEntry;
 
 // 🎨 App UI Constants (matching existing app design)
-const Color kAppBg = Color(0xFFFFF7FB);
+const Color kAppBg = Colors.white;
 const Color kCardBg = Colors.white;
 const Color kAccent = Color(0xFFFFD600);
 
@@ -248,12 +248,16 @@ class _GraphPageState extends State<GraphPage> {
                         ChoiceChip(
                           label: const Text("Overall"),
                           selected: !byEmployee,
+                          selectedColor: const Color(0xFFF8D94B),
+                          labelStyle: const TextStyle(color: Colors.black),
                           onSelected: (s) => setStateSB(() => byEmployee = !s),
                         ),
                         const SizedBox(width: 8),
                         ChoiceChip(
                           label: const Text("By Employee"),
                           selected: byEmployee,
+                          selectedColor: kAccent,
+                          labelStyle: const TextStyle(color: Colors.black),
                           onSelected: (s) => setStateSB(() => byEmployee = s),
                         ),
                       ],
@@ -457,6 +461,8 @@ class _GraphPageState extends State<GraphPage> {
                   ChoiceChip(
                     label: const Text("Overall"),
                     selected: !_employeeMode,
+                    selectedColor: kAccent,
+                    labelStyle: const TextStyle(color: Colors.black),
                     onSelected: (v) {
                       if (v) {
                         HapticFeedback.selectionClick();
@@ -472,6 +478,8 @@ class _GraphPageState extends State<GraphPage> {
                   ChoiceChip(
                     label: const Text("By Employee"),
                     selected: _employeeMode,
+                    selectedColor: kAccent, // ✅ ADD THIS
+                    labelStyle: const TextStyle(color: Colors.black),
                     onSelected: (v) {
                       if (v) {
                         setState(() {
@@ -484,6 +492,7 @@ class _GraphPageState extends State<GraphPage> {
                       }
                     },
                   ),
+
                   const SizedBox(width: 12),
                   if (_employeeMode)
                     Expanded(
@@ -520,27 +529,27 @@ class _GraphPageState extends State<GraphPage> {
                   _summaryCard(
                       title: "Total tasks",
                       value: totalTasks.toString(),
-                      color: Colors.blue),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Completed",
                       value: doneCount.toString(),
-                      color: Colors.green),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Pending",
                       value: pendingCount.toString(),
-                      color: Colors.orange),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "On time",
                       value: onTime.toString(),
-                      color: Colors.teal),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Late done",
                       value: late.toString(),
-                      color: Colors.redAccent),
+                      color: Colors.black54),
                   _summaryCard(
                       title: "Overdue pending",
                       value: overduePending.toString(),
-                      color: Colors.deepOrange),
+                      color: Colors.black54),
                 ],
               ),
 

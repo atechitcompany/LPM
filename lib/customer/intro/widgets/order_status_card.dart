@@ -54,6 +54,25 @@ class OrderStatusCard extends StatelessWidget {
                   final isCompleted = stepStatus[step] == true;
                   final isCurrent = _isCurrentStep(step);
                   final isLast = step == OrderStatus.delivered;
+          /// ✅ ONLY Progress Bar Centered
+          /// ✅ Progress bar centered WITH proper alignment
+          Center(
+            child: SizedBox(
+              width: 320, // 👈 adjust based on your steps count
+              child: OrderProgressBar(
+                stepStatus: {
+                  OrderStatus.designing: true,
+                  OrderStatus.laserCutting: true,
+                  OrderStatus.autoBending: true,
+                  OrderStatus.manualBending: true,
+                  OrderStatus.delivered: true,
+                },
+              ),
+            ),
+          ),
+
+
+          const SizedBox(height: 12),
 
                   return _buildDot(
                     isCompleted: isCompleted,

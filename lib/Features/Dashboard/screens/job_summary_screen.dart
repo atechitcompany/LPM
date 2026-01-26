@@ -1,138 +1,88 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
-
-  const JobSummaryScreen({
-    super.key,
-    required this.lpm,
-  });
-
-  // ✅ Helper UI widget for "Label : Value"
-  Widget _field(String label, dynamic value) {
-    final textValue = (value ?? "").toString().trim();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        "$label : ${textValue.isEmpty ? "-" : textValue}",
-        style: const TextStyle(
-          fontSize: 14,
-          height: 1.4,
-        ),
-      ),
-    );
-  }
-
+  const JobSummaryScreen({super.key, required this.lpm});
 
   @override
   Widget build(BuildContext context) {
-    final query = FirebaseFirestore.instance
-        .collection("jobs")
-        .where("LpmAutoIncrement", isEqualTo: lpm)
-        .limit(1);
-
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text("Job Summary - $lpm"),
-        backgroundColor: Colors.yellow,
-      ),
-      body: FutureBuilder<QuerySnapshot>(
-        future: query.get(),
+      appBar: AppBar(title: const Text("Job Summary")),
+      body: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection("jobs").doc(lpm).get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
-            return const Center(child: Text("Error loading job summary"));
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Job not found"));
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Text("No job found for LPM: $lpm"),
-            );
-          }
+          final data = snapshot.data!.data() as Map<String, dynamic>;
 
-          final data = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+          final designer = data["designer"]?["data"] ?? {};
+          final currentDepartment =
+          (data["currentDepartment"] ?? "").toString();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Designer Form Summary",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _row("LPM No", lpm),
+                _row("Party Name", designer["PartyName"]),
+                _row("Particular Job", designer["ParticularJobName"]),
+                _row("Delivery At", designer["DeliveryAt"]),
+                _row("Order By", designer["Orderby"]),
+                _row("Remark", designer["Remark"]),
+                _row("Priority", designer["Priority"]),
+
+                const SizedBox(height: 24),
+
+                if (currentDepartment != "Completed")
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.push(
+                          '/jobform',
+                          extra: {
+                            'department': currentDepartment,
+                            'lpm': lpm,
+                            'mode': 'edit',
+                          },
+                        );
+                      },
+                      child: const Text("Edit"),
                     ),
                   ),
-                  const SizedBox(height: 14),
-
-                  // ✅ Only Designer Form fields
-                  _field("LPM No", data["LpmAutoIncrement"]),
-                  _field("Party Name", data["PartyName"]),
-                  _field("Designer Created By", data["DesignerCreatedBy"]),
-                  _field("Delivery At", data["DeliveryAt"]),
-                  _field("Order By", data["Orderby"]),
-                  _field("Particular Job Name", data["ParticularJobName"]),
-                  _field("Priority", data["Priority"]),
-                  _field("Remark", data["Remark"]),
-
-                  const Divider(height: 25),
-
-                  // ✅ Designing / Reports
-                  _field("Designing Status", data["DesigningStatus"]),
-                  _field("Designed By", data["DesignedBy"]),
-                  _field("Ply Type", data["PlyType"]),
-                  _field("Ply Selected By", data["PlySelectedBy"]),
-
-                  const Divider(height: 25),
-
-                  // ✅ Blade / Creasing
-                  _field("Blade", data["Blade"]),
-                  _field("Blade Selected By", data["BladeSelectedBy"]),
-                  _field("Creasing", data["Creasing"]),
-                  _field("Creasing Selected By", data["CreasingSelectedBy"]),
-
-                  const Divider(height: 25),
-
-                  // ✅ Page 4 items (Perforation etc)
-                  _field("Perforation", data["Perforation"]),
-                  _field("Perforation Selected By", data["PerforationSelectedBy"]),
-
-                  _field("Zig Zag Blade", data["ZigZagBlade"]),
-                  _field("Zig Zag Blade Selected By", data["ZigZagBladeSelectedBy"]),
-
-                  _field("Rubber Type", data["RubberType"]),
-                  _field("Rubber Selected By", data["RubberSelectedBy"]),
-
-                  _field("Hole Type", data["HoleType"]),
-                  _field("Hole Selected By", data["HoleSelectedBy"]),
-
-                  const Divider(height: 25),
-
-                  // ✅ Page 6 items
-                  _field("Stripping", data["StrippingType"]),
-                  _field("Laser Cutting Status", data["LaserCuttingStatus"]),
-                  _field("Rubber Fixing Done", data["RubberFixingDone"]),
-                  _field("White Profile Rubber", data["WhiteProfileRubber"]),
-                ],
-              ),
+              ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _row(String label, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$label: ",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(value?.toString().trim().isNotEmpty == true
+                ? value.toString()
+                : "-"),
+          ),
+        ],
       ),
     );
   }

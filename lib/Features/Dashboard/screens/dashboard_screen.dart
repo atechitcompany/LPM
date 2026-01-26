@@ -13,7 +13,6 @@ import 'package:lightatech/FormComponents/FLoatingButton.dart';
 class DashboardScreen extends StatefulWidget {
   final String department;
   final String email;
-
   const DashboardScreen({super.key,
     required this.department,
     required this.email,});
@@ -60,7 +59,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
-                              const SizedBox(width: 12),
                               StatusCard(
                                 status: 'Hot',
                                 count: 0,
@@ -221,6 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: ActivityListFirestore(
               searchText: searchController.text,
+              department: widget.department,
             ),
           ),
 
@@ -228,18 +227,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
 
       // ✅ Floating Add Button → open Job Form
-      floatingActionButton: FloatingButton(
+      floatingActionButton:
+      widget.department == 'Designer'
+          ? FloatingButton(
         onPressed: () {
           context.push(
             '/jobform',
             extra: {
-              'department': widget.department,
+              'department': 'Designer',
               'email': widget.email,
             },
           );
-
         },
-      ),
+      )
+          : null,
+
     );
   }
 }
@@ -267,3 +269,5 @@ class ShadowWrapper extends StatelessWidget {
     );
   }
 }
+
+//Login Parsing to be done

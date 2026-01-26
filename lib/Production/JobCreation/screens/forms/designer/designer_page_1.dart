@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
-import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
+import '../../../../../FormComponents/AddableSearchDropdown.dart';
+import '../../../../../FormComponents/AutoIncrementField.dart';
+import '../../../../../FormComponents/TextInput.dart';
 import '../new_form_scope.dart';
 
 class DesignerPage1 extends StatefulWidget {
@@ -13,6 +14,41 @@ class DesignerPage1 extends StatefulWidget {
 }
 
 class _DesignerPage1State extends State<DesignerPage1> {
+  List<String> userNames = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserNames();
+  }
+
+  Future<void> fetchUserNames() async {
+    try {
+      final query =
+      await FirebaseFirestore.instance.collection('Onboarding').get();
+
+      final names = query.docs
+          .map((doc) => doc['Username']?.toString() ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList();
+
+      names.sort();
+
+      setState(() {
+        userNames = names; // ✅ NO "Select Party"
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching usernames: $e");
+      setState(() {
+        userNames = [];
+        isLoading = false;
+      });
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
@@ -29,12 +65,12 @@ class _DesignerPage1State extends State<DesignerPage1> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// ✅ Party Name *
-            SearchableDropdownWithInitial(
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SearchableDropdownWithInitial(
               label: "Party Name *",
-              items: form.parties,
-              initialValue: form.PartyName.text.isEmpty
-                  ? "Select Party"
-                  : form.PartyName.text,
+              items: userNames,
+              initialValue: null, // ✅ IMPORTANT
               onChanged: (v) {
                 setState(() {
                   form.PartyName.text = (v ?? "").trim();
@@ -42,23 +78,29 @@ class _DesignerPage1State extends State<DesignerPage1> {
               },
             ),
 
+
+
             const SizedBox(height: 30),
 
             /// ✅ Designer Created By
-            SearchableDropdownWithInitial(
-              label: "Designer Created By",
-              items: form.parties,
-              initialValue: form.DesignerCreatedBy.text.isEmpty
-                  ? "Select"
-                  : form.DesignerCreatedBy.text,
-              onChanged: (v) {
-                setState(() {
-                  form.DesignerCreatedBy.text = (v ?? "").trim();
-                });
-              },
-            ),
+            /// ✅ Designer Created By
+            if (form.canView("DesignerCreatedBy"))
+              SearchableDropdownWithInitial(
+                label: "Designer Created By",
+                items: form.parties,
+                initialValue: form.DesignerCreatedBy.text.isEmpty
+                    ? "Select"
+                    : form.DesignerCreatedBy.text,
+                onChanged: (v) {
+                  setState(() {
+                    form.DesignerCreatedBy.text = (v ?? "").trim();
+                  });
+                },
+              ),
 
-            const SizedBox(height: 30),
+            if (form.canView("DesignerCreatedBy"))
+              const SizedBox(height: 30),
+
 
             /// ✅ Delivery At
             TextInput(
@@ -83,7 +125,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
               label: "Particular Job Name *",
               items: form.jobs,
               initialValue: form.ParticularJobName.text.isEmpty
-                  ? "No"
+                  ? "Select Job"
                   : form.ParticularJobName.text,
               onChanged: (v) {
                 setState(() {
@@ -95,14 +137,16 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 30),
 
-            /// ✅ LPM Auto Increment (auto refresh without hot reload)
+            /// ✅ LPM Auto Increment
             ValueListenableBuilder(
               valueListenable: form.LpmAutoIncrement,
               builder: (context, value, child) {
-                final lpm = int.tryParse(form.LpmAutoIncrement.text) ?? 0;
+                final lpm =
+                    int.tryParse(form.LpmAutoIncrement.text) ?? 0;
 
                 if (lpm == 0) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                      child: CircularProgressIndicator());
                 }
 
                 return AutoIncrementField(value: lpm);
@@ -116,4 +160,3 @@ class _DesignerPage1State extends State<DesignerPage1> {
     );
   }
 }
-

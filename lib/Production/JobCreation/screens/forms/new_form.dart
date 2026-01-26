@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/department_field_access.dart';
+
 import 'new_form_scope.dart';
+
+enum Department {
+  Designer,
+  AutoBending,
+  ManualBending,
+  Lasercut,
+  Emboss,
+  Rubber,
+  Account,
+  Delivery,
+}
 
 class NewForm extends StatefulWidget {
   final Widget child;
+  final String department;
+  final String? lpm;
+  final String? mode;
 
-  const NewForm({super.key, required this.child});
+  const NewForm({super.key,
+    required this.child,
+    required this.department,
+    this.lpm,
+    this.mode,
+  });
 
   @override
   State<NewForm> createState() => NewFormState();
@@ -14,152 +35,31 @@ class NewForm extends StatefulWidget {
 }
 
 class NewFormState extends State<NewForm> {
+  late String department;
+  late bool isEditMode;
+  bool get isLastDesignerPage {
+    if (department != "Designer") return false;
 
-  Map<String, bool> fieldAccess = {
-    // Basic Info
-    'partyName': true,
-    'designerCreatedBy': true,
-    'autoBendingCreatedBy': true,
-    'laserCuttingCreatedBy': true,
-    'accountsCreatedBy': true,
-    'embossCreatedBy': true,
-    'manualBendingCreatedBy': true,
-    'gst': true,
-    'buyerOrderNo': true,
-    'deliveryAt': true,
-    'Orderby': true,
-    'particularJobName': true,
-    'lpmAutoIncrement': true,
-    'priority': true,
-    'remark': true,
-    'designingToggle': true,
-    'DrawingAttachment': true,
-    'punchReport': true,
-    'ups': true,
-    'partyWorkName': true,
-    'size': true,
-    'size2': true,
-    'size3': true,
-    'size4': true,
-    'size5': true,
-    'sizesSlider': true,
-    'ups32Stepper': true,
-    'laserCuttingPunchNew': true,
+    final location = GoRouterState.of(context).uri.toString();
+    return location == '/jobform/designer-6';
+  }
 
-    // Ply
-    'plyDropdown': true,
-    'plyLength': true,
-    'plyBreadth': true,
-    'plySize': true,
-    'plyAmount': true,
+  bool get isJobFormRoute {
+    final location = GoRouterState.of(context).uri.toString();
+    return location.startsWith('/jobform');
+  }
 
-    // Blade
-    'blade': true,
-    'bladeSize': true,
-    'bladeAmount': true,
+  String fieldPermission(String key) {
+    final access = DepartmentFieldAccess.access(department);
+    return access[key] ?? "hide";
+  }
 
-    // Extra
-    'extra': true,
+  bool canView(String key) => fieldPermission(key) != "hide";
 
-    // Capsule Rate
-    'capsuleRate': true,
+  bool canEdit(String key) =>
+      fieldPermission(key) == "edit" && isEditMode;
 
-    // Creasing
-    'creasing': true,
-    'creasingSize': true,
-    'creasingAmount': true,
-    'creasingSlider': true,
-    'rubberDoneBy': true,
-    'microSerrationHalfCut': true,
-    'microSerrationCreasing': true,
-    'manualbendingfittingdoneby':true,
-    'wpFile': true,
-    'deliveryCreatedBy': true,
-    'deliveryToggle': true,
-    'receiverName': true,
-    'diePunchImage': true,
-    'invoiceImage': true,
-    'courierReceivingImage': true,
-    'deliveryUrl': true,
-    'jobDone': true,
-    'transportName': true,
 
-    // Address
-    'houseNo': true,
-    'appartment': true,
-    'street': true,
-    'pincode': true,
-    'fullAddress': true,
-    'unknown': true,
-    'designSendBy': true,
-
-    // Capsule
-    'capsule': true,
-    'capsulePcs': true,
-    'capsuleRateField': true,
-    'capsuleAmt': true,
-
-    // Perforation
-    'perforationDropdown': true,
-    'perforationSize': true,
-    'perforationAmount': true,
-    'ZigZagBlade': true,
-
-    // Zig Zag
-    'zigZagBladeSize': true,
-    'zigZagBladeAmount': true,
-
-    // Rubber
-    'rubber': true,
-    'rubberSize': true,
-    'rubberAmount': true,
-
-    // Hole
-    'hole': true,
-    'holes': true,
-    'holeAmount': true,
-
-    // Emboss
-    'embossToggle': true,
-    'embossPcs': true,
-    'embossPcsField': true,
-    'minimumChargeApply': true,
-    'maleEmboss': true,
-    'maleRate': true,
-    'xField': true,
-    'yField': true,
-    'xySize': true,
-    'maleAmount': true,
-    'femaleEmboss': true,
-    'femaleRate': true,
-    'x2Field': true,
-    'y2Field': true,
-    'xy2Size': true,
-    'femaleAmount': true,
-
-    // Stripping
-    'stripping': true,
-    'strippingSize': true,
-    'strippingAmount': true,
-
-    // Courier & Laser
-    'courierCharges': true,
-    'autoCreasingStatus': true,
-    'laserRate': true,
-    'laserdoneby':true,
-    'laserCuttingStatus': true,
-    'autobendingdoneby': true,
-    'invoiceToggle': true,
-    'invoicePrintedBy': true,
-    'createdBy': true,
-    'particular': true,
-    'amount1': true,
-    'amount2': true,
-    'amount3': true,
-    'submitButton': true,
-    'rubberfixingdone': true,
-    'whiteprofilerubber': true,
-  };
 
   List<String> parties = ["Tata", "Jindal", "Infosys"];
   List<String> jobs = ["Laser", "Bending", "Cutting"];
@@ -278,6 +178,8 @@ class NewFormState extends State<NewForm> {
   final TextEditingController RubberSelectedBy = TextEditingController();
   final TextEditingController HoleSelectedBy = TextEditingController();
   final LpmAutoIncrement = TextEditingController();
+  final JobDone = TextEditingController();
+
 
 
   bool AutoCreasing = false;
@@ -646,41 +548,116 @@ class NewFormState extends State<NewForm> {
     });
   }
 
+  Future<void> submitDesignerForm() async {
+    final data = buildFormData();
+
+    final lpm = LpmAutoIncrement.text; // 🔥 unique ID
+
+    final jobRef =
+    FirebaseFirestore.instance.collection("jobs").doc(lpm);
+
+    await jobRef.set({
+      "lpm": lpm,
+      "currentDepartment": "AutoBending",
+      "status": "InProgress",
+
+      "designer": {
+        "submitted": true,
+        "data": data,
+      },
+
+      "autoBending": {"submitted": false},
+      "manualBending": {"submitted": false},
+      "laserCut": {"submitted": false},
+      "emboss": {"submitted": false},
+      "rubber": {"submitted": false},
+      "account": {"submitted": false},
+      "delivery": {"submitted": false},
+
+      "createdAt": FieldValue.serverTimestamp(),
+      "updatedAt": FieldValue.serverTimestamp(),
+    });
+
+    await incrementLpmAfterSubmit();
+  }
+
+  Future<void> submitDepartmentForm(String nextDepartment) async {
+    final data = buildFormData();
+
+    final lpm = LpmAutoIncrement.text; // already loaded
+
+    await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .update({
+      "${_deptKey(department)}.submitted": true,
+      "${_deptKey(department)}.data": data,
+      "currentDepartment": nextDepartment,
+      "updatedAt": FieldValue.serverTimestamp(),
+  });
+  }
+
 
 
   Future<void> submitForm() async {
-    final data = buildFormData();
-
     try {
-      // ✅ 1) Submit form
-      await FirebaseFirestore.instance.collection("jobs").add(data);
-
-      // ✅ 2) Increment counter ONLY after success
-      await incrementLpmAfterSubmit();
-
-      // ✅ 3) Clear current form
-      clearForm();
-
-      // ✅ 4) Load next number for next form
-      await loadCurrentLpm();
+      if (department == "Designer") {
+        await submitDesignerForm();
+      } else {
+        await submitDepartmentForm(_nextDepartment(department));
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Form submitted successfully!")),
+        const SnackBar(content: Text("Form submitted successfully")),
       );
+
+      context.pop(); // back to dashboard
     } catch (e) {
-      print(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error submitting form")),
+        SnackBar(content: Text("Error: $e")),
       );
     }
   }
+
+  Future<void> _loadJob(String lpm) async {
+    final doc = await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .get();
+
+    final data = doc.data()!;
+    final designer = data["designer"]?["data"] ?? {};
+    final autobending = data["autoBending"]?["data"] ?? {};
+
+    PartyName.text = designer["PartyName"] ?? "";
+    DeliveryAt.text = designer["DeliveryAt"] ?? "";
+    ParticularJobName.text = designer["ParticularJobName"] ?? "";
+
+    AutoCreasingStatus.text =
+        autobending["AutoCreasingStatus"] ?? "";
+  }
+
 
 
   @override
   void initState() {
     super.initState();
-    loadCurrentLpm();
+    isEditMode = widget.mode == 'edit';
+    department = widget.department;
 
+    if (widget.lpm != null) {
+      // 🔥 Existing job
+      LpmAutoIncrement.text = widget.lpm!;
+    } else {
+      // 🔥 New job (Designer only)
+      loadCurrentLpm();
+    }
+
+    if (widget.lpm != null) {
+      _loadJob(widget.lpm!);
+    }
+
+    // defaults
     Remark.text = "NO REMARK";
     Ups.text = "NO";
     PartyworkName.text = "NO";
@@ -690,19 +667,13 @@ class NewFormState extends State<NewForm> {
     Size4.text = "NO";
     Size5.text = "NO";
     DeliveryURL.text = "URL";
-    EmbossPcs.text = "No";
-    TotalSize.text = "No";
-    Unknown.text = "";
-    // Add all fields that have initialValue
 
-    // Example Toggles (default values):
     DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
     LaserPunchNew.text = "No";
 
-    // Dropdowns default
     PlyType.text = "No";
     Creasing.text = "No";
   }
@@ -818,22 +789,25 @@ class NewFormState extends State<NewForm> {
             Expanded(child: widget.child),
 
             // 🔹 PREV / NEXT BUTTONS
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: _goPrev,
-                    child: const Text("Previous"),
-                  ),
-                  ElevatedButton(
-                    onPressed: _goNext,
-                    child: const Text("Next"),
-                  ),
-                ],
+            if (isJobFormRoute)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _goPrev,
+                      child: const Text("Previous"),
+                    ),
+
+                    if (!(department == "Designer" && isLastDesignerPage))
+                      ElevatedButton(
+                        onPressed: _goNext,
+                        child: const Text("Next"),
+                      ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -842,35 +816,77 @@ class NewFormState extends State<NewForm> {
 
   // -------- Navigation Logic --------
 
-  void _goNext() {
+  void _goDesignerNext() {
     final location = GoRouterState.of(context).uri.toString();
 
-    const pages = [
+    const designerPages = [
       '/jobform/designer-1',
       '/jobform/designer-2',
       '/jobform/designer-3',
       '/jobform/designer-4',
       '/jobform/designer-5',
       '/jobform/designer-6',
-      '/jobform/auto-bending',
-      '/jobform/manual-bending',
-      '/jobform/laser',
-      '/jobform/rubber',
-      '/jobform/emboss',
-      '/jobform/account1',
-      '/jobform/account2',
-      '/jobform/delivery',
     ];
 
-    final index = pages.indexOf(location);
-    if (index != -1 && index < pages.length - 1) {
-      context.push(pages[index + 1]);
+    final index = designerPages.indexOf(location);
+    if (index != -1 && index < designerPages.length - 1) {
+      context.push(designerPages[index + 1]);
     }
   }
+
+
+  void _goNext() {
+    if (department == "Designer") {
+      _goDesignerNext();
+    }
+  }
+
 
   void _goPrev() {
     if (context.canPop()) {
       context.pop(); // ✅ Goes back without rebuilding state
+    }
+  }
+  String _nextDepartment(String current) {
+    const flow = [
+      "Designer",
+      "AutoBending",
+      "ManualBending",
+      "Lasercut",
+      "Emboss",
+      "Rubber",
+      "Account",
+      "Delivery",
+    ];
+
+    final index = flow.indexOf(current);
+    if (index == -1 || index == flow.length - 1) {
+      return "Completed";
+    }
+
+    return flow[index + 1];
+  }
+
+  String _deptKey(String dept) {
+    switch (dept) {
+      case "Designer":
+        return "designer";
+      case "AutoBending":
+        return "autoBending";
+      case "ManualBending":
+        return "manualBending";
+      case "Lasercut":
+        return "laserCut";
+      case "Emboss":
+        return "emboss";
+      case "Rubber":
+        return "rubber";
+      case "Account":
+        return "account";
+      case "Delivery":
+        return "delivery";
+      default:
+        throw Exception("Unknown department: $dept");
     }
   }
 
