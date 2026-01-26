@@ -89,313 +89,111 @@ String _normalizeDepartment(String d) {
 class AppRoutes {
   AppRoutes._();
 
-
-    static final GoRouter router = GoRouter(
-    navigatorKey: _rootNavigatorKey,
-      debugLogDiagnostics: true,
-    routes: [
-
-      /// ================= ROOT SHELL =================
+  static final GoRouter router = GoRouter(
+    debugLogDiagnostics: true,
     initialLocation: SessionManager.isLoggedIn() ? '/dashboard' : '/',
 
-
     routes: [
-      // ✅ Login & Intro pages (outside shells)
+
+      // ================= AUTH =================
       GoRoute(
         path: '/',
-        name: AppRoutesName.Loginroutename,
-        builder: (context, state) => const LoginScreen(),
+        builder: (_, __) => const LoginScreen(),
       ),
 
       GoRoute(
         path: '/admin',
-        name: AppRoutesName.Adminroutename,
-        builder: (context, state) => const Admin(),
+        builder: (_, __) => const Admin(),
       ),
 
-      GoRoute(
-        path: '/order-details',
-        name: 'orderDetails',
-        builder: (context, state) => OrderDetailScreen(),
-      ),
-
-      GoRoute(
-        path: '/intro/splash',
-        builder: (context, state) => const SplashScreen(),
-      ),
-
-      GoRoute(
-        path: '/intro',
-        builder: (context, state) => const IntroScreen(),
-      ),
-
-      GoRoute(
-        path: '/intro/biometric',
-        builder: (context, state) => const BiometricScreen(),
-      ),
-
-      GoRoute(
-        path: '/intro/fill-profile',
-        builder: (context, state) => const FillProfileScreen(),
-      ),
-
-      GoRoute(
-        path: '/intro/create-pin',
-        builder: (context, state) => const CreatePinScreen(),
-      ),
-
-      GoRoute(
-        path: '/auth/entry',
-        builder: (context, state) => const LetsYouInScreen(),
-      ),
-
-      // ✅ DASHBOARD SHELL (Home Bottom Nav)
+      // ================= DASHBOARD SHELL =================
       ShellRoute(
-        navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
-          return child;
-        },
-        routes: [
-
-          // ================= AUTH =================
-          GoRoute(
-            path: '/',
-            builder: (_, __) => const LoginScreen(),
-          ),
-
-          GoRoute(
-            path: '/admin',
-            builder: (_, __) => const Admin(),
-          ),
-
-          GoRoute(
-            path: '/jobform',
-            redirect: (_, __) => '/jobform/designer-1',
-          ),
-
-
-          // ================= JOB FORM SHELL =================
-          ShellRoute(
-            builder: (context, state, child) {
-              final lpm = state.uri.queryParameters['lpm'];
-              final mode = state.uri.queryParameters['mode'];
-              final department =
-                  state.pathParameters['department'] ?? 'designer';
-
-              return NewForm(
-                department: _normalizeDepartment(department),
-                lpm: lpm,
-                mode: mode,
-                child: child,
-              );
-            },
-            routes: [
-
-              // redirect entry point
-
-
-
-
-
-              // designer pages
-              GoRoute(path: '/jobform/designer-1', builder: (_, __) => const DesignerPage1()),
-              GoRoute(path: '/jobform/designer-2', builder: (_, __) => const DesignerPage2()),
-              GoRoute(path: '/jobform/designer-3', builder: (_, __) => const DesignerPage3()),
-              GoRoute(path: '/jobform/designer-4', builder: (_, __) => const DesignerPage4()),
-              GoRoute(path: '/jobform/designer-5', builder: (_, __) => const DesignerPage5()),
-              GoRoute(path: '/jobform/designer-6', builder: (_, __) => const DesignerPage6()),
-
-              // departments
-              GoRoute(path: '/jobform/autobending', builder: (_, __) => const AutoBendingPage()),
-              GoRoute(path: '/jobform/manualbending', builder: (_, __) => const ManualBendingPage()),
-              GoRoute(path: '/jobform/laser', builder: (_, __) => const LaserPage()),
-              GoRoute(path: '/jobform/emboss', builder: (_, __) => const EmbossPage()),
-              GoRoute(path: '/jobform/rubber', builder: (_, __) => const RubberPage()),
-              GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountPage()),
-              GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
-            ],
           return Home(
             child: child,
             location: state.uri.toString(),
           );
         },
         routes: [
+
           GoRoute(
             path: '/dashboard',
-            name: AppRoutesName.DashboardScreen,
             builder: (context, state) {
-              final data = state.extra as Map<String, dynamic>?;
+              final dept =
+                  state.uri.queryParameters['department']
+                      ?? SessionManager.getDepartment()
+                      ?? 'Designer';
 
-              final dept = data?['department'] ?? SessionManager.getDepartment() ?? 'Unknown';
-              final email = data?['email'] ?? SessionManager.getEmail() ?? '';
+              final email =
+                  state.uri.queryParameters['email']
+                      ?? SessionManager.getEmail()
+                      ?? '';
 
               return DashboardScreen(
                 department: dept,
                 email: email,
               );
-
             },
           ),
 
           GoRoute(
             path: '/job-summary/:lpm',
-            builder: (context, state) {
-              final lpm = state.pathParameters['lpm']!;
-              return JobSummaryScreen(lpm: lpm);
-            },
-          ),
-
-          GoRoute(
-            path: '/map',
-            name: AppRoutesName.MapScreen,
-            builder: (context, state) => const MapScreen(title: 'Maps'),
-          ),
-
-          GoRoute(
-            path: '/payment',
-            name: AppRoutesName.PaymentScreen,
-            builder: (context, state) => const PaidScreen(),
-          ),
-
-          GoRoute(
-            path: '/graph',
-            builder: (context, state) => const GraphPage(),
-          ),
-
-          GoRoute(
-            path: '/target',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) =>
+                JobSummaryScreen(lpm: state.pathParameters['lpm']!),
           ),
         ],
       ),
 
-      // ✅ JOB FORM SHELL (NewForm Wrapper)
+      // ================= JOB FORM SHELL =================
       ShellRoute(
         builder: (context, state, child) {
-          final extra = state.extra as Map<String, dynamic>?;
+          final dept =
+              state.uri.queryParameters['department'] ?? 'designer';
+
+          final email =
+          state.uri.queryParameters['email'];
+
+          final lpm =
+          state.uri.queryParameters['lpm'];
+
+          final mode =
+          state.uri.queryParameters['mode'];
 
           return NewForm(
-            department: extra?['department'] ?? 'Designer',
-            lpm: extra?['lpm'],
-            mode: extra?['mode'],
+            department: _normalizeDepartment(dept),
+            lpm: lpm,
+            mode: mode,
             child: child,
           );
         },
         routes: [
+
           GoRoute(
             path: '/jobform',
-            redirect: (_, __) => '/jobform/designer-1',
+            redirect: (_, __) => '/jobform/designer-1?department=designer',
           ),
 
-          GoRoute(
-            path: '/jobform/designer-1',
-            builder: (context, state) => const DesignerPage1(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-2',
-            builder: (context, state) => const DesignerPage2(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-3',
-            builder: (context, state) => const DesignerPage3(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-4',
-            builder: (context, state) => const DesignerPage4(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-5',
-            builder: (context, state) => const DesignerPage5(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-6',
-            builder: (context, state) => const DesignerPage6(),
-          ),
+          // Designer flow
+          GoRoute(path: '/jobform/designer-1', builder: (_, __) => const DesignerPage1()),
+          GoRoute(path: '/jobform/designer-2', builder: (_, __) => const DesignerPage2()),
+          GoRoute(path: '/jobform/designer-3', builder: (_, __) => const DesignerPage3()),
+          GoRoute(path: '/jobform/designer-4', builder: (_, __) => const DesignerPage4()),
+          GoRoute(path: '/jobform/designer-5', builder: (_, __) => const DesignerPage5()),
+          GoRoute(path: '/jobform/designer-6', builder: (_, __) => const DesignerPage6()),
 
-          GoRoute(
-            path: '/jobform/auto-bending',
-            builder: (context, state) => const AutoBendingPage(),
-          ),
-          GoRoute(
-            path: '/jobform/manual-bending',
-            builder: (context, state) => const ManualBendingPage(),
-          ),
-          GoRoute(
-            path: '/jobform/laser',
-            builder: (context, state) => const LaserPage(),
-          ),
-          GoRoute(
-            path: '/jobform/rubber',
-            builder: (context, state) => const RubberPage(),
-          ),
-          GoRoute(
-            path: '/jobform/emboss',
-            builder: (context, state) => const EmbossPage(),
-          ),
-          GoRoute(
-            path: '/jobform/account1',
-            builder: (context, state) => const AccountPage(),
-          ),
-          GoRoute(
-            path: '/jobform/delivery',
-            builder: (context, state) => const DeliveryPage(),
-          ),
+          // Departments
+          GoRoute(path: '/jobform/autobending', builder: (_, __) => const AutoBendingPage()),
+          GoRoute(path: '/jobform/manualbending', builder: (_, __) => const ManualBendingPage()),
+          GoRoute(path: '/jobform/laser', builder: (_, __) => const LaserPage()),
+          GoRoute(path: '/jobform/emboss', builder: (_, __) => const EmbossPage()),
+          GoRoute(path: '/jobform/rubber', builder: (_, __) => const RubberPage()),
+          GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountPage()),
+          GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
         ],
-      ),
-
-          // ================= DASHBOARD SHELL =================
-          ShellRoute(
-            builder: (context, state, child) {
-              return Home(
-                child: child,
-                location: state.uri.toString(),
-              );
-            },
-            routes: [
-              GoRoute(
-                path: '/dashboard',
-                builder: (context, state) {
-                  final data = state.extra as Map<String, dynamic>?;
-
-                  return DashboardScreen(
-                    department: data?['department'] ?? '',
-                    email: data?['email'] ?? '',
-                  );
-                },
-              ),
-              GoRoute(
-                path: '/job-summary/:lpm',
-                builder: (context, state) =>
-                    JobSummaryScreen(lpm: state.pathParameters['lpm']!),
-              ),
-            ],
-          ),
-        ],
-      // ✅ Other Routes
-      GoRoute(
-        path: '/task',
-        name: AppRoutesName.TaskDetail,
-        builder: (context, state) {
-          final task = state.extra as Task;
-          return TaskDetailPage(
-            task: task,
-            onChanged: () {},
-            onDelete: () {},
-          );
-        },
-      ),
-
-      GoRoute(
-        path: '/graphform',
-        builder: (context, state) => const GraphFormPage(),
-      ),
-
-      GoRoute(
-        path: '/graphtasks',
-        builder: (context, state) => const GraphTasksPage(),
       ),
     ],
   );
 }
+
 
 

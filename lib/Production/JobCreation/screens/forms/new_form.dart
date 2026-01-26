@@ -805,7 +805,8 @@ class NewFormState extends State<NewForm> {
   // -------- Navigation Logic --------
 
   void _goDesignerNext() {
-    final location = GoRouterState.of(context).uri.toString();
+    final uri = GoRouterState.of(context).uri;
+    final path = uri.path; // 👈 IMPORTANT: path only
 
     const designerPages = [
       '/jobform/designer-1',
@@ -816,9 +817,12 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-6',
     ];
 
-    final index = designerPages.indexOf(location);
+    final index = designerPages.indexOf(path);
+
     if (index != -1 && index < designerPages.length - 1) {
-      context.push(designerPages[index + 1]);
+      context.push(
+        designerPages[index + 1] + '?${uri.query}', // 👈 preserve params
+      );
     }
   }
 
