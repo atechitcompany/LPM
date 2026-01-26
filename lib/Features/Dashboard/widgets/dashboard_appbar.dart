@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lightatech/core/session/session_manager.dart';
+
 
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
@@ -11,6 +14,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onBack,
     required this.department,
   }) : super(key: key);
+
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +64,11 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             height: 20,
           ),
 
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Profile options coming soon')),
-            );
+          onPressed: () async {
+            await SessionManager.clearSession();
+            context.go('/');
           },
+
         ),
       ],
     );

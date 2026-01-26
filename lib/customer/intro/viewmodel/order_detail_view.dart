@@ -10,6 +10,16 @@ class OrderDetailScreen extends StatelessWidget {
   OrderDetailScreen({super.key});
 
   final OrderStatus currentStatus = OrderStatus.autoBending;
+  final Map<OrderStatus, bool> stepStatus = {
+    OrderStatus.designing: true,
+    OrderStatus.laserCutting: true,
+    OrderStatus.autoBending: true, // 👈 CURRENT
+    OrderStatus.manualBending: false,
+    OrderStatus.delivered: false,
+  };
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +52,11 @@ class OrderDetailScreen extends StatelessWidget {
                     ClientHeaderCard(),
                     const SizedBox(height: 16),
 
-                    OrderStatusCard(currentStatus: currentStatus),
+                    OrderStatusCard(
+                      stepStatus: stepStatus,
+                    ),
+
+
                     const SizedBox(height: 16),
 
                     const RatingCard(),
@@ -61,5 +75,6 @@ class OrderDetailScreen extends StatelessWidget {
       ),
 
     );
+
   }
 }

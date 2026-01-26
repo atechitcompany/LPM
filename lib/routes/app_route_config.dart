@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:lightatech/common/responsive_shell.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
 
 // Intro
@@ -15,6 +13,8 @@ import 'package:lightatech/Features/Intro/auth/screens/lets_you_in_screen.dart';
 // Login / Admin
 import 'package:lightatech/Login/LoginScreen.dart';
 import 'package:lightatech/Login/Admin/Admin.dart';
+import 'package:lightatech/core/session/session_manager.dart';
+
 
 // Dashboard
 import 'package:lightatech/Features/Dashboard/screens/dashboard_screen.dart';
@@ -86,7 +86,6 @@ String _normalizeDepartment(String d) {
 }
 
 
-/// ✅ SINGLETON ROUTER
 class AppRoutes {
   AppRoutes._();
 
@@ -94,11 +93,65 @@ class AppRoutes {
     static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
       debugLogDiagnostics: true,
-    initialLocation: '/',
     routes: [
 
       /// ================= ROOT SHELL =================
+    initialLocation: SessionManager.isLoggedIn() ? '/dashboard' : '/',
+
+
+    routes: [
+      // ✅ Login & Intro pages (outside shells)
+      GoRoute(
+        path: '/',
+        name: AppRoutesName.Loginroutename,
+        builder: (context, state) => const LoginScreen(),
+      ),
+
+      GoRoute(
+        path: '/admin',
+        name: AppRoutesName.Adminroutename,
+        builder: (context, state) => const Admin(),
+      ),
+
+      GoRoute(
+        path: '/order-details',
+        name: 'orderDetails',
+        builder: (context, state) => OrderDetailScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro',
+        builder: (context, state) => const IntroScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/biometric',
+        builder: (context, state) => const BiometricScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/fill-profile',
+        builder: (context, state) => const FillProfileScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/create-pin',
+        builder: (context, state) => const CreatePinScreen(),
+      ),
+
+      GoRoute(
+        path: '/auth/entry',
+        builder: (context, state) => const LetsYouInScreen(),
+      ),
+
+      // ✅ DASHBOARD SHELL (Home Bottom Nav)
       ShellRoute(
+        navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
           return child;
         },
@@ -161,7 +214,134 @@ class AppRoutes {
               GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountPage()),
               GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
             ],
+          return Home(
+            child: child,
+            location: state.uri.toString(),
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/dashboard',
+            name: AppRoutesName.DashboardScreen,
+            builder: (context, state) {
+              final data = state.extra as Map<String, dynamic>?;
+
+              final dept = data?['department'] ?? SessionManager.getDepartment() ?? 'Unknown';
+              final email = data?['email'] ?? SessionManager.getEmail() ?? '';
+
+              return DashboardScreen(
+                department: dept,
+                email: email,
+              );
+
+            },
           ),
+
+          GoRoute(
+            path: '/job-summary/:lpm',
+            builder: (context, state) {
+              final lpm = state.pathParameters['lpm']!;
+              return JobSummaryScreen(lpm: lpm);
+            },
+          ),
+
+          GoRoute(
+            path: '/map',
+            name: AppRoutesName.MapScreen,
+            builder: (context, state) => const MapScreen(title: 'Maps'),
+          ),
+
+          GoRoute(
+            path: '/payment',
+            name: AppRoutesName.PaymentScreen,
+            builder: (context, state) => const PaidScreen(),
+          ),
+
+          GoRoute(
+            path: '/graph',
+            builder: (context, state) => const GraphPage(),
+          ),
+
+          GoRoute(
+            path: '/target',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+        ],
+      ),
+
+      // ✅ JOB FORM SHELL (NewForm Wrapper)
+      ShellRoute(
+        builder: (context, state, child) {
+          final extra = state.extra as Map<String, dynamic>?;
+
+          return NewForm(
+            department: extra?['department'] ?? 'Designer',
+            lpm: extra?['lpm'],
+            mode: extra?['mode'],
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/jobform',
+            redirect: (_, __) => '/jobform/designer-1',
+          ),
+
+          GoRoute(
+            path: '/jobform/designer-1',
+            builder: (context, state) => const DesignerPage1(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-2',
+            builder: (context, state) => const DesignerPage2(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-3',
+            builder: (context, state) => const DesignerPage3(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-4',
+            builder: (context, state) => const DesignerPage4(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-5',
+            builder: (context, state) => const DesignerPage5(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-6',
+            builder: (context, state) => const DesignerPage6(),
+          ),
+
+          GoRoute(
+            path: '/jobform/auto-bending',
+            builder: (context, state) => const AutoBendingPage(),
+          ),
+          GoRoute(
+            path: '/jobform/manual-bending',
+            builder: (context, state) => const ManualBendingPage(),
+          ),
+          GoRoute(
+            path: '/jobform/laser',
+            builder: (context, state) => const LaserPage(),
+          ),
+          GoRoute(
+            path: '/jobform/rubber',
+            builder: (context, state) => const RubberPage(),
+          ),
+          GoRoute(
+            path: '/jobform/emboss',
+            builder: (context, state) => const EmbossPage(),
+          ),
+          GoRoute(
+            path: '/jobform/account1',
+            builder: (context, state) => const AccountPage(),
+          ),
+          GoRoute(
+            path: '/jobform/delivery',
+            builder: (context, state) => const DeliveryPage(),
+          ),
+        ],
+      ),
 
           // ================= DASHBOARD SHELL =================
           ShellRoute(
@@ -191,6 +371,28 @@ class AppRoutes {
             ],
           ),
         ],
+      // ✅ Other Routes
+      GoRoute(
+        path: '/task',
+        name: AppRoutesName.TaskDetail,
+        builder: (context, state) {
+          final task = state.extra as Task;
+          return TaskDetailPage(
+            task: task,
+            onChanged: () {},
+            onDelete: () {},
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/graphform',
+        builder: (context, state) => const GraphFormPage(),
+      ),
+
+      GoRoute(
+        path: '/graphtasks',
+        builder: (context, state) => const GraphTasksPage(),
       ),
     ],
   );

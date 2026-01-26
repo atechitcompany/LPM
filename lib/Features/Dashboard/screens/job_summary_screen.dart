@@ -11,28 +11,33 @@ class JobSummaryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Job Summary")),
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection("jobs")
-            .doc(lpm)
-            .get(),
+        future: FirebaseFirestore.instance.collection("jobs").doc(lpm).get(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          final designer = data["designer"]?["data"] ?? {};
-          final currentDepartment = data["currentDepartment"];
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Job not found"));
+          }
 
-          return Padding(
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          final designer = data["designer"]?["data"] ?? {};
+          final currentDepartment =
+          (data["currentDepartment"] ?? "").toString();
+
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                _row("Party", designer["PartyName"]),
-                _row("Job", designer["ParticularJobName"]),
+                _row("LPM No", lpm),
+                _row("Party Name", designer["PartyName"]),
+                _row("Particular Job", designer["ParticularJobName"]),
                 _row("Delivery At", designer["DeliveryAt"]),
+                _row("Order By", designer["Orderby"]),
+                _row("Remark", designer["Remark"]),
                 _row("Priority", designer["Priority"]),
 
                 const SizedBox(height: 24),
@@ -52,7 +57,7 @@ class JobSummaryScreen extends StatelessWidget {
 
                       child: const Text("Edit"),
                     ),
-                  )
+                  ),
               ],
             ),
           );
@@ -65,10 +70,17 @@ class JobSummaryScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("$label: ",
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value?.toString() ?? "-")),
+          Text(
+            "$label: ",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(value?.toString().trim().isNotEmpty == true
+                ? value.toString()
+                : "-"),
+          ),
         ],
       ),
     );
