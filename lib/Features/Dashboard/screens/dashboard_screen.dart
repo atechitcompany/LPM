@@ -13,7 +13,6 @@ import 'package:lightatech/FormComponents/FLoatingButton.dart';
 class DashboardScreen extends StatefulWidget {
   final String department;
   final String email;
-
   const DashboardScreen({super.key,
     required this.department,
     required this.email,});

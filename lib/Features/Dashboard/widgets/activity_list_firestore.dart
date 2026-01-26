@@ -14,8 +14,7 @@ class ActivityListFirestore extends StatefulWidget {
   });
 
   @override
-  State<ActivityListFirestore> createState() =>
-      _ActivityListFirestoreState();
+  State<ActivityListFirestore> createState() => _ActivityListFirestoreState();
 }
 
 class _ActivityListFirestoreState extends State<ActivityListFirestore> {
@@ -90,74 +89,80 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
           return const Center(child: Text("No matching entries"));
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          itemCount: filteredDocs.length,
-          itemBuilder: (context, index) {
-            final data =
-            filteredDocs[index].data() as Map<String, dynamic>;
-            final designerData = data["designer"]?["data"] ?? {};
+        return Container(
+          color: Colors.white,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            itemCount: filteredDocs.length,
+            itemBuilder: (context, index) {
+              final data = filteredDocs[index].data() as Map<String, dynamic>;
+              final designerData = data["designer"]?["data"] ?? {};
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: InkWell(
-                onTap: () {
-                  context.push('/job-summary/${filteredDocs[index].id}');
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.grey.shade200,
-                        child: const Icon(
-                          Icons.assignment_outlined,
-                          color: Colors.grey,
+              // ✅ LPM is the document ID
+              final lpm = filteredDocs[index].id;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: InkWell(
+                  onTap: () {
+                    // ✅ open summary page (LPM as unique id)
+                    context.push('/job-summary/$lpm');
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.grey.shade200,
+                          child: const Icon(
+                            Icons.assignment_outlined,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              (designerData["PartyName"] ??
-                                  "No Party Name")
-                                  .toString(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (designerData["PartyName"] ?? "No Party Name")
+                                    .toString(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              (designerData["ParticularJobName"] ??
-                                  "No Particular Job")
-                                  .toString(),
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 13,
+                              const SizedBox(height: 4),
+                              Text(
+                                (designerData["ParticularJobName"] ??
+                                    "No Particular Job")
+                                    .toString(),
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
