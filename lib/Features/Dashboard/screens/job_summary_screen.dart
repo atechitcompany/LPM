@@ -42,15 +42,14 @@ class JobSummaryScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        context.push(
-                          '/jobform',
-                          extra: {
-                            'department': currentDepartment,
-                            'lpm': lpm,
-                            'mode': 'edit',
-                          },
-                        );
+                        final path =
+                            '/jobform/${currentDepartment.toLowerCase()}?lpm=$lpm&mode=edit';
+
+                        debugPrint('EDIT CLICK → $path');
+
+                        context.push(path);
                       },
+
                       child: const Text("Edit"),
                     ),
                   )
