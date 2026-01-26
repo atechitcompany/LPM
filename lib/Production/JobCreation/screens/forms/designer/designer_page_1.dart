@@ -14,7 +14,7 @@ class DesignerPage1 extends StatefulWidget {
 }
 
 class _DesignerPage1State extends State<DesignerPage1> {
-  List<String> userNames = ["Loading..."];
+  List<String> userNames = [];
   bool isLoading = true;
 
   @override
@@ -25,26 +25,29 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
   Future<void> fetchUserNames() async {
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('Onboarding')
-          .get();
+      final query =
+      await FirebaseFirestore.instance.collection('Onboarding').get();
 
       final names = query.docs
-          .map((doc) => doc['Username']?.toString() ?? 'Unknown')
+          .map((doc) => doc['Username']?.toString() ?? '')
+          .where((name) => name.isNotEmpty)
           .toList();
 
+      names.sort();
+
       setState(() {
-        userNames = names;
+        userNames = names; // ✅ NO "Select Party"
         isLoading = false;
       });
     } catch (e) {
-      print("❌ Error fetching usernames: $e");
+      debugPrint("❌ Error fetching usernames: $e");
       setState(() {
         userNames = [];
         isLoading = false;
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +70,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
                 : SearchableDropdownWithInitial(
               label: "Party Name *",
               items: userNames,
-              initialValue: form.PartyName.text.isEmpty
-                  ? "Select Party"
-                  : form.PartyName.text,
+              initialValue: null, // ✅ IMPORTANT
               onChanged: (v) {
                 setState(() {
                   form.PartyName.text = (v ?? "").trim();
@@ -77,23 +78,29 @@ class _DesignerPage1State extends State<DesignerPage1> {
               },
             ),
 
+
+
             const SizedBox(height: 30),
 
             /// ✅ Designer Created By
-            SearchableDropdownWithInitial(
-              label: "Designer Created By",
-              items: userNames,
-              initialValue: form.DesignerCreatedBy.text.isEmpty
-                  ? "Select"
-                  : form.DesignerCreatedBy.text,
-              onChanged: (v) {
-                setState(() {
-                  form.DesignerCreatedBy.text = (v ?? "").trim();
-                });
-              },
-            ),
+            /// ✅ Designer Created By
+            if (form.canView("DesignerCreatedBy"))
+              SearchableDropdownWithInitial(
+                label: "Designer Created By",
+                items: form.parties,
+                initialValue: form.DesignerCreatedBy.text.isEmpty
+                    ? "Select"
+                    : form.DesignerCreatedBy.text,
+                onChanged: (v) {
+                  setState(() {
+                    form.DesignerCreatedBy.text = (v ?? "").trim();
+                  });
+                },
+              ),
 
-            const SizedBox(height: 30),
+            if (form.canView("DesignerCreatedBy"))
+              const SizedBox(height: 30),
+
 
             /// ✅ Delivery At
             TextInput(
@@ -118,7 +125,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
               label: "Particular Job Name *",
               items: form.jobs,
               initialValue: form.ParticularJobName.text.isEmpty
-                  ? "No"
+                  ? "Select Job"
                   : form.ParticularJobName.text,
               onChanged: (v) {
                 setState(() {
@@ -134,10 +141,12 @@ class _DesignerPage1State extends State<DesignerPage1> {
             ValueListenableBuilder(
               valueListenable: form.LpmAutoIncrement,
               builder: (context, value, child) {
-                final lpm = int.tryParse(form.LpmAutoIncrement.text) ?? 0;
+                final lpm =
+                    int.tryParse(form.LpmAutoIncrement.text) ?? 0;
 
                 if (lpm == 0) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                      child: CircularProgressIndicator());
                 }
 
                 return AutoIncrementField(value: lpm);
