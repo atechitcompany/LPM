@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
-import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
+import '../../../../../FormComponents/AddableSearchDropdown.dart';
+import '../../../../../FormComponents/AutoIncrementField.dart';
+import '../../../../../FormComponents/TextInput.dart';
 import '../new_form_scope.dart';
 
 class DesignerPage1 extends StatefulWidget {
@@ -13,6 +14,41 @@ class DesignerPage1 extends StatefulWidget {
 }
 
 class _DesignerPage1State extends State<DesignerPage1> {
+  List<String> userNames = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserNames();
+  }
+
+  Future<void> fetchUserNames() async {
+    try {
+      final query =
+      await FirebaseFirestore.instance.collection('Onboarding').get();
+
+      final names = query.docs
+          .map((doc) => doc['Username']?.toString() ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList();
+
+      names.sort();
+
+      setState(() {
+        userNames = names; // ✅ NO "Select Party"
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching usernames: $e");
+      setState(() {
+        userNames = [];
+        isLoading = false;
+      });
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
@@ -29,23 +65,24 @@ class _DesignerPage1State extends State<DesignerPage1> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// ✅ Party Name *
-            if (form.canView("PartyName"))
-              SearchableDropdownWithInitial(
-                label: "Party Name *",
-                items: form.parties,
-                initialValue: form.PartyName.text.isEmpty
-                    ? "Select Party"
-                    : form.PartyName.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.PartyName.text = (v ?? "").trim();
-                  });
-                },
-              ),
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SearchableDropdownWithInitial(
+              label: "Party Name *",
+              items: userNames,
+              initialValue: null, // ✅ IMPORTANT
+              onChanged: (v) {
+                setState(() {
+                  form.PartyName.text = (v ?? "").trim();
+                });
+              },
+            ),
 
-            if (form.canView("PartyName"))
-              const SizedBox(height: 30),
 
+
+            const SizedBox(height: 30),
+
+            /// ✅ Designer Created By
             /// ✅ Designer Created By
             if (form.canView("DesignerCreatedBy"))
               SearchableDropdownWithInitial(
@@ -64,69 +101,62 @@ class _DesignerPage1State extends State<DesignerPage1> {
             if (form.canView("DesignerCreatedBy"))
               const SizedBox(height: 30),
 
-            /// ✅ Delivery At
-            if (form.canView("DeliveryAt"))
-              TextInput(
-                controller: form.DeliveryAt,
-                label: "Delivery At",
-                hint: "Address",
-              ),
 
-            if (form.canView("DeliveryAt"))
-              const SizedBox(height: 30),
+            /// ✅ Delivery At
+            TextInput(
+              controller: form.DeliveryAt,
+              label: "Delivery At",
+              hint: "Address",
+            ),
+
+            const SizedBox(height: 30),
 
             /// ✅ Order By
-            if (form.canView("Orderby"))
-              TextInput(
-                controller: form.Orderby,
-                label: "Order By",
-                hint: "Name",
-              ),
+            TextInput(
+              controller: form.Orderby,
+              label: "Order By",
+              hint: "Name",
+            ),
 
-            if (form.canView("Orderby"))
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
             /// ✅ Particular Job Name *
-            if (form.canView("ParticularJobName"))
-              AddableSearchDropdown(
-                label: "Particular Job Name *",
-                items: form.jobs,
-                initialValue: form.ParticularJobName.text.isEmpty
-                    ? "No"
-                    : form.ParticularJobName.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.ParticularJobName.text = (v ?? "").trim();
-                  });
-                },
-                onAdd: (newJob) => form.jobs.add(newJob),
-              ),
+            AddableSearchDropdown(
+              label: "Particular Job Name *",
+              items: form.jobs,
+              initialValue: form.ParticularJobName.text.isEmpty
+                  ? "Select Job"
+                  : form.ParticularJobName.text,
+              onChanged: (v) {
+                setState(() {
+                  form.ParticularJobName.text = (v ?? "").trim();
+                });
+              },
+              onAdd: (newJob) => form.jobs.add(newJob),
+            ),
 
-            if (form.canView("ParticularJobName"))
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-            /// ✅ LPM Auto Increment (still VIEW-only logically, but visible)
-            if (form.canView("LpmAutoIncrement"))
-              ValueListenableBuilder(
-                valueListenable: form.LpmAutoIncrement,
-                builder: (context, value, child) {
-                  final lpm = int.tryParse(form.LpmAutoIncrement.text) ?? 0;
+            /// ✅ LPM Auto Increment
+            ValueListenableBuilder(
+              valueListenable: form.LpmAutoIncrement,
+              builder: (context, value, child) {
+                final lpm =
+                    int.tryParse(form.LpmAutoIncrement.text) ?? 0;
 
-                  if (lpm == 0) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+                if (lpm == 0) {
+                  return const Center(
+                      child: CircularProgressIndicator());
+                }
 
-                  return AutoIncrementField(value: lpm);
-                },
-              ),
+                return AutoIncrementField(value: lpm);
+              },
+            ),
 
-            if (form.canView("LpmAutoIncrement"))
-              const SizedBox(height: 30),
-
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 }
-
