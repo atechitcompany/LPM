@@ -2,9 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/session/session_manager.dart';
+
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
   const JobSummaryScreen({super.key, required this.lpm});
+  static const Map<String, String> departmentEditRoute = {
+    "Designer": "/jobform/designer-1",
+    "AutoBending": "/jobform/autobending",
+    "ManualBending": "/jobform/manualbending",
+    "LaserCutting": "/jobform/laser",
+    "Emboss": "/jobform/emboss",
+    "Rubber": "/jobform/rubber",
+    "Account": "/jobform/account1",
+    "Delivery": "/jobform/delivery",
+  };
+
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +60,25 @@ class JobSummaryScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        final path =
-                            '/jobform/${currentDepartment.toLowerCase()}?lpm=$lpm&mode=edit';
+                        final loggedInDept = SessionManager.getDepartment();
 
+                        if (loggedInDept == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Session expired. Please login again.")),
+                          );
+                          return;
+                        }
+
+                        final route = departmentEditRoute[loggedInDept];
+
+                        if (route == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("No edit form for $loggedInDept")),
+                          );
+                          return;
+                        }
+
+                        final path = "$route?lpm=$lpm&mode=edit";
                         debugPrint('EDIT CLICK → $path');
 
                         context.push(path);

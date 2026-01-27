@@ -9,12 +9,14 @@ enum Department {
   Designer,
   AutoBending,
   ManualBending,
-  Lasercut,
+  LaserCutting,
   Emboss,
   Rubber,
   Account,
   Delivery,
+  Completed,
 }
+
 
 class NewForm extends StatefulWidget {
   final Widget child;
