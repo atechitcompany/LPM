@@ -43,31 +43,63 @@ class JobSummaryScreen extends StatelessWidget {
           (data["currentDepartment"] ?? "").toString();
 
           /// Fields to show
-          final fields = {
-            "LPM No": lpm,
-            "Party Name": designer["PartyName"],
-            "Particular Job": designer["ParticularJobName"],
-            "Delivery At": designer["DeliveryAt"],
-            "Order By": designer["Orderby"],
-            "Remark": designer["Remark"],
-            "Priority": designer["Priority"],
-            "Size": designer["Size"],
-            "Ups": designer["Ups"],
-            "Ply Type": designer["PlyType"],
-            "Blade": designer["Blade"],
-            "Creasing": designer["Creasing"],
-          };
+          final entries = designer.entries.toList();
+
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ...fields.entries.map(
-                      (e) => _row(e.key, e.value),
+
+                // HEADER CARD
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Job Summary",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Chip(
+                          label: Text("LPM $lpm"),
+                          backgroundColor: Colors.amber.shade100,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // FORM DATA CARD
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: entries
+                          .map<Widget>((entry) =>
+                          _prettyRow(entry.key, entry.value))
+                          .toList(),
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 24),
+
 
                 if (currentDepartment != "Completed")
                   SizedBox(
@@ -113,21 +145,36 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, dynamic value) {
+  Widget _prettyRow(String label, dynamic value) {
+    final textValue =
+    value?.toString().trim().isNotEmpty == true
+        ? value.toString()
+        : "-";
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "$label: ",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
           ),
           Expanded(
+            flex: 6,
             child: Text(
-              value?.toString().trim().isNotEmpty == true
-                  ? value.toString()
-                  : "-",
+              textValue,
+              style: TextStyle(
+                color: textValue == "-"
+                    ? Colors.grey
+                    : Colors.black,
+              ),
             ),
           ),
         ],
