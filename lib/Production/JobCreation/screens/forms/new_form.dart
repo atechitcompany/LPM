@@ -85,6 +85,8 @@ class NewFormState extends State<NewForm> {
     "SV Road",
   ];
   List<String> PincodeList = ["400104", "400058", "400064", "400092"];
+  String? get mode => widget.mode;
+  String? get lpm => widget.lpm;
 
   final BuyerOrderNo = TextEditingController();
   final DeliveryAt = TextEditingController();
@@ -192,6 +194,56 @@ class NewFormState extends State<NewForm> {
   String Street = "";
   String Pincode = "";
   String User = "";
+
+  void clearDesignerData() {
+    PartyName.clear();
+    DesignerCreatedBy.clear();
+    DeliveryAt.clear();
+    Orderby.clear();
+    ParticularJobName.clear();
+    Priority.clear();
+    Remark.clear();
+
+    DesigningStatus.text = "Pending";
+    DesignedBy.clear();
+
+    PlyType.text = "No";
+    PlySelectedBy.clear();
+
+    Blade.text = "No";
+    BladeSelectedBy.clear();
+
+    Creasing.text = "No";
+    CreasingSelectedBy.clear();
+
+    Perforation.text = "No";
+    PerforationSelectedBy.clear();
+
+    ZigZagBlade.text = "No";
+    ZigZagBladeSelectedBy.clear();
+
+    RubberType.text = "No";
+    RubberSelectedBy.clear();
+
+    HoleType.text = "No";
+    HoleSelectedBy.clear();
+
+    EmbossStatus.text = "No";
+    EmbossPcs.clear();
+
+    MaleEmbossType.text = "No";
+    FemaleEmbossType.text = "No";
+
+    X.clear();
+    Y.clear();
+    X2.clear();
+    Y2.clear();
+
+    StrippingType.text = "No";
+    LaserCuttingStatus.text = "Pending";
+    RubberFixingDone.text = "No";
+    WhiteProfileRubber.text = "No";
+  }
 
   Map<String, dynamic> buildFormData() {
     return {
