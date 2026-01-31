@@ -150,7 +150,6 @@ class JobSummaryScreen extends StatelessWidget {
     value?.toString().trim().isNotEmpty == true
         ? value.toString()
         : "-";
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -182,3 +181,4 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 }
+// Summary done
