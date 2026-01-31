@@ -106,6 +106,44 @@ class AppRoutes {
         builder: (_, __) => const Admin(),
       ),
 
+      GoRoute(
+        path: '/order-details',
+        name: 'orderDetails',
+        builder: (context, state) => OrderDetailScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro',
+        builder: (context, state) => const IntroScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/biometric',
+        builder: (context, state) => const BiometricScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/fill-profile',
+        builder: (context, state) => const FillProfileScreen(),
+      ),
+
+      GoRoute(
+        path: '/intro/create-pin',
+        builder: (context, state) => const CreatePinScreen(),
+      ),
+
+      GoRoute(
+        path: '/auth/entry',
+        builder: (context, state) => const LetsYouInScreen(),
+      ),
+
+
+
       // ================= DASHBOARD SHELL =================
       ShellRoute(
         builder: (context, state, child) {
@@ -140,6 +178,28 @@ class AppRoutes {
             path: '/job-summary/:lpm',
             builder: (context, state) =>
                 JobSummaryScreen(lpm: state.pathParameters['lpm']!),
+          ),
+
+          GoRoute(
+            path: '/map',
+            name: AppRoutesName.MapScreen,
+            builder: (context, state) => const MapScreen(title: 'Maps'),
+          ),
+
+          GoRoute(
+            path: '/payment',
+            name: AppRoutesName.PaymentScreen,
+            builder: (context, state) => const PaidScreen(),
+          ),
+
+          GoRoute(
+            path: '/graph',
+            builder: (context, state) => const GraphPage(),
+          ),
+
+          GoRoute(
+            path: '/target',
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
@@ -190,6 +250,30 @@ class AppRoutes {
           GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountPage()),
           GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
         ],
+      ),
+
+      //Other routes
+      GoRoute(
+        path: '/task',
+        name: AppRoutesName.TaskDetail,
+        builder: (context, state) {
+          final task = state.extra as Task;
+          return TaskDetailPage(
+            task: task,
+            onChanged: () {},
+            onDelete: () {},
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/graphform',
+        builder: (context, state) => const GraphFormPage(),
+      ),
+
+      GoRoute(
+        path: '/graphtasks',
+        builder: (context, state) => const GraphTasksPage(),
       ),
     ],
   );

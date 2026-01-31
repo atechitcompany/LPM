@@ -16,12 +16,68 @@ class DesignerPage1 extends StatefulWidget {
 class _DesignerPage1State extends State<DesignerPage1> {
   List<String> userNames = [];
   bool isLoading = true;
+  bool _initialized = false;
+
 
   @override
   void initState() {
     super.initState();
     fetchUserNames();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    final form = NewFormScope.of(context);
+
+    // 🆕 CREATE MODE → CLEAR FORM
+    if (form.mode != "edit") {
+      form.clearDesignerData();
+    }
+    // ✏️ EDIT MODE → LOAD DATA
+    else {
+      _loadDesignerData(form);
+    }
+  }
+
+
+  Future<void> _loadDesignerData(dynamic form) async {
+    final lpm = form.lpm;
+    if (lpm == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .get();
+
+    if (!snap.exists) return;
+
+    final data = snap.data()!;
+    final designer =
+    Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+
+    form.PartyName.text = designer["PartyName"] ?? "";
+    form.DesignerCreatedBy.text =
+        designer["DesignerCreatedBy"] ?? "";
+    form.DeliveryAt.text = designer["DeliveryAt"] ?? "";
+    form.Orderby.text = designer["Orderby"] ?? "";
+    form.ParticularJobName.text =
+        designer["ParticularJobName"] ?? "";
+    form.Priority.text = designer["Priority"] ?? "";
+    form.Remark.text = designer["Remark"] ?? "";
+
+    // LPM must be preserved
+    form.LpmAutoIncrement.text = lpm.toString();
+    if (mounted) setState(() {});
+    debugPrint("DesignerPage1 MODE = ${form.mode}");
+    debugPrint("DesignerPage1 LPM = ${form.lpm}");
+
+  }
+
 
   Future<void> fetchUserNames() async {
     try {
@@ -70,13 +126,16 @@ class _DesignerPage1State extends State<DesignerPage1> {
                 : SearchableDropdownWithInitial(
               label: "Party Name *",
               items: userNames,
-              initialValue: null, // ✅ IMPORTANT
+              initialValue: form.PartyName.text.isEmpty
+                  ? null
+                  : form.PartyName.text,
               onChanged: (v) {
                 setState(() {
                   form.PartyName.text = (v ?? "").trim();
                 });
               },
             ),
+
 
 
 
