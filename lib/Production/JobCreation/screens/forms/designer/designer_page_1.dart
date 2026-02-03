@@ -17,6 +17,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
   List<String> userNames = [];
   bool isLoading = true;
   bool _initialized = false;
+  String? selectedJob;
 
 
   @override
@@ -65,10 +66,13 @@ class _DesignerPage1State extends State<DesignerPage1> {
         designer["DesignerCreatedBy"] ?? "";
     form.DeliveryAt.text = designer["DeliveryAt"] ?? "";
     form.Orderby.text = designer["Orderby"] ?? "";
-    form.ParticularJobName.text =
-        designer["ParticularJobName"] ?? "";
+    selectedJob = designer["ParticularJobName"];
+    form.ParticularJobName.text = selectedJob ?? "";
+
     form.Priority.text = designer["Priority"] ?? "";
     form.Remark.text = designer["Remark"] ?? "";
+
+
 
     // LPM must be preserved
     form.LpmAutoIncrement.text = lpm.toString();
@@ -183,16 +187,22 @@ class _DesignerPage1State extends State<DesignerPage1> {
             AddableSearchDropdown(
               label: "Particular Job Name *",
               items: form.jobs,
-              initialValue: form.ParticularJobName.text.isEmpty
-                  ? "Select Job"
-                  : form.ParticularJobName.text,
+              initialValue: selectedJob,
               onChanged: (v) {
                 setState(() {
+                  selectedJob = v;
                   form.ParticularJobName.text = (v ?? "").trim();
                 });
               },
-              onAdd: (newJob) => form.jobs.add(newJob),
+              onAdd: (newJob) {
+                setState(() {
+                  form.jobs.add(newJob);
+                  selectedJob = newJob;
+                  form.ParticularJobName.text = newJob;
+                });
+              },
             ),
+
 
             const SizedBox(height: 30),
 
