@@ -665,7 +665,6 @@ class NewFormState extends State<NewForm> {
         const SnackBar(content: Text("Form submitted successfully")),
       );
 
-      context.pop(); // back to dashboard
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),

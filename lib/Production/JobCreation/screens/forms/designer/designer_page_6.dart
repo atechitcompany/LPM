@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lightatech/routes/app_route_config.dart';
+import 'package:lightatech/routes/app_route_constants.dart';
 
 class DesignerPage6 extends StatefulWidget {
   const DesignerPage6({super.key});
@@ -120,6 +123,8 @@ class _DesignerPage6State extends State<DesignerPage6> {
 
                     try {
                       await form.submitForm();
+
+                      context.go('/dashboard');
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
