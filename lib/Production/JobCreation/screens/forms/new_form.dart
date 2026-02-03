@@ -133,6 +133,7 @@ class NewFormState extends State<NewForm> {
   final CreatedBy = TextEditingController();
   final Amounts3 = TextEditingController();
   final DesignerCreatedBy = TextEditingController();
+  final AutoBendingStatus = TextEditingController();
   final AutoBendingCreatedBy = TextEditingController();
   final LaserCuttingCreatedBy = TextEditingController();
   final AccountsCreatedBy = TextEditingController();
@@ -203,7 +204,7 @@ class NewFormState extends State<NewForm> {
     ParticularJobName.clear();
     Priority.clear();
     Remark.clear();
-
+    AutoBendingStatus.text = "Pending";
     DesigningStatus.text = "Pending";
     DesignedBy.clear();
 
