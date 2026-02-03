@@ -17,6 +17,7 @@ class AutoBendingPage extends StatefulWidget {
 class _AutoBendingPageState extends State<AutoBendingPage> {
   bool loading = true;
   bool _loaded = false;
+  bool autobendingstatus=false;
 
   @override
   void didChangeDependencies() {
@@ -163,6 +164,26 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
             ),
 
             const SizedBox(height: 30),
+
+              FlexibleToggle(
+                label: "AutoBending *",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue: autobendingstatus,
+                onChanged: (val) {
+                  setState(() {
+                    autobendingstatus = val;
+                  });
+
+                  form.AutoBendingStatus.text =
+                  val ? "Done" : "Pending";
+
+                  if (!val) {
+                    form.DesignedBy.clear();
+                  }
+                },
+              ),
+              const SizedBox(height: 30),
 
             /// ✏️ AUTOBENDING (EDITABLE)
             SearchableDropdownWithInitial(
