@@ -10,8 +10,8 @@ class JobSummaryScreen extends StatelessWidget {
 
   static const Map<String, String> departmentEditRoute = {
     "Designer": "/jobform/designer-1",
-    "AutoBending": "/jobform/auto-bending",
-    "ManualBending": "/jobform/manual-bending",
+    "AutoBending": "/jobform/autobending",
+    "ManualBending": "/jobform/manualbending",
     "Lasercut": "/jobform/laser",
     "Emboss": "/jobform/emboss",
     "Rubber": "/jobform/rubber",
