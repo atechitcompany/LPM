@@ -91,7 +91,7 @@ class AppRoutes {
 
   static final GoRouter router = GoRouter(
     debugLogDiagnostics: true,
-    initialLocation: SessionManager.isLoggedIn() ? '/dashboard' : '/',
+    initialLocation: SessionManager.isLoggedIn() ? '/' : '/',
 
     routes: [
 
@@ -157,15 +157,12 @@ class AppRoutes {
           GoRoute(
             path: '/dashboard',
             builder: (context, state) {
-              final dept =
-                  state.uri.queryParameters['department']
-                      ?? SessionManager.getDepartment()
-                      ?? 'Designer';
+              final dept = SessionManager.getDepartment();
+              final email = SessionManager.getEmail();
 
-              final email =
-                  state.uri.queryParameters['email']
-                      ?? SessionManager.getEmail()
-                      ?? '';
+              if (dept == null || email == null) {
+                return const LoginScreen();
+              }
 
               return DashboardScreen(
                 department: dept,
@@ -173,6 +170,7 @@ class AppRoutes {
               );
             },
           ),
+
 
           GoRoute(
             path: '/job-summary/:lpm',
