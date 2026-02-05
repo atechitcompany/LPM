@@ -85,8 +85,16 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
         autoBending["AutoBendingCreatedBy"] ?? "";
 
     form.AutoCreasing = autoBending["AutoCreasing"] == true;
+
     form.AutoCreasingStatus.text =
         autoBending["AutoCreasingStatus"] ?? "Pending";
+
+    form.AutoBendingStatus.text =
+        autoBending["AutoBendingStatus"] ?? "Pending";
+
+    autobendingstatus =
+        form.AutoBendingStatus.text.toLowerCase() == "done";
+
 
     setState(() => loading = false);
   }
@@ -242,16 +250,17 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
                     "autoBending": {
                       "submitted": true,
                       "data": {
-                        "AutoBendingCreatedBy":
-                        form.AutoBendingCreatedBy.text,
+                        "AutoBendingStatus": form.AutoBendingStatus.text,   // ✅ ADD THIS
+                        "AutoBendingCreatedBy": form.AutoBendingCreatedBy.text,
                         "AutoCreasing": form.AutoCreasing,
-                        "AutoCreasingStatus":
-                        form.AutoCreasingStatus.text,
+                        "AutoCreasingStatus": form.AutoCreasingStatus.text,
                       },
                     },
                     "currentDepartment": "LaserCutting",
                     "updatedAt": FieldValue.serverTimestamp(),
                   }, SetOptions(merge: true));
+
+
 
                   Navigator.pop(context);
                 },

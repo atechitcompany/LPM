@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../core/session/session_manager.dart';
 
 class JobSummaryScreen extends StatelessWidget {
@@ -12,12 +11,13 @@ class JobSummaryScreen extends StatelessWidget {
     "Designer": "/jobform/designer-1",
     "AutoBending": "/jobform/autobending",
     "ManualBending": "/jobform/manualbending",
-    "Lasercut": "/jobform/laser",
+    "LaserCutting": "/jobform/laser",
     "Emboss": "/jobform/emboss",
     "Rubber": "/jobform/rubber",
     "Account": "/jobform/account1",
     "Delivery": "/jobform/delivery",
   };
+
 
   @override
   Widget build(BuildContext context) {
@@ -28,31 +28,31 @@ class JobSummaryScreen extends StatelessWidget {
             .collection("jobs")
             .doc(lpm)
             .get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, snap) {
+          if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || !snapshot.data!.exists) {
+          if (!snap.data!.exists) {
             return const Center(child: Text("Job not found"));
           }
 
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          final designer = data["designer"]?["data"] ?? {};
-          final currentDepartment =
-          (data["currentDepartment"] ?? "").toString();
+          final data = snap.data!.data() as Map<String, dynamic>;
 
-          /// Fields to show
-          final entries = designer.entries.toList();
+          final designer =
+          Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+          final auto =
+          Map<String, dynamic>.from(data["autoBending"]?["data"] ?? {});
 
+          final dept = SessionManager.getDepartment();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // HEADER CARD
+                // ================= HEADER =================
+
                 Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -63,9 +63,9 @@ class JobSummaryScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "Job Summary",
-                          style: TextStyle(
+                        Text(
+                          "$dept Summary",
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -81,62 +81,65 @@ class JobSummaryScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                // FORM DATA CARD
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: entries
-                          .map<Widget>((entry) =>
-                          _prettyRow(entry.key, entry.value))
-                          .toList(),
-                    ),
-                  ),
-                ),
+                // ================= DESIGNER SUMMARY =================
+
+                if (dept == "Designer")
+                  _card([
+                    _row("Party Name", designer["PartyName"]),
+                    _row("Particular Job Name", designer["ParticularJobName"]),
+                    _row("Delivery At", designer["DeliveryAt"]),
+                    _row("Order By", designer["Orderby"]),
+                    _row("Priority", designer["Priority"]),
+                    _row("Remark", designer["Remark"]),
+                  ]),
+
+                // ================= AUTOBENDING SUMMARY =================
+
+                if (dept == "AutoBending") ...[
+                  _sectionTitle("AutoBending Details"),
+                  _card([
+                    _row("Party Name", designer["PartyName"]),
+                    _row("Delivery At", designer["DeliveryAt"]),
+                    _row("Order By", designer["Orderby"]),
+                    _row("Particular Job Name", designer["ParticularJobName"]),
+                    _row("Priority", designer["Priority"]),
+                    _row("LPM", lpm),
+                    _row("AutoBending Status", auto["AutoBendingStatus"]),   // ✅ ADD
+                    _row("AutoBending Created By", auto["AutoBendingCreatedBy"]),
+                    _row("Auto Creasing", auto["AutoCreasing"] == true ? "Yes" : "No"),
+                    _row("Auto Creasing Status", auto["AutoCreasingStatus"]),
+                  ]),
+
+                  const SizedBox(height: 12),
+
+                ],
 
                 const SizedBox(height: 24),
 
+                // ================= EDIT BUTTON =================
 
-                if (currentDepartment != "Completed")
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final loggedInDept =
-                        SessionManager.getDepartment();
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final dept = SessionManager.getDepartment();
+                      final route = departmentEditRoute[dept];
 
-                        if (loggedInDept == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    "Session expired. Please login again.")),
-                          );
-                          return;
-                        }
+                      debugPrint("EDIT CLICK → dept=$dept route=$route lpm=$lpm");
 
-                        final route =
-                        departmentEditRoute[loggedInDept];
-
-                        if (route == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    "No edit form for $loggedInDept")),
-                          );
-                          return;
-                        }
-
-                        context.push(
-                          "$route?lpm=$lpm&mode=edit",
+                      if (route == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("No form for $dept")),
                         );
-                      },
-                      child: const Text("Edit"),
-                    ),
+                        return;
+                      }
+
+                      context.push("$route?lpm=$lpm&mode=edit");
+                    },
+
+                    child: const Text("Edit"),
                   ),
+                ),
               ],
             ),
           );
@@ -145,34 +148,60 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _prettyRow(String label, dynamic value) {
-    final textValue =
-    value?.toString().trim().isNotEmpty == true
-        ? value.toString()
-        : "-";
+  // ================= UI HELPERS =================
+
+  Widget _sectionTitle(String t) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          t,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _card(List<Widget> children) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(children: children),
+      ),
+    );
+  }
+
+  Widget _row(String label, dynamic value) {
+    final text = (value == null || value.toString().trim().isEmpty)
+        ? "-"
+        : value.toString();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 4,
             child: Text(
               label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
           Expanded(
             flex: 6,
             child: Text(
-              textValue,
+              text,
               style: TextStyle(
-                color: textValue == "-"
-                    ? Colors.grey
-                    : Colors.black,
+                color: text == "-" ? Colors.grey : Colors.black,
               ),
             ),
           ),
@@ -181,4 +210,3 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 }
-// Summary done
