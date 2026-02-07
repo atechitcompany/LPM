@@ -22,6 +22,7 @@ class SessionManager {
     return _box.get('department');
   }
 
+
   static bool isLoggedIn() {
     return _box.get('isLoggedIn') == true;
   }
