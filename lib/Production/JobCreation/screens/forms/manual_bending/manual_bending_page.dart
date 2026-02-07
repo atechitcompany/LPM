@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import '../../../../../FormComponents/FlexibleToggle.dart';
 import '../new_form_scope.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,6 +17,7 @@ class ManualBendingPage extends StatefulWidget {
 class _ManualBendingPageState extends State<ManualBendingPage> {
   bool loading = true;
   bool _loaded = false;
+  bool manualbendingstatus=false;
 
   @override
   void didChangeDependencies() {
@@ -109,6 +111,27 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
               controller: form.LpmAutoIncrement,
               readOnly: true, hint: 'LPM NO.',
             ),
+
+            const SizedBox(height: 30),
+
+            FlexibleToggle(
+              label: "Manual Bending *",
+              inactiveText: "Pending",
+              activeText: "Done",
+              initialValue: manualbendingstatus,
+              onChanged: (val) {
+                setState(() {
+                  manualbendingstatus = val;
+                });
+
+                form.ManualBendingStatus.text =
+                val ? "Done" : "Pending";
+
+                if (!val) {
+                  form.ManualBendingCreatedBy.clear();
+                }
+              },
+            ),
             const SizedBox(height: 30),
 
             /// ✏️ MANUAL BENDING (EDITABLE)
@@ -140,6 +163,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                     "manualBending": {
                       "submitted": true,
                       "data": {
+                        "ManualBendingStatus": form.ManualBendingStatus.text,
                         "ManualBendingCreatedBy":
                         form.ManualBendingCreatedBy.text,
                       },
@@ -149,6 +173,10 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                   }, SetOptions(merge: true));
 
                   context.pop(); // ✅ CORRECT
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Form submitted successfully")),
+                  );
+                  Navigator.pop(context);
                 },
 
                 child: const Text("Save & Continue"),

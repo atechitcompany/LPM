@@ -715,17 +715,6 @@ class _AccountPageState extends State<AccountPage> {
             //Make it Take Values from other forms
 
 
-
-
-
-
-
-
-
-
-
-
-
           ],
         ),
       ),
