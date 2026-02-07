@@ -7,6 +7,34 @@ class JobSummaryScreen extends StatelessWidget {
   final String lpm;
   const JobSummaryScreen({super.key, required this.lpm});
 
+  String _prettyValue(dynamic value) {
+    if (value == null) return "-";
+
+    // Boolean formatting
+    if (value is bool) {
+      return value ? "Yes" : "No";
+    }
+
+    // List formatting
+    if (value is List) {
+      if (value.isEmpty) return "-";
+      return value.join(", ");
+    }
+
+    // Map formatting (fallback)
+    if (value is Map) {
+      if (value.isEmpty) return "-";
+      return value.entries
+          .map((e) => "${e.key}: ${e.value}")
+          .join(", ");
+    }
+
+    // String / number fallback
+    final str = value.toString().trim();
+    return str.isEmpty ? "-" : str;
+  }
+
+
   static const Map<String, String> departmentEditRoute = {
     "Designer": "/jobform/designer-1",
     "AutoBending": "/jobform/autobending",
@@ -43,6 +71,8 @@ class JobSummaryScreen extends StatelessWidget {
           Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
           final auto =
           Map<String, dynamic>.from(data["autoBending"]?["data"] ?? {});
+          final manual =
+          Map<String, dynamic>.from(data["manualBending"]?["data"] ?? {});
 
           final dept = SessionManager.getDepartment();
 
@@ -97,17 +127,22 @@ class JobSummaryScreen extends StatelessWidget {
 
                 if (dept == "AutoBending") ...[
                   _sectionTitle("AutoBending Details"),
+                  _card(
+                    auto.entries
+                        .map((e) => _row(e.key, _prettyValue(e.value)))
+                        .toList(),
+                  ),
+                ],
+
+
+                const SizedBox(height: 24),
+
+                if (dept == "ManualBending") ...[
+                  _sectionTitle("ManualBending Details"),
                   _card([
                     _row("Party Name", designer["PartyName"]),
-                    _row("Delivery At", designer["DeliveryAt"]),
-                    _row("Order By", designer["Orderby"]),
                     _row("Particular Job Name", designer["ParticularJobName"]),
-                    _row("Priority", designer["Priority"]),
-                    _row("LPM", lpm),
-                    _row("AutoBending Status", auto["AutoBendingStatus"]),   // ✅ ADD
-                    _row("AutoBending Created By", auto["AutoBendingCreatedBy"]),
-                    _row("Auto Creasing", auto["AutoCreasing"] == true ? "Yes" : "No"),
-                    _row("Auto Creasing Status", auto["AutoCreasingStatus"]),
+                    _row("ManualBending Created By", auto["ManualBendingCreatedBy"]),
                   ]),
 
                   const SizedBox(height: 12),
