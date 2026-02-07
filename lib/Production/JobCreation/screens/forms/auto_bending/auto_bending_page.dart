@@ -187,7 +187,7 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
                   val ? "Done" : "Pending";
 
                   if (!val) {
-                    form.DesignedBy.clear();
+                    form.AutoBendingStatus.clear();
                   }
                 },
               ),
