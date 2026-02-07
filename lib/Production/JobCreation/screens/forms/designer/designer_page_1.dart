@@ -146,23 +146,6 @@ class _DesignerPage1State extends State<DesignerPage1> {
             const SizedBox(height: 30),
 
 
-            if (form.canView("DesignerCreatedBy"))
-              SearchableDropdownWithInitial(
-                label: "Designer Created By",
-                items: form.parties,
-                initialValue: form.DesignerCreatedBy.text.isEmpty
-                    ? "Select"
-                    : form.DesignerCreatedBy.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.DesignerCreatedBy.text = (v ?? "").trim();
-                  });
-                },
-              ),
-
-            if (form.canView("DesignerCreatedBy"))
-              const SizedBox(height: 30),
-
 
             /// ✅ Delivery At
             TextInput(
