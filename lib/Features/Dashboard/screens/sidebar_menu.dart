@@ -62,12 +62,17 @@ class SidebarMenu extends StatelessWidget {
               Icons.card_giftcard,
                   () {},
             ),
+
             buildMenuItem(
               context,
               'Productivity',
               Icons.show_chart,
-                  () {},
+                  () {
+                Navigator.pop(context); // close drawer
+                context.go('/productivity');
+              },
             ),
+
 
             const Divider(),
 
