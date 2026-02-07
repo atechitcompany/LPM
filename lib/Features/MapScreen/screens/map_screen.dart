@@ -6,7 +6,7 @@ import '../models/task.dart';
 import '../models/floating_sheet_type.dart';
 import 'task_detail_page.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:flutter/gestures.dart';
 
 
 class MapScreen extends StatefulWidget {
@@ -775,38 +775,43 @@ class _MapScreenState extends State<MapScreen> {
 
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 48,
-                  child: ReorderableListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-
-                    buildDefaultDragHandles: false,
-
-                    itemCount: _buttonOrder.length,
-
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) newIndex -= 1;
-                        final item = _buttonOrder.removeAt(oldIndex);
-                        _buttonOrder.insert(newIndex, item);
-                      });
-                      _saveButtonOrder();
-                    },
-
-                    itemBuilder: (context, index) {
-                      final type = _buttonOrder[index];
-
-                      return Padding(
-                        key: ValueKey(type),
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ReorderableDelayedDragStartListener(
-                          index: index,
-                          child: _buildBottomSheetButton(type),
-                        ),
-                      );
-                    },
+                  height: 56, // slightly taller for web hit-testing
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(
+                      dragDevices: {
+                        PointerDeviceKind.touch,
+                        PointerDeviceKind.mouse,
+                        PointerDeviceKind.trackpad,
+                      },
+                    ),
+                    child: ReorderableListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const ClampingScrollPhysics(), // IMPORTANT for web
+                      buildDefaultDragHandles: false,
+                      itemCount: _buttonOrder.length,
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          if (newIndex > oldIndex) newIndex -= 1;
+                          final item = _buttonOrder.removeAt(oldIndex);
+                          _buttonOrder.insert(newIndex, item);
+                        });
+                        _saveButtonOrder();
+                      },
+                      itemBuilder: (context, index) {
+                        final type = _buttonOrder[index];
+                        return Padding(
+                          key: ValueKey(type),
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ReorderableDelayedDragStartListener(
+                            index: index,
+                            child: _buildBottomSheetButton(type),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
+
 
 
               ],
