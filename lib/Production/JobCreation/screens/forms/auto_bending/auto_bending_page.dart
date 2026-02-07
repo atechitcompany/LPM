@@ -263,6 +263,37 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
 
 
                   Navigator.pop(context);
+                  try {
+                    await FirebaseFirestore.instance
+                        .collection("jobs")
+                        .doc(form.LpmAutoIncrement.text)
+                        .set({
+                      "autoBending": {
+                        "submitted": true,
+                        "data": {
+                          "AutoBendingStatus": form.AutoBendingStatus.text,
+                          "AutoBendingCreatedBy":
+                          form.AutoBendingCreatedBy.text,
+                          "AutoCreasing": form.AutoCreasing,
+                          "AutoCreasingStatus":
+                          form.AutoCreasingStatus.text,
+                        },
+                      },
+                      "currentDepartment": "ManualBending",
+                      "updatedAt": FieldValue.serverTimestamp(),
+                    }, SetOptions(merge: true));
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Form submitted successfully")),
+                    );
+                    Navigator.pop(context);
+                  }
+
+                  catch(e){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Error: $e")),
+                    );
+                  }
                 },
                 child: const Text("Save & Continue"),
               ),

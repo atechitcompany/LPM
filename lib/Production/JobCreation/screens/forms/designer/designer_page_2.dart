@@ -59,28 +59,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 30),
             ],
 
-            /// ✅ Designing Toggle
-            if (form.canView("DesigningStatus")) ...[
-              FlexibleToggle(
-                label: "Designing *",
-                inactiveText: "Pending",
-                activeText: "Done",
-                initialValue: isDesigningDone,
-                onChanged: (val) {
-                  setState(() {
-                    isDesigningDone = val;
-                  });
-
-                  form.DesigningStatus.text =
-                  val ? "Done" : "Pending";
-
-                  if (!val) {
-                    form.DesignedBy.clear();
-                  }
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
 
             /// ✅ Drawing Attachment
             if (form.canView("DrawingAttachment")) ...[

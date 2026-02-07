@@ -96,6 +96,14 @@ class DepartmentFieldAccess {
 
   static Map<String, String> _manualBending() => {
     "PartyName": "view",
-    "Blade": "edit",
+    "LpmAutoIncrement": "view",
+    "ParticularJobName": "view",
+
+    // ✏️ Manual bending editable
+    "ManualBendingCreatedBy": "edit",
+
+
+    // ❌ Others hidden
+    "AutoBendingCreatedBy": "hide",
   };
 }

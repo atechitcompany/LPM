@@ -1,20 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
-import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/GSTSelector.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
-import 'package:lightatech/FormComponents/PrioritySelector.dart';
-import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:lightatech/FormComponents/FileUploadBox.dart';
-import 'package:lightatech/FormComponents/FlexibleSlider.dart';
-import 'package:lightatech/FormComponents/NumberStepper.dart';
-import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
-
+import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import '../new_form_scope.dart';
-
 
 class ManualBendingPage extends StatefulWidget {
   const ManualBendingPage({super.key});
@@ -24,30 +12,145 @@ class ManualBendingPage extends StatefulWidget {
 }
 
 class _ManualBendingPageState extends State<ManualBendingPage> {
+  bool loading = true;
+  bool _loaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
+    _loaded = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  Future<void> _loadData() async {
+    final form = NewFormScope.of(context);
+
+    final lpm = form.LpmAutoIncrement.text;
+    if (lpm.isEmpty) {
+      setState(() => loading = false);
+      return;
+    }
+
+    final snap = await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .get();
+
+    if (!snap.exists) {
+      setState(() => loading = false);
+      return;
+    }
+
+    final data = snap.data()!;
+    final designer =
+    Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+    final manual =
+    Map<String, dynamic>.from(data["manualBending"]?["data"] ?? {});
+
+    /// 🔒 DESIGNER (VIEW ONLY)
+    form.PartyName.text = designer["PartyName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.LpmAutoIncrement.text = lpm;
+
+    /// ✏️ MANUAL BENDING (EDITABLE)
+    form.ManualBendingCreatedBy.text =
+        manual["ManualBendingCreatedBy"] ?? "";
+
+    setState(() => loading = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Manual Bending"), backgroundColor: Colors.yellow,),
+      appBar: AppBar(
+        title: const Text("Manual Bending"),
+        backgroundColor: Colors.yellow,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            /// 🔒 DESIGNER DATA (VIEW ONLY)
+            TextInput(
+              label: "Party Name",
+              controller: form.PartyName,
+              readOnly: true,
+              hint: 'Name',
+            ),
+            const SizedBox(height: 20),
+
+            TextInput(
+              label: "Particular Job Name",
+              controller: form.ParticularJobName,
+              readOnly: true,
+              hint: 'Job name',
+            ),
+            const SizedBox(height: 20),
+
+            TextInput(
+              label: "LPM Number",
+              controller: form.LpmAutoIncrement,
+              readOnly: true, hint: 'LPM NO.',
+            ),
+            const SizedBox(height: 30),
+
+            /// ✏️ MANUAL BENDING (EDITABLE)
             SearchableDropdownWithInitial(
               label: "Manual Bending Created By",
               items: form.parties,
-              onChanged: (v) {},
+              initialValue: form.ManualBendingCreatedBy.text.isEmpty
+                  ? "Select"
+                  : form.ManualBendingCreatedBy.text,
+              onChanged: (v) {
+                setState(() {
+                  form.ManualBendingCreatedBy.text = (v ?? "").trim();
+                });
+              },
             ),
-            SizedBox(height: 30,),
 
+            const SizedBox(height: 40),
 
-            //Party Name view access
+            /// ✅ SAVE
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection("jobs")
+                      .doc(form.LpmAutoIncrement.text)
+                      .set({
+                    "manualBending": {
+                      "submitted": true,
+                      "data": {
+                        "ManualBendingCreatedBy":
+                        form.ManualBendingCreatedBy.text,
+                      },
+                    },
+                    "currentDepartment": "LaserCutting",
+                    "updatedAt": FieldValue.serverTimestamp(),
+                  }, SetOptions(merge: true));
 
-            //Particular Job name view access
-
-            //LPM view access
-
+                  Navigator.pop(context);
+                },
+                child: const Text("Save & Continue"),
+              ),
+            ),
           ],
         ),
       ),

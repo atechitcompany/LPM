@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../FormComponents/SearchableDropdownWithInitial.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
@@ -19,6 +20,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+    bool isDesigningDone = false;
 
     final bool laserDone =
         form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
@@ -107,6 +109,46 @@ class _DesignerPage6State extends State<DesignerPage6> {
               ),
               const SizedBox(height: 30),
             ],
+
+            if (form.canView("DesigningStatus")) ...[
+              FlexibleToggle(
+                label: "Designing *",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue: isDesigningDone,
+                onChanged: (val) {
+                  setState(() {
+                    isDesigningDone = val;
+                  });
+
+                  form.DesigningStatus.text =
+                  val ? "Done" : "Pending";
+
+                  if (!val) {
+                    form.DesignedBy.clear();
+                  }
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            if (form.canView("DesignerCreatedBy"))
+              SearchableDropdownWithInitial(
+                label: "Designer Created By",
+                items: form.parties,
+                initialValue: form.DesignerCreatedBy.text.isEmpty
+                    ? "Select"
+                    : form.DesignerCreatedBy.text,
+                onChanged: (v) {
+                  setState(() {
+                    form.DesignerCreatedBy.text = (v ?? "").trim();
+                  });
+                },
+              ),
+
+            if (form.canView("DesignerCreatedBy"))
+              const SizedBox(height: 30),
+
 
             /// ✅ Submit Button
             if (form.canView("submitButton")) ...[
