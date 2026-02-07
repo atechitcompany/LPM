@@ -102,7 +102,7 @@ class AppRoutes {
 
       // ================= AUTH =================
       GoRoute(
-        path: '/',
+        path: '/login',
         builder: (_, __) => const LoginScreen(),
       ),
 
@@ -118,7 +118,7 @@ class AppRoutes {
       ),
 
       GoRoute(
-        path: '/intro/splash',
+        path: '/',
         builder: (context, state) => const SplashScreen(),
       ),
 

@@ -46,6 +46,18 @@ class JobSummaryScreen extends StatelessWidget {
     "Delivery": "/jobform/delivery",
   };
 
+  static const Map<String, String> departmentFirestoreKey = {
+    "Designer": "designer",
+    "AutoBending": "autoBending",
+    "ManualBending": "manualBending",
+    "LaserCutting": "laserCut",
+    "Emboss": "emboss",
+    "Rubber": "rubber",
+    "Account": "account",
+    "Delivery": "delivery",
+  };
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -56,129 +68,99 @@ class JobSummaryScreen extends StatelessWidget {
             .collection("jobs")
             .doc(lpm)
             .get(),
-        builder: (context, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          builder: (context, snap) {
+            if (!snap.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (!snap.data!.exists) {
-            return const Center(child: Text("Job not found"));
-          }
+            if (!snap.data!.exists) {
+              return const Center(child: Text("Job not found"));
+            }
 
-          final data = snap.data!.data() as Map<String, dynamic>;
+            final data = snap.data!.data() as Map<String, dynamic>;
+            final dept = SessionManager.getDepartment();
 
-          final designer =
-          Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
-          final auto =
-          Map<String, dynamic>.from(data["autoBending"]?["data"] ?? {});
-          final manual =
-          Map<String, dynamic>.from(data["manualBending"]?["data"] ?? {});
+            final deptKey = departmentFirestoreKey[dept];
+            final Map<String, dynamic> summaryData =
+            Map<String, dynamic>.from(
+              data[deptKey]?["data"] ?? {},
+            );
 
-          final dept = SessionManager.getDepartment();
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-
-                // ================= HEADER =================
-
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "$dept Summary",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  // ================= HEADER =================
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "$dept Summary",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        Chip(
-                          label: Text("LPM $lpm"),
-                          backgroundColor: Colors.amber.shade100,
-                        ),
-                      ],
+                          Chip(
+                            label: Text("LPM $lpm"),
+                            backgroundColor: Colors.amber.shade100,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // ================= DESIGNER SUMMARY =================
-
-                if (dept == "Designer") ...[
-                  _sectionTitle("Designer Form Details"),
+                  // ================= FORM SUMMARY =================
+                  _sectionTitle("$dept Form Details"),
                   _card(
-                    designer.entries
-                        .map((e) => _row(e.key, e.value))
+                    summaryData.entries
+                        .map(
+                          (e) => _row(
+                        e.key,
+                        _prettyValue(e.value),
+                      ),
+                    )
                         .toList(),
                   ),
-                ],
 
+                  const SizedBox(height: 24),
 
-                // ================= AUTOBENDING SUMMARY =================
+                  // ================= EDIT BUTTON =================
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final route = departmentEditRoute[dept];
 
-                if (dept == "AutoBending") ...[
-                  _sectionTitle("AutoBending Details"),
-                  _card(
-                    auto.entries
-                        .map((e) => _row(e.key, _prettyValue(e.value)))
-                        .toList(),
+                        debugPrint(
+                            "EDIT CLICK → dept=$dept route=$route lpm=$lpm");
+
+                        if (route == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("No form for $dept")),
+                          );
+                          return;
+                        }
+
+                        context.push("$route?lpm=$lpm&mode=edit");
+                      },
+                      child: const Text("Edit"),
+                    ),
                   ),
                 ],
-
-
-                const SizedBox(height: 24),
-
-                if (dept == "ManualBending") ...[
-                  _sectionTitle("ManualBending Details"),
-                  _card([
-                    _row("Party Name", designer["PartyName"]),
-                    _row("Particular Job Name", designer["ParticularJobName"]),
-                    _row("ManualBending Created By", auto["ManualBendingCreatedBy"]),
-                  ]),
-
-                  const SizedBox(height: 12),
-
-                ],
-
-                const SizedBox(height: 24),
-
-                // ================= EDIT BUTTON =================
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final dept = SessionManager.getDepartment();
-                      final route = departmentEditRoute[dept];
-
-                      debugPrint("EDIT CLICK → dept=$dept route=$route lpm=$lpm");
-
-                      if (route == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("No form for $dept")),
-                        );
-                        return;
-                      }
-
-                      context.push("$route?lpm=$lpm&mode=edit");
-                    },
-
-                    child: const Text("Edit"),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          }
       ),
     );
   }

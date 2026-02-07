@@ -4,6 +4,8 @@ import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import '../../../../../FormComponents/FlexibleToggle.dart';
 import '../new_form_scope.dart';
+import 'package:go_router/go_router.dart';
+
 
 class ManualBendingPage extends StatefulWidget {
   const ManualBendingPage({super.key});
@@ -170,11 +172,13 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                     "updatedAt": FieldValue.serverTimestamp(),
                   }, SetOptions(merge: true));
 
+                  context.pop(); // ✅ CORRECT
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Form submitted successfully")),
                   );
                   Navigator.pop(context);
                 },
+
                 child: const Text("Save & Continue"),
               ),
             ),
