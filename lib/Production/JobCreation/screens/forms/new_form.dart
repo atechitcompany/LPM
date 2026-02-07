@@ -138,6 +138,7 @@ class NewFormState extends State<NewForm> {
   final LaserCuttingCreatedBy = TextEditingController();
   final AccountsCreatedBy = TextEditingController();
   final EmbossCreatedBy = TextEditingController();
+  final ManualBendingStatus = TextEditingController();
   final ManualBendingCreatedBy = TextEditingController();
   final ManualBendingFittingDoneBy = TextEditingController();
   final GSTType = TextEditingController();
@@ -204,8 +205,8 @@ class NewFormState extends State<NewForm> {
     ParticularJobName.clear();
     Priority.clear();
     Remark.clear();
-    AutoBendingStatus.text = "Pending";
-    DesigningStatus.text = "Pending";
+
+
     DesignedBy.clear();
 
     PlyType.text = "No";
@@ -346,6 +347,8 @@ class NewFormState extends State<NewForm> {
 
       // Status fields
       "DesigningStatus": DesigningStatus.text,
+      "ManualBendingStatus": ManualBendingStatus.text,
+      "AutobendingStatus": AutoBendingStatus.text,
       "DeliveryStatus": DeliveryStatus.text,
       "EmbossStatus": EmbossStatus.text,
       "AutoCreasingStatus": AutoCreasingStatus.text,
@@ -481,6 +484,8 @@ class NewFormState extends State<NewForm> {
     ReceiverName.clear();
     TransportName.clear();
     DesigningStatus.clear();
+    ManualBendingStatus.clear();
+    AutoBendingStatus.clear();
     DeliveryStatus.clear();
     EmbossStatus.clear();
     AutoCreasingStatus.clear();
@@ -534,6 +539,8 @@ class NewFormState extends State<NewForm> {
     // Add all fields that have initialValue
 
     // Example Toggles (default values):
+    AutoBendingStatus.text = "Pending";
+    ManualBendingStatus.text="Pending";
     DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
@@ -700,7 +707,6 @@ class NewFormState extends State<NewForm> {
     Size5.text = "NO";
     DeliveryURL.text = "URL";
 
-    DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
@@ -774,6 +780,8 @@ class NewFormState extends State<NewForm> {
     ReceiverName.dispose();
     TransportName.dispose();
     DesigningStatus.dispose();
+    AutoBendingStatus.dispose();
+    ManualBendingStatus.dispose();
     DeliveryStatus.dispose();
     EmbossStatus.dispose();
     AutoCreasingStatus.dispose();
