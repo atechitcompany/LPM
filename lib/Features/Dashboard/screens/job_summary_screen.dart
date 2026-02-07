@@ -83,15 +83,15 @@ class JobSummaryScreen extends StatelessWidget {
 
                 // ================= DESIGNER SUMMARY =================
 
-                if (dept == "Designer")
-                  _card([
-                    _row("Party Name", designer["PartyName"]),
-                    _row("Particular Job Name", designer["ParticularJobName"]),
-                    _row("Delivery At", designer["DeliveryAt"]),
-                    _row("Order By", designer["Orderby"]),
-                    _row("Priority", designer["Priority"]),
-                    _row("Remark", designer["Remark"]),
-                  ]),
+                if (dept == "Designer") ...[
+                  _sectionTitle("Designer Form Details"),
+                  _card(
+                    designer.entries
+                        .map((e) => _row(e.key, e.value))
+                        .toList(),
+                  ),
+                ],
+
 
                 // ================= AUTOBENDING SUMMARY =================
 
