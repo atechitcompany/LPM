@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import 'package:go_router/go_router.dart';
 
 
 import 'account_pages/account_page_1_basic.dart';
@@ -72,30 +73,54 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                if (_currentPage > 0)
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _back,
-                      child: const Text("Back"),
-                    ),
+
+                // BACK BUTTON — ALWAYS VISIBLE
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      if (_currentPage == 0) {
+                        // FIRST PAGE → DASHBOARD
+                        context.go('/dashboard');
+                      } else {
+                        _controller.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
+                    child: const Text("Back"),
                   ),
-                if (_currentPage > 0) const SizedBox(width: 12),
+                ),
+
+                const SizedBox(width: 12),
+
+                // NEXT / SUBMIT BUTTON
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _next,
+                    onPressed: () {
+                      if (_currentPage == totalPages - 1) {
+                        // LAST PAGE → DASHBOARD
+                        context.go('/dashboard');
+                      } else {
+                        _controller.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,
                       foregroundColor: Colors.black,
                     ),
                     child: Text(
-                      _currentPage == totalPages - 1
-                          ? "Submit"
-                          : "Next",
+                      _currentPage == totalPages - 1 ? "Submit" : "Next",
                     ),
                   ),
                 ),
+
               ],
-            ),
+            )
+
           ),
         ],
       ),
