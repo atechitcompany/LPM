@@ -7,7 +7,7 @@ import '../models/floating_sheet_type.dart';
 import 'task_detail_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/gestures.dart';
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key, required this.title});
@@ -28,6 +28,8 @@ class _MapScreenState extends State<MapScreen> {
 
   // selected tasks for multi-select
   final Set<Task> _selected = {};
+
+  bool _wasKeyboardVisible = false;
 
   // temp selections while creating a new task
   String? _newTaskPriority;
@@ -62,6 +64,8 @@ class _MapScreenState extends State<MapScreen> {
   FirebaseFirestore.instance.collection('tasks');
 
   // collapsed/expanded state for completed section
+  bool _isAddTaskSheetOpen = false;
+
   bool _completedCollapsed = false;
 
   // cache for assignees (loaded from Firestore)
@@ -719,108 +723,121 @@ class _MapScreenState extends State<MapScreen> {
 
   // ------------- add task bottom sheet -------------
   void _openAddTaskSheet() {
+    _isAddTaskSheetOpen = true;
+    _wasKeyboardVisible = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
+      isDismissible: true,
+      enableDrag: !kIsWeb,
+      backgroundColor: Colors.white,
+      constraints: kIsWeb
+          ? BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.4,  // Fixed height on web
+      )
+          : null,  // Dynamic height on mobile
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+          padding: kIsWeb
+              ? const EdgeInsets.all(16.0)  // No viewInsets on web
+              : EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[600],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[600],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                // input row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: taskName,
-                        focusNode: _focusNode,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          hintText: "Add a task",
-                          border: InputBorder.none,
-                        ),
-                        onSubmitted: (_) async {
-                          await _handleAddTaskFromSheet();
-                        },
+              ),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: taskName,
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: "Add a task",
+                        border: InputBorder.none,
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () async {
+                      onSubmitted: (_) async {
                         await _handleAddTaskFromSheet();
                       },
-                      icon: const Icon(
-                        Icons.send,
-                        color: Colors.brown,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 56, // slightly taller for web hit-testing
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(
-                      dragDevices: {
-                        PointerDeviceKind.touch,
-                        PointerDeviceKind.mouse,
-                        PointerDeviceKind.trackpad,
-                      },
-                    ),
-                    child: ReorderableListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const ClampingScrollPhysics(), // IMPORTANT for web
-                      buildDefaultDragHandles: false,
-                      itemCount: _buttonOrder.length,
-                      onReorder: (oldIndex, newIndex) {
-                        setState(() {
-                          if (newIndex > oldIndex) newIndex -= 1;
-                          final item = _buttonOrder.removeAt(oldIndex);
-                          _buttonOrder.insert(newIndex, item);
-                        });
-                        _saveButtonOrder();
-                      },
-                      itemBuilder: (context, index) {
-                        final type = _buttonOrder[index];
-                        return Padding(
-                          key: ValueKey(type),
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ReorderableDelayedDragStartListener(
-                            index: index,
-                            child: _buildBottomSheetButton(type),
-                          ),
-                        );
-                      },
                     ),
                   ),
+                  IconButton(
+                    onPressed: () async {
+                      await _handleAddTaskFromSheet();
+                    },
+                    icon: const Icon(Icons.send, color: Colors.brown),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              SizedBox(
+                height: 56,
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(sheetContext).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                      PointerDeviceKind.trackpad,
+                    },
+                  ),
+                  child: ReorderableListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
+                    buildDefaultDragHandles: false,
+                    itemCount: _buttonOrder.length,
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) newIndex -= 1;
+                        final item = _buttonOrder.removeAt(oldIndex);
+                        _buttonOrder.insert(newIndex, item);
+                      });
+                      _saveButtonOrder();
+                    },
+                    itemBuilder: (context, index) {
+                      final type = _buttonOrder[index];
+                      return Padding(
+                        key: ValueKey(type),
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ReorderableDelayedDragStartListener(
+                          index: index,
+                          child: _buildBottomSheetButton(type),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-
-
-
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      _isAddTaskSheetOpen = false;
+      _wasKeyboardVisible = false;
+    });
   }
+
   // ----------------- full-page task detail -----------------
   void _openTaskDetail(Task task) {
     context.push(
@@ -1134,7 +1151,31 @@ class _MapScreenState extends State<MapScreen> {
     // If multi-select active, show selection appbar
     final bool selectionActive = _selected.isNotEmpty;
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        if (_isAddTaskSheetOpen) {
+          if (kIsWeb) {
+            // WEB: Just close the sheet on any back press
+            Navigator.of(context, rootNavigator: true).pop();
+            FocusScope.of(context).unfocus();
+            return false;
+          } else {
+            // NATIVE: Two-step keyboard then sheet
+            final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
+            if (isKeyboardVisible) {
+              FocusScope.of(context).unfocus();
+              return false;
+            } else {
+              Navigator.of(context, rootNavigator: true).pop();
+              return false;
+            }
+          }
+        }
+        return true; // Allow normal back navigation
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: selectionActive
           ? AppBar(
@@ -1272,7 +1313,9 @@ class _MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: selectionActive
           ? null
-          : FloatingButton(onPressed: _openAddTaskSheet)
+          : FloatingButton(onPressed: _openAddTaskSheet),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        ),
     );
   }
 }

@@ -160,6 +160,7 @@ class AppRoutes {
 
       // ================= DASHBOARD SHELL =================
       ShellRoute(
+        navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
           return Home(
             child: child,
