@@ -5,11 +5,15 @@ import 'firebase_options.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+
   await Hive.initFlutter();
   await Hive.openBox('sessionBox');
   runApp(const MyApp());
