@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
+
 
 // Intro
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
@@ -20,6 +25,8 @@ import 'package:lightatech/core/session/session_manager.dart';
 import 'package:lightatech/Features/Dashboard/screens/dashboard_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/home.dart';
 import 'package:lightatech/Features/Dashboard/screens/job_summary_screen.dart';
+import 'package:lightatech/Features/Dashboard/screens/customer_request_detail_screen.dart';
+import 'package:lightatech/Features/Dashboard/screens/customer_requests_screen.dart';
 
 // Order
 import '../customer/intro/viewmodel/order_detail_view.dart';
@@ -56,9 +63,39 @@ import 'package:lightatech/Features/Target/screens/profile_screen.dart';
 // Payment
 import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
 
+//Firebase
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// 🔑 Navigator Keys
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _rootNavigatorKey =
+GlobalKey<NavigatorState>();
+
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+GlobalKey<NavigatorState>();
+
+String _normalizeDepartment(String d) {
+  switch (d.toLowerCase()) {
+    case 'designer':
+      return 'Designer';
+    case 'auto-bending':
+      return 'AutoBending';
+    case 'manual-bending':
+      return 'ManualBending';
+    case 'laser':
+      return 'Lasercut';
+    case 'emboss':
+      return 'Emboss';
+    case 'rubber':
+      return 'Rubber';
+    case 'account1':
+      return 'Account';
+    case 'delivery':
+      return 'Delivery';
+    default:
+      return 'Designer';
+  }
+}
+
 
 class AppRoutes {
   AppRoutes._();
@@ -69,17 +106,16 @@ class AppRoutes {
 
 
     routes: [
-      // ✅ Login & Intro pages (outside shells)
+
+      // ================= AUTH =================
       GoRoute(
-        path: '/',
-        name: AppRoutesName.Loginroutename,
-        builder: (context, state) => const LoginScreen(),
+        path: '/login',
+        builder: (_, __) => const LoginScreen(),
       ),
 
       GoRoute(
         path: '/admin',
-        name: AppRoutesName.Adminroutename,
-        builder: (context, state) => const Admin(),
+        builder: (_, __) => const Admin(),
       ),
 
       GoRoute(
@@ -89,7 +125,7 @@ class AppRoutes {
       ),
 
       GoRoute(
-        path: '/intro/splash',
+        path: '/',
         builder: (context, state) => const SplashScreen(),
       ),
 
@@ -118,7 +154,18 @@ class AppRoutes {
         builder: (context, state) => const LetsYouInScreen(),
       ),
 
-      // ✅ DASHBOARD SHELL (Home Bottom Nav)
+
+      GoRoute(
+        path: '/productivity',
+        builder: (context, state) {
+          return NewFormScope(
+            form: NewFormState(),
+            child: const AccountFormFlow(),
+          );
+        },
+      ),
+
+      // ================= DASHBOARD SHELL =================
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
@@ -128,29 +175,43 @@ class AppRoutes {
           );
         },
         routes: [
+
           GoRoute(
             path: '/dashboard',
-            name: AppRoutesName.DashboardScreen,
             builder: (context, state) {
-              final data = state.extra as Map<String, dynamic>?;
+              final dept = SessionManager.getDepartment();
+              final email = SessionManager.getEmail();
 
-              final dept = data?['department'] ?? SessionManager.getDepartment() ?? 'Unknown';
-              final email = data?['email'] ?? SessionManager.getEmail() ?? '';
+              if (dept == null || email == null) {
+                return const LoginScreen();
+              }
 
               return DashboardScreen(
                 department: dept,
                 email: email,
               );
+            },
+          ),
 
+          // ✅ NEW ROUTE: Customer Requests Screen (opened from notification icon)
+          GoRoute(
+            path: '/customer-requests',
+            builder: (context, state) => const CustomerRequestsScreen(),
+          ),
+
+          // ✅ ROUTE: Customer Request Detail
+          GoRoute(
+            path: '/customer-request-detail/:docId',
+            builder: (context, state) {
+              final docId = state.pathParameters['docId'] ?? '';
+              return CustomerRequestDetailScreen(docId: docId);
             },
           ),
 
           GoRoute(
             path: '/job-summary/:lpm',
-            builder: (context, state) {
-              final lpm = state.pathParameters['lpm']!;
-              return JobSummaryScreen(lpm: lpm);
-            },
+            builder: (context, state) =>
+                JobSummaryScreen(lpm: state.pathParameters['lpm']!),
           ),
 
           GoRoute(
@@ -177,90 +238,80 @@ class AppRoutes {
         ],
       ),
 
-      // ✅ JOB FORM SHELL (NewForm Wrapper)
+      // ================= JOB FORM SHELL =================
       ShellRoute(
         builder: (context, state, child) {
-          final extra = state.extra as Map<String, dynamic>?;
+          final dept =
+              state.uri.queryParameters['department'] ?? 'designer';
+
+          final email =
+          state.uri.queryParameters['email'];
+
+          final lpm =
+          state.uri.queryParameters['lpm'];
+
+          final mode =
+          state.uri.queryParameters['mode'];
 
           return NewForm(
-            department: extra?['department'] ?? 'Designer',
-            lpm: extra?['lpm'],
-            mode: extra?['mode'],
+            department: _normalizeDepartment(dept),
+            lpm: lpm,
+            mode: mode,
             child: child,
           );
         },
         routes: [
+
           GoRoute(
             path: '/jobform',
-            redirect: (_, __) => '/jobform/designer-1',
+            redirect: (_, __) => '/jobform/designer-1?department=designer',
           ),
 
-          GoRoute(
-            path: '/jobform/designer-1',
-            builder: (context, state) => const DesignerPage1(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-2',
-            builder: (context, state) => const DesignerPage2(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-3',
-            builder: (context, state) => const DesignerPage3(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-4',
-            builder: (context, state) => const DesignerPage4(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-5',
-            builder: (context, state) => const DesignerPage5(),
-          ),
-          GoRoute(
-            path: '/jobform/designer-6',
-            builder: (context, state) => const DesignerPage6(),
-          ),
+          // Designer flow
+          GoRoute(path: '/jobform/designer-1', builder: (_, __) => const DesignerPage1()),
+          GoRoute(path: '/jobform/designer-2', builder: (_, __) => const DesignerPage2()),
+          GoRoute(path: '/jobform/designer-3', builder: (_, __) => const DesignerPage3()),
+          GoRoute(path: '/jobform/designer-4', builder: (_, __) => const DesignerPage4()),
+          GoRoute(path: '/jobform/designer-5', builder: (_, __) => const DesignerPage5()),
+          GoRoute(path: '/jobform/designer-6', builder: (_, __) => const DesignerPage6()),
 
-          GoRoute(
-            path: '/jobform/auto-bending',
-            builder: (context, state) => const AutoBendingPage(),
-          ),
-          GoRoute(
-            path: '/jobform/manual-bending',
-            builder: (context, state) => const ManualBendingPage(),
-          ),
-          GoRoute(
-            path: '/jobform/laser',
-            builder: (context, state) => const LaserPage(),
-          ),
-          GoRoute(
-            path: '/jobform/rubber',
-            builder: (context, state) => const RubberPage(),
-          ),
-          GoRoute(
-            path: '/jobform/emboss',
-            builder: (context, state) => const EmbossPage(),
-          ),
-          GoRoute(
-            path: '/jobform/account1',
-            builder: (context, state) => const AccountPage(),
-          ),
-          GoRoute(
-            path: '/jobform/delivery',
-            builder: (context, state) => const DeliveryPage(),
-          ),
+          // Departments
+          GoRoute(path: '/jobform/autobending', builder: (_, __) => const AutoBendingPage()),
+          GoRoute(path: '/jobform/manualbending', builder: (_, __) => const ManualBendingPage()),
+          GoRoute(path: '/jobform/laser', builder: (_, __) => const LaserPage()),
+          GoRoute(path: '/jobform/emboss', builder: (_, __) => const EmbossPage()),
+          GoRoute(path: '/jobform/rubber', builder: (_, __) => const RubberPage()),
+          GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountPage()),
+          GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
         ],
       ),
 
-      // ✅ Other Routes
+      //Other routes
       GoRoute(
         path: '/task',
-        name: AppRoutesName.TaskDetail,
         builder: (context, state) {
           final task = state.extra as Task;
+
           return TaskDetailPage(
             task: task,
-            onChanged: () {},
-            onDelete: () {},
+            onChanged: () async {
+              // Update in Firebase directly
+              if (task.id != null) {
+                await FirebaseFirestore.instance
+                    .collection('tasks')
+                    .doc(task.id)
+                    .update(task.toMap());
+              }
+            },
+            onDelete: () async {
+              // Delete from Firebase
+              if (task.id != null) {
+                await FirebaseFirestore.instance
+                    .collection('tasks')
+                    .doc(task.id)
+                    .delete();
+              }
+            },
           );
         },
       ),

@@ -9,12 +9,14 @@ enum Department {
   Designer,
   AutoBending,
   ManualBending,
-  Lasercut,
+  LaserCutting,
   Emboss,
   Rubber,
   Account,
   Delivery,
+  Completed,
 }
+
 
 class NewForm extends StatefulWidget {
   final Widget child;
@@ -83,6 +85,8 @@ class NewFormState extends State<NewForm> {
     "SV Road",
   ];
   List<String> PincodeList = ["400104", "400058", "400064", "400092"];
+  String? get mode => widget.mode;
+  String? get lpm => widget.lpm;
 
   final BuyerOrderNo = TextEditingController();
   final DeliveryAt = TextEditingController();
@@ -129,10 +133,12 @@ class NewFormState extends State<NewForm> {
   final CreatedBy = TextEditingController();
   final Amounts3 = TextEditingController();
   final DesignerCreatedBy = TextEditingController();
+  final AutoBendingStatus = TextEditingController();
   final AutoBendingCreatedBy = TextEditingController();
   final LaserCuttingCreatedBy = TextEditingController();
   final AccountsCreatedBy = TextEditingController();
   final EmbossCreatedBy = TextEditingController();
+  final ManualBendingStatus = TextEditingController();
   final ManualBendingCreatedBy = TextEditingController();
   final ManualBendingFittingDoneBy = TextEditingController();
   final GSTType = TextEditingController();
@@ -190,6 +196,56 @@ class NewFormState extends State<NewForm> {
   String Street = "";
   String Pincode = "";
   String User = "";
+
+  void clearDesignerData() {
+    PartyName.clear();
+    DesignerCreatedBy.clear();
+    DeliveryAt.clear();
+    Orderby.clear();
+    ParticularJobName.clear();
+    Priority.clear();
+    Remark.clear();
+
+
+    DesignedBy.clear();
+
+    PlyType.text = "No";
+    PlySelectedBy.clear();
+
+    Blade.text = "No";
+    BladeSelectedBy.clear();
+
+    Creasing.text = "No";
+    CreasingSelectedBy.clear();
+
+    Perforation.text = "No";
+    PerforationSelectedBy.clear();
+
+    ZigZagBlade.text = "No";
+    ZigZagBladeSelectedBy.clear();
+
+    RubberType.text = "No";
+    RubberSelectedBy.clear();
+
+    HoleType.text = "No";
+    HoleSelectedBy.clear();
+
+    EmbossStatus.text = "No";
+    EmbossPcs.clear();
+
+    MaleEmbossType.text = "No";
+    FemaleEmbossType.text = "No";
+
+    X.clear();
+    Y.clear();
+    X2.clear();
+    Y2.clear();
+
+    StrippingType.text = "No";
+    LaserCuttingStatus.text = "Pending";
+    RubberFixingDone.text = "No";
+    WhiteProfileRubber.text = "No";
+  }
 
   Map<String, dynamic> buildFormData() {
     return {
@@ -291,6 +347,8 @@ class NewFormState extends State<NewForm> {
 
       // Status fields
       "DesigningStatus": DesigningStatus.text,
+      "ManualBendingStatus": ManualBendingStatus.text,
+      "AutobendingStatus": AutoBendingStatus.text,
       "DeliveryStatus": DeliveryStatus.text,
       "EmbossStatus": EmbossStatus.text,
       "AutoCreasingStatus": AutoCreasingStatus.text,
@@ -426,6 +484,8 @@ class NewFormState extends State<NewForm> {
     ReceiverName.clear();
     TransportName.clear();
     DesigningStatus.clear();
+    ManualBendingStatus.clear();
+    AutoBendingStatus.clear();
     DeliveryStatus.clear();
     EmbossStatus.clear();
     AutoCreasingStatus.clear();
@@ -479,6 +539,8 @@ class NewFormState extends State<NewForm> {
     // Add all fields that have initialValue
 
     // Example Toggles (default values):
+    AutoBendingStatus.text = "Pending";
+    ManualBendingStatus.text="Pending";
     DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
@@ -611,30 +673,11 @@ class NewFormState extends State<NewForm> {
         const SnackBar(content: Text("Form submitted successfully")),
       );
 
-      context.pop(); // back to dashboard
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
     }
-  }
-
-  Future<void> _loadJob(String lpm) async {
-    final doc = await FirebaseFirestore.instance
-        .collection("jobs")
-        .doc(lpm)
-        .get();
-
-    final data = doc.data()!;
-    final designer = data["designer"]?["data"] ?? {};
-    final autobending = data["autoBending"]?["data"] ?? {};
-
-    PartyName.text = designer["PartyName"] ?? "";
-    DeliveryAt.text = designer["DeliveryAt"] ?? "";
-    ParticularJobName.text = designer["ParticularJobName"] ?? "";
-
-    AutoCreasingStatus.text =
-        autobending["AutoCreasingStatus"] ?? "";
   }
 
 
@@ -653,10 +696,6 @@ class NewFormState extends State<NewForm> {
       loadCurrentLpm();
     }
 
-    if (widget.lpm != null) {
-      _loadJob(widget.lpm!);
-    }
-
     // defaults
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -668,7 +707,6 @@ class NewFormState extends State<NewForm> {
     Size5.text = "NO";
     DeliveryURL.text = "URL";
 
-    DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
@@ -677,6 +715,9 @@ class NewFormState extends State<NewForm> {
     PlyType.text = "No";
     Creasing.text = "No";
   }
+
+
+
 
   // Dispose controllers to prevent memory leaks
   @override
@@ -739,6 +780,8 @@ class NewFormState extends State<NewForm> {
     ReceiverName.dispose();
     TransportName.dispose();
     DesigningStatus.dispose();
+    AutoBendingStatus.dispose();
+    ManualBendingStatus.dispose();
     DeliveryStatus.dispose();
     EmbossStatus.dispose();
     AutoCreasingStatus.dispose();
@@ -780,6 +823,13 @@ class NewFormState extends State<NewForm> {
   @override
 
   Widget build(BuildContext context) {
+    debugPrint(
+      'NEWFORM BUILD → '
+          'dept=${widget.department}, '
+          'lpm=${widget.lpm}, '
+          'mode=${widget.mode}, '
+          'uri=${GoRouterState.of(context).uri}',
+    );
     return NewFormScope(
       form: this,
       child: Scaffold(
@@ -817,7 +867,8 @@ class NewFormState extends State<NewForm> {
   // -------- Navigation Logic --------
 
   void _goDesignerNext() {
-    final location = GoRouterState.of(context).uri.toString();
+    final uri = GoRouterState.of(context).uri;
+    final path = uri.path; // 👈 IMPORTANT: path only
 
     const designerPages = [
       '/jobform/designer-1',
@@ -828,9 +879,12 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-6',
     ];
 
-    final index = designerPages.indexOf(location);
+    final index = designerPages.indexOf(path);
+
     if (index != -1 && index < designerPages.length - 1) {
-      context.push(designerPages[index + 1]);
+      context.push(
+        designerPages[index + 1] + '?${uri.query}', // 👈 preserve params
+      );
     }
   }
 

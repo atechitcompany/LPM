@@ -90,12 +90,16 @@ class DepartmentFieldAccess {
     "AutoCreasingStatus": "edit",
     "LaserCuttingStatus": "edit",
 
-    // ❌ hidden
-    "AccountsCreatedBy": "hide",
+
   };
 
   static Map<String, String> _manualBending() => {
     "PartyName": "view",
-    "Blade": "edit",
+    "LpmAutoIncrement": "view",
+    "ParticularJobName": "view",
+
+    // ✏️ Manual bending editable
+    "ManualBendingStatus" : "edit",
+    "ManualBendingCreatedBy": "edit",
   };
 }

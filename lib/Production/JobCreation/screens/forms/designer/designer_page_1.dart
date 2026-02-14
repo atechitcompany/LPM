@@ -16,12 +16,72 @@ class DesignerPage1 extends StatefulWidget {
 class _DesignerPage1State extends State<DesignerPage1> {
   List<String> userNames = [];
   bool isLoading = true;
+  bool _initialized = false;
+  String? selectedJob;
+
 
   @override
   void initState() {
     super.initState();
     fetchUserNames();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    final form = NewFormScope.of(context);
+
+    // 🆕 CREATE MODE → CLEAR FORM
+    if (form.mode != "edit") {
+      form.clearDesignerData();
+    }
+    // ✏️ EDIT MODE → LOAD DATA
+    else {
+      _loadDesignerData(form);
+    }
+  }
+
+
+  Future<void> _loadDesignerData(dynamic form) async {
+    final lpm = form.lpm;
+    if (lpm == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .get();
+
+    if (!snap.exists) return;
+
+    final data = snap.data()!;
+    final designer =
+    Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+
+    form.PartyName.text = designer["PartyName"] ?? "";
+    form.DesignerCreatedBy.text =
+        designer["DesignerCreatedBy"] ?? "";
+    form.DeliveryAt.text = designer["DeliveryAt"] ?? "";
+    form.Orderby.text = designer["Orderby"] ?? "";
+    selectedJob = designer["ParticularJobName"];
+    form.ParticularJobName.text = selectedJob ?? "";
+
+    form.Priority.text = designer["Priority"] ?? "";
+    form.Remark.text = designer["Remark"] ?? "";
+
+
+
+    // LPM must be preserved
+    form.LpmAutoIncrement.text = lpm.toString();
+    if (mounted) setState(() {});
+    debugPrint("DesignerPage1 MODE = ${form.mode}");
+    debugPrint("DesignerPage1 LPM = ${form.lpm}");
+
+  }
+
 
   Future<void> fetchUserNames() async {
     try {
@@ -70,7 +130,9 @@ class _DesignerPage1State extends State<DesignerPage1> {
                 : SearchableDropdownWithInitial(
               label: "Party Name *",
               items: userNames,
-              initialValue: null, // ✅ IMPORTANT
+              initialValue: form.PartyName.text.isEmpty
+                  ? null
+                  : form.PartyName.text,
               onChanged: (v) {
                 setState(() {
                   form.PartyName.text = (v ?? "").trim();
@@ -80,26 +142,9 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
 
 
+
             const SizedBox(height: 30),
 
-            /// ✅ Designer Created By
-            /// ✅ Designer Created By
-            if (form.canView("DesignerCreatedBy"))
-              SearchableDropdownWithInitial(
-                label: "Designer Created By",
-                items: form.parties,
-                initialValue: form.DesignerCreatedBy.text.isEmpty
-                    ? "Select"
-                    : form.DesignerCreatedBy.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.DesignerCreatedBy.text = (v ?? "").trim();
-                  });
-                },
-              ),
-
-            if (form.canView("DesignerCreatedBy"))
-              const SizedBox(height: 30),
 
 
             /// ✅ Delivery At
@@ -124,16 +169,22 @@ class _DesignerPage1State extends State<DesignerPage1> {
             AddableSearchDropdown(
               label: "Particular Job Name *",
               items: form.jobs,
-              initialValue: form.ParticularJobName.text.isEmpty
-                  ? "Select Job"
-                  : form.ParticularJobName.text,
+              initialValue: selectedJob,
               onChanged: (v) {
                 setState(() {
+                  selectedJob = v;
                   form.ParticularJobName.text = (v ?? "").trim();
                 });
               },
-              onAdd: (newJob) => form.jobs.add(newJob),
+              onAdd: (newJob) {
+                setState(() {
+                  form.jobs.add(newJob);
+                  selectedJob = newJob;
+                  form.ParticularJobName.text = newJob;
+                });
+              },
             ),
+
 
             const SizedBox(height: 30),
 
