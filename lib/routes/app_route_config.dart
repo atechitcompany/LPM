@@ -25,6 +25,8 @@ import 'package:lightatech/core/session/session_manager.dart';
 import 'package:lightatech/Features/Dashboard/screens/dashboard_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/home.dart';
 import 'package:lightatech/Features/Dashboard/screens/job_summary_screen.dart';
+import 'package:lightatech/Features/Dashboard/screens/customer_request_detail_screen.dart';
+import 'package:lightatech/Features/Dashboard/screens/customer_requests_screen.dart';
 
 // Order
 import '../customer/intro/viewmodel/order_detail_view.dart';
@@ -67,6 +69,7 @@ GlobalKey<NavigatorState>();
 
 final GlobalKey<NavigatorState> _shellNavigatorKey =
 GlobalKey<NavigatorState>();
+
 String _normalizeDepartment(String d) {
   switch (d.toLowerCase()) {
     case 'designer':
@@ -186,6 +189,20 @@ class AppRoutes {
             },
           ),
 
+          // ✅ NEW ROUTE: Customer Requests Screen (opened from notification icon)
+          GoRoute(
+            path: '/customer-requests',
+            builder: (context, state) => const CustomerRequestsScreen(),
+          ),
+
+          // ✅ ROUTE: Customer Request Detail
+          GoRoute(
+            path: '/customer-request-detail/:docId',
+            builder: (context, state) {
+              final docId = state.pathParameters['docId'] ?? '';
+              return CustomerRequestDetailScreen(docId: docId);
+            },
+          ),
 
           GoRoute(
             path: '/job-summary/:lpm',
@@ -291,6 +308,3 @@ class AppRoutes {
     ],
   );
 }
-
-
-

@@ -144,39 +144,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Row(
                       children: [
                         const SizedBox(width: 12),
-                          PaymentStatusCard(
-                            label: 'Payments',
-                            count: 4,
-                            color: Colors.red,
-                            icon: Icons.account_balance_wallet,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Viewing Payments')),
-                              );
-                            },
-                          ),
-                          PaymentStatusCard(
-                            label: 'Upcoming',
-                            count: 4,
-                            color: Colors.blue,
-                            icon: Icons.access_time,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Viewing Upcoming')),
-                              );
-                            },
-                          ),
-                          PaymentStatusCard(
-                            label: 'Done',
-                            count: 4,
-                            color: Colors.green,
-                            icon: Icons.check_circle,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Viewing Done')),
-                              );
-                            },
-                          ),
+                        PaymentStatusCard(
+                          label: 'Payments',
+                          count: 4,
+                          color: Colors.red,
+                          icon: Icons.account_balance_wallet,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Viewing Payments')),
+                            );
+                          },
+                        ),
+                        PaymentStatusCard(
+                          label: 'Upcoming',
+                          count: 4,
+                          color: Colors.blue,
+                          icon: Icons.access_time,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Viewing Upcoming')),
+                            );
+                          },
+                        ),
+                        PaymentStatusCard(
+                          label: 'Done',
+                          count: 4,
+                          color: Colors.green,
+                          icon: Icons.check_circle,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Viewing Done')),
+                            );
+                          },
+                        ),
 
                         const SizedBox(width: 12),
                       ],
@@ -185,20 +185,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
 
                 // ✅ Search Bar (UI only for now)
-                  SearchBarWidget(
-                    controller: searchController,
-                    onFilterTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Advanced filters coming soon!'),
-                        ),
-                      );
-                    },
-                    onSearchChanged: (_) {
-                      // ✅ We will connect search to Firestore later
-                      setState(() {});
-                    },
-                  ),
+                SearchBarWidget(
+                  controller: searchController,
+                  onFilterTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Advanced filters coming soon!'),
+                      ),
+                    );
+                  },
+                  onSearchChanged: (_) {
+                    // ✅ We will connect search to Firestore later
+                    setState(() {});
+                  },
+                ),
               ],
             ),
           ),

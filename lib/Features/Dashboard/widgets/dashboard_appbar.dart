@@ -49,18 +49,21 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
 
       actions: [
-        IconButton(
-          icon: Icon(Icons.notifications_none),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('No new notifications')),
-            );
-          },
-        ),
+        // ✅ NOTIFICATION ICON - Only for Designer
+        if (department == 'Designer')
+          IconButton(
+            icon: Icon(Icons.notifications_none),
+            onPressed: () {
+              // Navigate to customer requests screen
+              context.push('/customer-requests');
+            },
+          ),
+
+        // ✅ USER PROFILE ICON
         IconButton(
           icon: Image.asset(
             'assets/user.png',
-            width: 20, // 👈 adjust size
+            width: 20,
             height: 20,
           ),
 
