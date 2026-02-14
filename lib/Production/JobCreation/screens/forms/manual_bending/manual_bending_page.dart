@@ -185,7 +185,6 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                           form.ManualBendingCreatedBy.text,
                         },
                       },
-                    },
                     "currentDepartment": "LaserCutting",
                     "updatedAt": FieldValue.serverTimestamp(),
                   }, SetOptions(merge: true));
@@ -194,10 +193,10 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Form submitted successfully")),
                   );
-                  Navigator.pop(context);
                 },
 
                 child: const Text("Save & Continue"),
+              ),
               ),
           ],
         ),
