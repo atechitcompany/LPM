@@ -102,7 +102,7 @@ class AppRoutes {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: SessionManager.isLoggedIn() ? '/dashboard' : '/dashboard',
+    initialLocation: SessionManager.isLoggedIn() ? '/dashboard' : '/',
 
 
     routes: [
