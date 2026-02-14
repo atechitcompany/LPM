@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
+
 
 // Intro
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
@@ -97,7 +102,7 @@ class AppRoutes {
 
       // ================= AUTH =================
       GoRoute(
-        path: '/',
+        path: '/login',
         builder: (_, __) => const LoginScreen(),
       ),
 
@@ -113,7 +118,7 @@ class AppRoutes {
       ),
 
       GoRoute(
-        path: '/intro/splash',
+        path: '/',
         builder: (context, state) => const SplashScreen(),
       ),
 
@@ -143,9 +148,19 @@ class AppRoutes {
       ),
 
 
+      GoRoute(
+        path: '/productivity',
+        builder: (context, state) {
+          return NewFormScope(
+            form: NewFormState(),
+            child: const AccountFormFlow(),
+          );
+        },
+      ),
 
       // ================= DASHBOARD SHELL =================
       ShellRoute(
+        navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
           return Home(
             child: child,

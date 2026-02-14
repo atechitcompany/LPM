@@ -45,7 +45,7 @@ class _IntroScreenState extends State<IntroScreen> {
       );
     } else {
       /// 👉 Later this will go to Auth flow
-      context.go('/'); // temporary
+      context.go('/login'); // temporary
     }
   }
 

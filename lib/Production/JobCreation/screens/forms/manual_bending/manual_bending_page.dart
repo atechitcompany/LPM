@@ -4,6 +4,8 @@ import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import '../new_form_scope.dart';
+import 'package:go_router/go_router.dart';
+
 
 class ManualBendingPage extends StatefulWidget {
   const ManualBendingPage({super.key});
@@ -183,14 +185,19 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                           form.ManualBendingCreatedBy.text,
                         },
                       },
-                      "currentDepartment": "LaserCutting",
-                      "updatedAt": FieldValue.serverTimestamp(),
-                    }, SetOptions(merge: true));
+                    },
+                    "currentDepartment": "LaserCutting",
+                    "updatedAt": FieldValue.serverTimestamp(),
+                  }, SetOptions(merge: true));
 
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Save & Continue"),
-                ),
+                  context.pop(); // ✅ CORRECT
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Form submitted successfully")),
+                  );
+                  Navigator.pop(context);
+                },
+
+                child: const Text("Save & Continue"),
               ),
           ],
         ),

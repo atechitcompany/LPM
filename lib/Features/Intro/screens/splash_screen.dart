@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     /// ⏳ Auto navigate after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      context.go('/intro');
+      context.go('/login');
     });
   }
 

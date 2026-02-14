@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:lightatech/routes/app_route_config.dart';
 import 'firebase_options.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/gestures.dart';
 
 
 void main() async {
@@ -24,14 +25,21 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
 
+      // ✅ THIS IS THE WEB FIX
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+        },
+      ),
+
       theme: ThemeData(
         useMaterial3: true,
 
-        // ✅ FIX: primary must NOT be white
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFFF8D94B), // used by checkbox & cursor
+          primary: Color(0xFFF8D94B),
           onPrimary: Colors.black,
-
           background: Colors.white,
           surface: Colors.white,
           onSurface: Colors.black,
@@ -39,18 +47,15 @@ class MyApp extends StatelessWidget {
 
         scaffoldBackgroundColor: Colors.white,
 
-        // ✅ FIX: cursor + selection visibility
         textSelectionTheme: const TextSelectionThemeData(
           cursorColor: Colors.black,
           selectionHandleColor: Colors.black,
         ),
 
-        // 🎯 ONLY APPBAR YELLOW (unchanged)
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFFF8D94B),
           surfaceTintColor: Colors.transparent,
           elevation: 0,
-
           iconTheme: IconThemeData(color: Colors.black),
           titleTextStyle: TextStyle(
             color: Colors.black,
@@ -62,5 +67,6 @@ class MyApp extends StatelessWidget {
 
       routerConfig: AppRoutes.router,
     );
+
   }
 }

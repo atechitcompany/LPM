@@ -17,29 +17,26 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int currentIndex = _calculateIndex(location);
+    final int currentIndex = _calculateIndex(location);
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,  // 👈 CHANGE back to false
       body: child,
-
       bottomNavigationBar: BottomNavBar(
         currentIndex: currentIndex,
         onNavTap: (index) => _onNavTap(context, index),
       ),
-
     );
   }
 
-  // ------------------ ROUTE → INDEX ------------------
   int _calculateIndex(String location) {
     if (location.startsWith('/map')) return 1;
     if (location.startsWith('/payment')) return 2;
     if (location.startsWith('/graph')) return 3;
     if (location.startsWith('/target')) return 4;
-    return 0; // dashboard
+    return 0;
   }
 
-  // ------------------ INDEX → ROUTE ------------------
   void _onNavTap(BuildContext context, int index) {
     switch (index) {
       case 0:

@@ -6,8 +6,8 @@ import '../models/task.dart';
 import '../models/floating_sheet_type.dart';
 import 'task_detail_page.dart';
 import 'package:go_router/go_router.dart';
-
-
+import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key, required this.title});
@@ -28,6 +28,8 @@ class _MapScreenState extends State<MapScreen> {
 
   // selected tasks for multi-select
   final Set<Task> _selected = {};
+
+  bool _wasKeyboardVisible = false;
 
   // temp selections while creating a new task
   String? _newTaskPriority;
@@ -62,6 +64,8 @@ class _MapScreenState extends State<MapScreen> {
   FirebaseFirestore.instance.collection('tasks');
 
   // collapsed/expanded state for completed section
+  bool _isAddTaskSheetOpen = false;
+
   bool _completedCollapsed = false;
 
   // cache for assignees (loaded from Firestore)
@@ -72,7 +76,6 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-
     // 1️⃣ Load saved button order (Priority / Remind / Assign / etc.)
     _loadButtonOrder();
 
@@ -86,6 +89,211 @@ class _MapScreenState extends State<MapScreen> {
     await prefs.setStringList(
       'home_button_order',
       _buttonOrder.map((e) => e.name).toList(),
+    );
+  }
+
+  Widget _buildBottomSheetButtonWithState(FloatingSheetType type, StateSetter setModalState) {
+    IconData icon;
+    String label;
+    String? selectedValue;
+    void Function(String) onSelected;
+    void Function() onClear;
+
+    switch (type) {
+      case FloatingSheetType.priority:
+        icon = Icons.flag_outlined;
+        label = "Priority";
+        selectedValue = _newTaskPriority;
+        onSelected = (v) {
+          setState(() => _newTaskPriority = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskPriority = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.remind:
+        icon = Icons.notifications_active;
+        label = "Remind Me";
+        selectedValue = _newTaskReminder != null ? "Set" : null;
+        onSelected = (v) {
+          setState(() => _newTaskReminder = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskReminder = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.assign:
+        icon = Icons.assignment;
+        label = "Assign";
+        selectedValue = _newTaskAssignee;
+        onSelected = (v) {
+          setState(() => _newTaskAssignee = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskAssignee = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.deadline:
+        icon = Icons.alarm;
+        label = "Deadline";
+        selectedValue = _newTaskDeadline != null ? "Set" : null;
+        onSelected = (v) {
+          setState(() => _newTaskDeadline = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskDeadline = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.workType:
+        icon = Icons.insert_drive_file;
+        label = "Work Type";
+        selectedValue = _newTaskWorkType;
+        onSelected = (v) {
+          setState(() => _newTaskWorkType = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskWorkType = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.folder:
+        icon = Icons.folder_outlined;
+        label = "Folder";
+        selectedValue = _newTaskFolder;
+        onSelected = (v) {
+          setState(() => _newTaskFolder = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskFolder = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.clientName:
+        icon = Icons.business_center_outlined;
+        label = "Client Name";
+        selectedValue = _newTaskClientName;
+        onSelected = (v) {
+          setState(() => _newTaskClientName = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskClientName = null);
+          setModalState(() {});
+        };
+        break;
+    }
+
+    final bool isSelected = selectedValue != null && selectedValue.isNotEmpty;
+    final String displayText = isSelected ? selectedValue : label;
+
+    return Builder(
+      builder: (buttonContext) => AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.brown.shade50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.brown : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _showFloatingSheet(
+              buttonContext,
+              type,
+              onSelected: onSelected,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        scale: animation,
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      icon,
+                      key: ValueKey('icon_$isSelected'),
+                      size: 18,
+                      color: isSelected ? Colors.brown : Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return SizeTransition(
+                        sizeFactor: animation,
+                        axis: Axis.horizontal,
+                        axisAlignment: -1,
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Text(
+                      displayText,
+                      key: ValueKey('text_$displayText'),
+                      style: TextStyle(
+                        color: isSelected ? Colors.brown : Colors.grey.shade700,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  // Show cross button only when selected
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: isSelected ? 24 : 0,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: isSelected ? 1.0 : 0.0,
+                      child: isSelected
+                          ? GestureDetector(
+                        onTap: () {
+                          onClear();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.brown,
+                          ),
+                        ),
+                      )
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -362,8 +570,8 @@ class _MapScreenState extends State<MapScreen> {
       assignee: _newTaskAssignee,
       deadline: _newTaskDeadline,
       workType: _newTaskWorkType,
-      folder: _newTaskFolder,          //
-      clientName: _newTaskClientName,  //
+      folder: _newTaskFolder,
+      clientName: _newTaskClientName,
       priorityUpdatedAt: _newTaskPriority != null ? nowMs : null,
     );
 
@@ -373,21 +581,20 @@ class _MapScreenState extends State<MapScreen> {
       tasks.add(newTask);
       _sortTasks();
 
-      // reset temporary selections for the next task
+      // Reset ALL temporary selections
       _newTaskPriority = null;
       _newTaskReminder = null;
       _newTaskAssignee = null;
       _newTaskDeadline = null;
       _newTaskWorkType = null;
+      _newTaskFolder = null;
+      _newTaskClientName = null;
     });
 
-    // KEEP THE BOTTOM SHEET OPEN: clear input and re-request focus
+    // Clear input and refocus
     taskName.clear();
     await Future.delayed(const Duration(milliseconds: 80));
     _focusNode.requestFocus();
-    _newTaskFolder = null;
-    _newTaskClientName = null;
-
   }
 
   // ---------- priority sorting helpers ----------
@@ -719,103 +926,139 @@ class _MapScreenState extends State<MapScreen> {
 
   // ------------- add task bottom sheet -------------
   void _openAddTaskSheet() {
+    _isAddTaskSheetOpen = true;
+    _wasKeyboardVisible = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
+      isDismissible: true,
+      enableDrag: !kIsWeb,
+      backgroundColor: Colors.white,
+      constraints: kIsWeb
+          ? BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.4,
+      )
+          : null,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[600],
-                    borderRadius: BorderRadius.circular(2),
+      builder: (sheetContext) {
+        return StatefulBuilder(  // 👈 ADD THIS to update UI when selections change
+          builder: (context, setModalState) {
+            return Padding(
+              padding: kIsWeb
+                  ? const EdgeInsets.all(16.0)
+                  : EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[600],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                // input row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: taskName,
-                        focusNode: _focusNode,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          hintText: "Add a task",
-                          border: InputBorder.none,
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: taskName,
+                          focusNode: _focusNode,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            hintText: "Add a task",
+                            border: InputBorder.none,
+                          ),
+                          onSubmitted: (_) async {
+                            await _handleAddTaskFromSheet();
+                            setModalState(() {}); // Reset selections in UI
+                          },
                         ),
-                        onSubmitted: (_) async {
+                      ),
+                      IconButton(
+                        onPressed: () async {
                           await _handleAddTaskFromSheet();
+                          setModalState(() {}); // Reset selections in UI
+                        },
+                        icon: const Icon(Icons.send, color: Colors.brown),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // 👇 CENTERED BUTTONS FOR WEB
+                  SizedBox(
+                    height: 56,
+                    child: kIsWeb
+                        ? Center(  // Center on web
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: _buttonOrder.map((type) {
+                          return _buildBottomSheetButtonWithState(type, setModalState);
+                        }).toList(),
+                      ),
+                    )
+                        : ScrollConfiguration(  // Scrollable on mobile
+                      behavior: ScrollConfiguration.of(sheetContext).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                        },
+                      ),
+                      child: ReorderableListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const ClampingScrollPhysics(),
+                        buildDefaultDragHandles: false,
+                        itemCount: _buttonOrder.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex -= 1;
+                            final item = _buttonOrder.removeAt(oldIndex);
+                            _buttonOrder.insert(newIndex, item);
+                          });
+                          _saveButtonOrder();
+                        },
+                        itemBuilder: (context, index) {
+                          final type = _buttonOrder[index];
+                          return Padding(
+                            key: ValueKey(type),
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ReorderableDelayedDragStartListener(
+                              index: index,
+                              child: _buildBottomSheetButtonWithState(type, setModalState),
+                            ),
+                          );
                         },
                       ),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await _handleAddTaskFromSheet();
-                      },
-                      icon: const Icon(
-                        Icons.send,
-                        color: Colors.brown,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 48,
-                  child: ReorderableListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-
-                    buildDefaultDragHandles: false,
-
-                    itemCount: _buttonOrder.length,
-
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) newIndex -= 1;
-                        final item = _buttonOrder.removeAt(oldIndex);
-                        _buttonOrder.insert(newIndex, item);
-                      });
-                      _saveButtonOrder();
-                    },
-
-                    itemBuilder: (context, index) {
-                      final type = _buttonOrder[index];
-
-                      return Padding(
-                        key: ValueKey(type),
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ReorderableDelayedDragStartListener(
-                          index: index,
-                          child: _buildBottomSheetButton(type),
-                        ),
-                      );
-                    },
                   ),
-                ),
-
-
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         );
       },
-    );
+    ).whenComplete(() {
+      _isAddTaskSheetOpen = false;
+      _wasKeyboardVisible = false;
+    });
   }
+
   // ----------------- full-page task detail -----------------
   void _openTaskDetail(Task task) {
     context.push(
@@ -1129,7 +1372,31 @@ class _MapScreenState extends State<MapScreen> {
     // If multi-select active, show selection appbar
     final bool selectionActive = _selected.isNotEmpty;
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        if (_isAddTaskSheetOpen) {
+          if (kIsWeb) {
+            // WEB: Just close the sheet on any back press
+            Navigator.of(context, rootNavigator: true).pop();
+            FocusScope.of(context).unfocus();
+            return false;
+          } else {
+            // NATIVE: Two-step keyboard then sheet
+            final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
+            if (isKeyboardVisible) {
+              FocusScope.of(context).unfocus();
+              return false;
+            } else {
+              Navigator.of(context, rootNavigator: true).pop();
+              return false;
+            }
+          }
+        }
+        return true; // Allow normal back navigation
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: selectionActive
           ? AppBar(
@@ -1267,7 +1534,9 @@ class _MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: selectionActive
           ? null
-          : FloatingButton(onPressed: _openAddTaskSheet)
+          : FloatingButton(onPressed: _openAddTaskSheet),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        ),
     );
   }
 }
