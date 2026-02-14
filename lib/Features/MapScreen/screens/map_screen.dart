@@ -76,7 +76,6 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-
     // 1️⃣ Load saved button order (Priority / Remind / Assign / etc.)
     _loadButtonOrder();
 
@@ -90,6 +89,211 @@ class _MapScreenState extends State<MapScreen> {
     await prefs.setStringList(
       'home_button_order',
       _buttonOrder.map((e) => e.name).toList(),
+    );
+  }
+
+  Widget _buildBottomSheetButtonWithState(FloatingSheetType type, StateSetter setModalState) {
+    IconData icon;
+    String label;
+    String? selectedValue;
+    void Function(String) onSelected;
+    void Function() onClear;
+
+    switch (type) {
+      case FloatingSheetType.priority:
+        icon = Icons.flag_outlined;
+        label = "Priority";
+        selectedValue = _newTaskPriority;
+        onSelected = (v) {
+          setState(() => _newTaskPriority = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskPriority = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.remind:
+        icon = Icons.notifications_active;
+        label = "Remind Me";
+        selectedValue = _newTaskReminder != null ? "Set" : null;
+        onSelected = (v) {
+          setState(() => _newTaskReminder = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskReminder = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.assign:
+        icon = Icons.assignment;
+        label = "Assign";
+        selectedValue = _newTaskAssignee;
+        onSelected = (v) {
+          setState(() => _newTaskAssignee = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskAssignee = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.deadline:
+        icon = Icons.alarm;
+        label = "Deadline";
+        selectedValue = _newTaskDeadline != null ? "Set" : null;
+        onSelected = (v) {
+          setState(() => _newTaskDeadline = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskDeadline = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.workType:
+        icon = Icons.insert_drive_file;
+        label = "Work Type";
+        selectedValue = _newTaskWorkType;
+        onSelected = (v) {
+          setState(() => _newTaskWorkType = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskWorkType = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.folder:
+        icon = Icons.folder_outlined;
+        label = "Folder";
+        selectedValue = _newTaskFolder;
+        onSelected = (v) {
+          setState(() => _newTaskFolder = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskFolder = null);
+          setModalState(() {});
+        };
+        break;
+      case FloatingSheetType.clientName:
+        icon = Icons.business_center_outlined;
+        label = "Client Name";
+        selectedValue = _newTaskClientName;
+        onSelected = (v) {
+          setState(() => _newTaskClientName = v);
+          setModalState(() {});
+        };
+        onClear = () {
+          setState(() => _newTaskClientName = null);
+          setModalState(() {});
+        };
+        break;
+    }
+
+    final bool isSelected = selectedValue != null && selectedValue.isNotEmpty;
+    final String displayText = isSelected ? selectedValue : label;
+
+    return Builder(
+      builder: (buttonContext) => AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.brown.shade50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.brown : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _showFloatingSheet(
+              buttonContext,
+              type,
+              onSelected: onSelected,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        scale: animation,
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      icon,
+                      key: ValueKey('icon_$isSelected'),
+                      size: 18,
+                      color: isSelected ? Colors.brown : Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return SizeTransition(
+                        sizeFactor: animation,
+                        axis: Axis.horizontal,
+                        axisAlignment: -1,
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Text(
+                      displayText,
+                      key: ValueKey('text_$displayText'),
+                      style: TextStyle(
+                        color: isSelected ? Colors.brown : Colors.grey.shade700,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  // Show cross button only when selected
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: isSelected ? 24 : 0,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: isSelected ? 1.0 : 0.0,
+                      child: isSelected
+                          ? GestureDetector(
+                        onTap: () {
+                          onClear();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.brown,
+                          ),
+                        ),
+                      )
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -366,8 +570,8 @@ class _MapScreenState extends State<MapScreen> {
       assignee: _newTaskAssignee,
       deadline: _newTaskDeadline,
       workType: _newTaskWorkType,
-      folder: _newTaskFolder,          //
-      clientName: _newTaskClientName,  //
+      folder: _newTaskFolder,
+      clientName: _newTaskClientName,
       priorityUpdatedAt: _newTaskPriority != null ? nowMs : null,
     );
 
@@ -377,21 +581,20 @@ class _MapScreenState extends State<MapScreen> {
       tasks.add(newTask);
       _sortTasks();
 
-      // reset temporary selections for the next task
+      // Reset ALL temporary selections
       _newTaskPriority = null;
       _newTaskReminder = null;
       _newTaskAssignee = null;
       _newTaskDeadline = null;
       _newTaskWorkType = null;
+      _newTaskFolder = null;
+      _newTaskClientName = null;
     });
 
-    // KEEP THE BOTTOM SHEET OPEN: clear input and re-request focus
+    // Clear input and refocus
     taskName.clear();
     await Future.delayed(const Duration(milliseconds: 80));
     _focusNode.requestFocus();
-    _newTaskFolder = null;
-    _newTaskClientName = null;
-
   }
 
   // ---------- priority sorting helpers ----------
@@ -735,101 +938,119 @@ class _MapScreenState extends State<MapScreen> {
       backgroundColor: Colors.white,
       constraints: kIsWeb
           ? BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.4,  // Fixed height on web
+        maxHeight: MediaQuery.of(context).size.height * 0.4,
       )
-          : null,  // Dynamic height on mobile
+          : null,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) {
-        return Padding(
-          padding: kIsWeb
-              ? const EdgeInsets.all(16.0)  // No viewInsets on web
-              : EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[600],
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        return StatefulBuilder(  // 👈 ADD THIS to update UI when selections change
+          builder: (context, setModalState) {
+            return Padding(
+              padding: kIsWeb
+                  ? const EdgeInsets.all(16.0)
+                  : EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
               ),
-
-              Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: taskName,
-                      focusNode: _focusNode,
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: "Add a task",
-                        border: InputBorder.none,
-                      ),
-                      onSubmitted: (_) async {
-                        await _handleAddTaskFromSheet();
-                      },
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[600],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () async {
-                      await _handleAddTaskFromSheet();
-                    },
-                    icon: const Icon(Icons.send, color: Colors.brown),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: taskName,
+                          focusNode: _focusNode,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            hintText: "Add a task",
+                            border: InputBorder.none,
+                          ),
+                          onSubmitted: (_) async {
+                            await _handleAddTaskFromSheet();
+                            setModalState(() {}); // Reset selections in UI
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          await _handleAddTaskFromSheet();
+                          setModalState(() {}); // Reset selections in UI
+                        },
+                        icon: const Icon(Icons.send, color: Colors.brown),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // 👇 CENTERED BUTTONS FOR WEB
+                  SizedBox(
+                    height: 56,
+                    child: kIsWeb
+                        ? Center(  // Center on web
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: _buttonOrder.map((type) {
+                          return _buildBottomSheetButtonWithState(type, setModalState);
+                        }).toList(),
+                      ),
+                    )
+                        : ScrollConfiguration(  // Scrollable on mobile
+                      behavior: ScrollConfiguration.of(sheetContext).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                        },
+                      ),
+                      child: ReorderableListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const ClampingScrollPhysics(),
+                        buildDefaultDragHandles: false,
+                        itemCount: _buttonOrder.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex -= 1;
+                            final item = _buttonOrder.removeAt(oldIndex);
+                            _buttonOrder.insert(newIndex, item);
+                          });
+                          _saveButtonOrder();
+                        },
+                        itemBuilder: (context, index) {
+                          final type = _buttonOrder[index];
+                          return Padding(
+                            key: ValueKey(type),
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ReorderableDelayedDragStartListener(
+                              index: index,
+                              child: _buildBottomSheetButtonWithState(type, setModalState),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 8),
-
-              SizedBox(
-                height: 56,
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(sheetContext).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                      PointerDeviceKind.trackpad,
-                    },
-                  ),
-                  child: ReorderableListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const ClampingScrollPhysics(),
-                    buildDefaultDragHandles: false,
-                    itemCount: _buttonOrder.length,
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) newIndex -= 1;
-                        final item = _buttonOrder.removeAt(oldIndex);
-                        _buttonOrder.insert(newIndex, item);
-                      });
-                      _saveButtonOrder();
-                    },
-                    itemBuilder: (context, index) {
-                      final type = _buttonOrder[index];
-                      return Padding(
-                        key: ValueKey(type),
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ReorderableDelayedDragStartListener(
-                          index: index,
-                          child: _buildBottomSheetButton(type),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     ).whenComplete(() {
