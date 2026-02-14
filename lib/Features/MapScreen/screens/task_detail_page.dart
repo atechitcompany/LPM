@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/task.dart';
 import '../models/floating_sheet_type.dart';
 import '../../../FormComponents/FileUploadBox.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:html' as html show AnchorElement;
 
 
 class TaskDetailPage extends StatefulWidget {
@@ -41,6 +44,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   // Caches for Firestore-loaded lists
   List<String>? _workTypesCache;
   List<String>? _assigneesCache;
+  List<String>? _clientsCache;
+  List<String>? _foldersCache;
 
   @override
   void initState() {
@@ -94,6 +99,29 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
     _assigneesCache = values;
     return values;
+  }
+
+  Future<List<String>> _loadClientsFromFirestore() async {
+    if (_clientsCache != null) return _clientsCache!;
+
+    final snap = await FirebaseFirestore.instance.collection('Client').get();
+
+    final values = snap.docs
+        .map((d) => d['name']?.toString() ?? '')
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    _clientsCache = values;
+    return values;
+  }
+
+  Future<List<String>> _loadFoldersFromFirestore() async {
+    if (_foldersCache != null) return _foldersCache!;
+
+    // You can change this to load from Firestore if you have a Folder collection
+    // For now, returning hardcoded values like in map_screen
+    _foldersCache = ['Personal', 'Office', 'Freelance'];
+    return _foldersCache!;
   }
 
   void _hideOverlay() {
@@ -207,6 +235,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       },
     );
   }
+
   Widget _tabButton({
     required String title,
     required bool selected,
@@ -239,8 +268,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-
-
   Future<void> _showOverlay(
       BuildContext buttonContext,
       FloatingSheetType type, {
@@ -272,28 +299,37 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           resolvedKey = 'workType';
           break;
         case FloatingSheetType.folder:
-          // TODO: Handle this case.
-          throw UnimplementedError();
+          resolvedKey = 'folder';
+          break;
         case FloatingSheetType.clientName:
-          // TODO: Handle this case.
-          throw UnimplementedError();
+          resolvedKey = 'clientName';
+          break;
       }
     }
 
-    // If workType or assignee, load values from Firestore (async)
+    // Load values from Firestore (async)
     List<String>? workTypes;
     List<String>? assignees;
+    List<String>? clients;
+    List<String>? folders;
+
     if (resolvedKey == 'workType') {
       workTypes = await _loadWorkTypesFromFirestore();
     } else if (resolvedKey == 'assignee') {
       assignees = await _loadAssigneesFromFirestore();
+    } else if (resolvedKey == 'clientName') {
+      clients = await _loadClientsFromFirestore();
+    } else if (resolvedKey == 'folder') {
+      folders = await _loadFoldersFromFirestore();
     }
 
     final OverlayState overlayState = Overlay.of(buttonContext);
     final RenderBox button = buttonContext.findRenderObject() as RenderBox;
-    final RenderBox overlayBox = overlayState.context.findRenderObject() as RenderBox;
+    final RenderBox overlayBox =
+    overlayState.context.findRenderObject() as RenderBox;
 
-    final Offset buttonPosition = button.localToGlobal(Offset.zero, ancestor: overlayBox);
+    final Offset buttonPosition =
+    button.localToGlobal(Offset.zero, ancestor: overlayBox);
     final Size buttonSize = button.size;
     final Size overlaySize = overlayBox.size;
 
@@ -316,30 +352,54 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           ];
         case 'reminder':
           return const [
-            ListTile(leading: Icon(Icons.access_time), title: Text("Today (1 hour)")),
-            ListTile(leading: Icon(Icons.access_time), title: Text("Today (3 hour)")),
-            ListTile(leading: Icon(Icons.access_time), title: Text("Today (6 hour)")),
-            ListTile(leading: Icon(Icons.access_time), title: Text("Tomorrow (12 pm)")),
-            ListTile(leading: Icon(Icons.calendar_month), title: Text("Custom")),
+            ListTile(
+                leading: Icon(Icons.access_time), title: Text("Today (1 hour)")),
+            ListTile(
+                leading: Icon(Icons.access_time), title: Text("Today (3 hour)")),
+            ListTile(
+                leading: Icon(Icons.access_time), title: Text("Today (6 hour)")),
+            ListTile(
+                leading: Icon(Icons.access_time),
+                title: Text("Tomorrow (12 pm)")),
+            ListTile(
+                leading: Icon(Icons.calendar_month), title: Text("Custom")),
           ];
         case 'assignee':
           if (assignees == null || assignees.isEmpty) {
             return const [
-              ListTile(leading: Icon(Icons.person), title: Text("Assign to me")),
-              ListTile(leading: Icon(Icons.group), title: Text("Assign to someone else")),
+              ListTile(
+                  leading: Icon(Icons.person), title: Text("Assign to me")),
+              ListTile(
+                  leading: Icon(Icons.group),
+                  title: Text("Assign to someone else")),
             ];
           }
           return assignees.map((v) => ListTile(title: Text(v))).toList();
         case 'deadline':
           return const [
-            ListTile(leading: Icon(Icons.access_time), title: Text("Today (1 hour)")),
-            ListTile(leading: Icon(Icons.access_time), title: Text("Today (3 hour)")),
-            ListTile(leading: Icon(Icons.access_time), title: Text("Today (6 hour)")),
-            ListTile(leading: Icon(Icons.access_time), title: Text("Tomorrow (12 pm)")),
-            ListTile(leading: Icon(Icons.calendar_month), title: Text("Custom")),
+            ListTile(
+                leading: Icon(Icons.access_time), title: Text("Today (1 hour)")),
+            ListTile(
+                leading: Icon(Icons.access_time), title: Text("Today (3 hour)")),
+            ListTile(
+                leading: Icon(Icons.access_time), title: Text("Today (6 hour)")),
+            ListTile(
+                leading: Icon(Icons.access_time),
+                title: Text("Tomorrow (12 pm)")),
+            ListTile(
+                leading: Icon(Icons.calendar_month), title: Text("Custom")),
           ];
         case 'workType':
           return (workTypes ?? []).map((v) => ListTile(title: Text(v))).toList();
+        case 'clientName':
+          if (clients == null || clients.isEmpty) {
+            return const [
+              ListTile(title: Text("No clients found")),
+            ];
+          }
+          return clients.map((v) => ListTile(title: Text(v))).toList();
+        case 'folder':
+          return (folders ?? []).map((v) => ListTile(title: Text(v))).toList();
         default:
           return [];
       }
@@ -400,7 +460,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             final label = (tile.title as Text).data ?? '';
 
                             // handle reminder/deadline specially: want to store concrete datetime (ISO)
-                            if (resolvedKey == 'reminder' || resolvedKey == 'deadline') {
+                            if (resolvedKey == 'reminder' ||
+                                resolvedKey == 'deadline') {
                               DateTime? computed;
 
                               // If 'Custom' => hide overlay first then open pickers
@@ -409,7 +470,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 _hideOverlay();
 
                                 computed = await pickDateTimeWithTabs(context);
-
                               } else {
                                 // Preset options: compute concrete DateTime
                                 final now = DateTime.now();
@@ -421,9 +481,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 } else if (lower.contains('today (6 hour)')) {
                                   computed = now.add(const Duration(hours: 6));
                                 } else if (lower.contains('tomorrow (12 pm)')) {
-                                  final tomorrow =
-                                  DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
-                                  computed = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 12, 0);
+                                  final tomorrow = DateTime(
+                                      now.year, now.month, now.day)
+                                      .add(const Duration(days: 1));
+                                  computed = DateTime(tomorrow.year,
+                                      tomorrow.month, tomorrow.day, 12, 0);
                                 } else {
                                   // fallback - shouldn't usually happen
                                   computed = null;
@@ -454,18 +516,25 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 _hideOverlay();
                               }
                             } else {
-                              // Non-date fields (priority, assignee, workType etc.)
+                              // Non-date fields (priority, assignee, workType, clientName, folder)
                               setState(() {
                                 switch (resolvedKey) {
                                   case 'priority':
                                     task.priority = label;
-                                    task.priorityUpdatedAt = DateTime.now().millisecondsSinceEpoch;
+                                    task.priorityUpdatedAt =
+                                        DateTime.now().millisecondsSinceEpoch;
                                     break;
                                   case 'assignee':
                                     task.assignee = label;
                                     break;
                                   case 'workType':
                                     task.workType = label;
+                                    break;
+                                  case 'clientName':
+                                    task.clientName = label;
+                                    break;
+                                  case 'folder':
+                                    task.folder = label;
                                     break;
                                   default:
                                     break;
@@ -545,7 +614,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Delete step'),
-          content: const Text('Are you sure you want to delete this sub-step?'),
+          content:
+          const Text('Are you sure you want to delete this sub-step?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -607,7 +677,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 step.title,
                 style: TextStyle(
                   fontSize: 15,
-                  decoration: step.isDone ? TextDecoration.lineThrough : TextDecoration.none,
+                  decoration: step.isDone
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
                 ),
               ),
             ),
@@ -625,7 +697,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           else
           // show delete icon when not editing
             IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+              icon: const Icon(Icons.delete_outline,
+                  size: 20, color: Colors.redAccent),
               onPressed: () => _confirmDeleteStep(index),
               tooltip: 'Delete sub-step',
             ),
@@ -646,6 +719,25 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
+  Widget _animatedBorderedTile({
+    required Widget child,
+    required bool isSelected,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.brown.shade50 : Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isSelected ? Colors.brown : Colors.grey.shade300,
+          width: isSelected ? 2 : 1,
+        ),
+      ),
+      child: child,
+    );
+  }
+
   Widget _infoTrailing(String? value) {
     if (value == null || value.isEmpty) {
       return Text(
@@ -660,7 +752,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     // if looks like ISO datetime, show a friendly formatted string
     try {
       final dt = DateTime.parse(value);
-      final formatted = "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+      final formatted =
+          "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
       return Text(
         formatted,
         style: const TextStyle(
@@ -704,6 +797,41 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
       ),
     );
+  }
+
+  // Open file helper
+  Future<void> _openFile(TaskFile file) async {
+    if (kIsWeb) {
+      // For web: Check if we have a stored URL (for existing files)
+      if (file.path != null && file.path!.startsWith('blob:')) {
+        // Open blob URL directly
+        html.AnchorElement(href: file.path!)
+          ..setAttribute('download', file.name)
+          ..click();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File cannot be opened. Web files need to be re-uploaded to open.'),
+            ),
+          );
+        }
+      }
+    } else {
+      // For native platforms
+      if (file.path != null && file.path!.isNotEmpty) {
+        final uri = Uri.file(file.path!);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Cannot open file: ${file.name}')),
+            );
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -837,7 +965,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               SizedBox(width: 8),
                               Text(
                                 "Add step",
-                                style: TextStyle(color: Colors.blue, fontSize: 15),
+                                style:
+                                TextStyle(color: Colors.blue, fontSize: 15),
                               ),
                             ],
                           ),
@@ -846,15 +975,15 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const SizedBox(height: 8),
 
-                    // ---------- Priority / Remind / Assign / Deadline / Work Type ----------
+                    // ---------- Priority / Remind / Assign / Deadline / Work Type / Client Name / Folder ----------
                     Builder(
-                      builder: (buttonContext) => _borderedTile(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.priority),
                         child: ListTile(
-                          leading:
-                          const Icon(Icons.flag_sharp, color: Colors.brown),
+                          leading: const Icon(Icons.flag_sharp,
+                              color: Colors.brown),
                           title: const Text("Priority"),
                           trailing: _infoTrailing(task.priority),
-                          selected: _isSelected(task.priority),
                           onTap: () => _showOverlay(
                             buttonContext,
                             FloatingSheetType.priority,
@@ -863,13 +992,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _borderedTile(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.reminder),
                         child: ListTile(
                           leading: const Icon(Icons.notifications_active,
                               color: Colors.brown),
                           title: const Text("Remind Me"),
                           trailing: _infoTrailing(task.reminder),
-                          selected: _isSelected(task.reminder),
                           onTap: () => _showOverlay(
                             buttonContext,
                             FloatingSheetType.remind,
@@ -878,13 +1007,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _borderedTile(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.assignee),
                         child: ListTile(
-                          leading:
-                          const Icon(Icons.checklist, color: Colors.brown),
+                          leading: const Icon(Icons.checklist,
+                              color: Colors.brown),
                           title: const Text("Assign"),
                           trailing: _infoTrailing(task.assignee),
-                          selected: _isSelected(task.assignee),
                           onTap: () => _showOverlay(
                             buttonContext,
                             FloatingSheetType.assign,
@@ -893,12 +1022,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _borderedTile(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.deadline),
                         child: ListTile(
-                          leading: const Icon(Icons.alarm, color: Colors.brown),
+                          leading:
+                          const Icon(Icons.alarm, color: Colors.brown),
                           title: const Text("Deadline"),
                           trailing: _infoTrailing(task.deadline),
-                          selected: _isSelected(task.deadline),
                           onTap: () => _showOverlay(
                             buttonContext,
                             FloatingSheetType.deadline,
@@ -907,83 +1037,134 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _borderedTile(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.workType),
                         child: ListTile(
                           leading: const Icon(Icons.insert_drive_file,
                               color: Colors.brown),
                           title: const Text("Work Type"),
                           trailing: _infoTrailing(task.workType),
-                          selected: _isSelected(task.workType),
                           onTap: () => _showOverlay(
                             buttonContext,
-                            FloatingSheetType.deadline,
+                            FloatingSheetType.workType,
                             fieldKey: 'workType',
                           ),
                         ),
                       ),
                     ),
+                    Builder(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.clientName),
+                        child: ListTile(
+                          leading: const Icon(Icons.business_center_outlined,
+                              color: Colors.brown),
+                          title: const Text("Client Name"),
+                          trailing: _infoTrailing(task.clientName),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.clientName,
+                            fieldKey: 'clientName',
+                          ),
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (buttonContext) => _animatedBorderedTile(
+                        isSelected: _isSelected(task.folder),
+                        child: ListTile(
+                          leading: const Icon(Icons.folder_outlined,
+                              color: Colors.brown),
+                          title: const Text("Folder"),
+                          trailing: _infoTrailing(task.folder),
+                          onTap: () => _showOverlay(
+                            buttonContext,
+                            FloatingSheetType.folder,
+                            fieldKey: 'folder',
+                          ),
+                        ),
+                      ),
+                    ),
 
-                    // ---------- FILES ----------
+                    const SizedBox(height: 12),
+
+                    // ---------- UPLOADED FILES (shown above upload button) ----------
                     if (task.files.isNotEmpty)
                       Column(
-                        children: task.files.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final file = entry.value;
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Uploaded Files",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...task.files.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final file = entry.value;
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.image, color: Colors.blue),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        file.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        "${(file.size / 1024).toStringAsFixed(1)} KB · Image",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                            return InkWell(
+                              onTap: () => _openFile(file),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  border:
+                                  Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: () {
-                                    setState(() {
-                                      task.files.removeAt(index);
-                                    });
-                                    widget.onChanged();
-                                  },
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.insert_drive_file,
+                                        color: Colors.blue),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            file.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "${(file.size / 1024).toStringAsFixed(1)} KB",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close, size: 20),
+                                      onPressed: () {
+                                        setState(() {
+                                          task.files.removeAt(index);
+                                        });
+                                        widget.onChanged();
+                                      },
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                              ),
+                            );
+                          }).toList(),
+                          const SizedBox(height: 8),
+                        ],
                       ),
 
                     // ---------- ADD FILE ----------
                     _borderedTile(
                       child: Padding(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: FileUploadBox(
                           onFileSelected: (PlatformFile file) {
                             setState(() {
@@ -1055,4 +1236,3 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 }
-

@@ -63,6 +63,9 @@ import 'package:lightatech/Features/Target/screens/profile_screen.dart';
 // Payment
 import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
 
+//Firebase
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// 🔑 Navigator Keys
 final GlobalKey<NavigatorState> _rootNavigatorKey =
 GlobalKey<NavigatorState>();
@@ -285,13 +288,29 @@ class AppRoutes {
       //Other routes
       GoRoute(
         path: '/task',
-        name: AppRoutesName.TaskDetail,
         builder: (context, state) {
           final task = state.extra as Task;
+
           return TaskDetailPage(
             task: task,
-            onChanged: () {},
-            onDelete: () {},
+            onChanged: () async {
+              // Update in Firebase directly
+              if (task.id != null) {
+                await FirebaseFirestore.instance
+                    .collection('tasks')
+                    .doc(task.id)
+                    .update(task.toMap());
+              }
+            },
+            onDelete: () async {
+              // Delete from Firebase
+              if (task.id != null) {
+                await FirebaseFirestore.instance
+                    .collection('tasks')
+                    .doc(task.id)
+                    .delete();
+              }
+            },
           );
         },
       ),
