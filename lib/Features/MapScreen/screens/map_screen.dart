@@ -1089,7 +1089,10 @@ class _MapScreenState extends State<MapScreen> {
 
   // ----------------- full-page task detail -----------------
   void _openTaskDetail(Task task) {
-    context.push('/task', extra: task);
+    context.push(
+      '/task',
+      extra: task,  // Just pass the task, not a Map
+    );
   }
 
   void _deleteTask(Task task) async {
