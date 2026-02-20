@@ -14,8 +14,8 @@ class OrderDetailScreen extends StatelessWidget {
     OrderStatus.designing: true,
     OrderStatus.laserCutting: true,
     OrderStatus.autoBending: true, // 👈 CURRENT
-    OrderStatus.manualBending: false,
-    OrderStatus.delivered: false,
+    OrderStatus.manualBending: true,
+    OrderStatus.delivered: true,
   };
 
 

@@ -1,76 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
+import '../utils/web_file_helper_stub.dart'
+if (dart.library.html) '../utils/web_file_helper.dart';
 
-class FileUploadBox extends StatefulWidget {
-  final Function(PlatformFile file) onFileSelected;
+class FileUploadBox extends StatelessWidget {
+  final Function(PlatformFile) onFileSelected;
 
-  const FileUploadBox({super.key, required this.onFileSelected});
+  const FileUploadBox({
+    super.key,
+    required this.onFileSelected,
+  });
 
-  @override
-  State<FileUploadBox> createState() => _FileUploadBoxState();
-}
+  Future<void> _pickFile(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
 
-class _FileUploadBoxState extends State<FileUploadBox> {
-  PlatformFile? selectedFile;
+      if (result != null && result.files.isNotEmpty) {
+        final pickedFile = result.files.first;
 
-  Future<void> pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: false, // you can make it true for multiple files
-      withData: true,
-    );
+        if (kIsWeb) {
+          // For web: Create blob URL from bytes
+          if (pickedFile.bytes != null) {
+            final blobUrl = createBlobUrl(pickedFile.bytes!);
 
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        selectedFile = result.files.first;
-      });
+            // Create a new PlatformFile with the blob URL as path
+            final webFile = PlatformFile(
+              name: pickedFile.name,
+              size: pickedFile.size,
+              path: blobUrl, // Store blob URL as path for web
+              bytes: pickedFile.bytes,
+            );
 
-      widget.onFileSelected(selectedFile!);
+            onFileSelected(webFile);
+          } else {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Failed to read file')),
+              );
+            }
+          }
+        } else {
+          // For native platforms: Use the file path directly
+          onFileSelected(pickedFile);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking file: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: pickFile,
+    return InkWell(
+      onTap: () => _pickFile(context),
       child: Container(
-        height: 55,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          border: Border.all(),
-          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Center(
-          child: selectedFile == null
-              ? Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.upload_file, size: 25),
-              SizedBox(width: 8),
-              Text("Drop here to attach or upload"),
-
-            ],
-          )
-              : Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.insert_drive_file,
-                  size: 25, color: Colors.blue),
-              const SizedBox(width: 8),
-              Text(
-                selectedFile!.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.upload_file, color: Colors.grey.shade600, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              'Upload File',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: 8),
-              Text(
-                "${(selectedFile!.size / (1024 * 1024)).toStringAsFixed(2)} MB",
-                style:
-                const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
