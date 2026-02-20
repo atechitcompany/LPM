@@ -422,8 +422,6 @@ class NewFormState extends State<NewForm> {
     setState(() {});
   }
 
-  // ---------- add this inside NewFormState ----------
-
   void clearForm() {
     // Clear all text controllers
     BuyerOrderNo.clear();
@@ -510,7 +508,6 @@ class NewFormState extends State<NewForm> {
     RubberFixingDone.clear();
     WhiteProfileRubber.clear();
     //new
-    // ✅ clear new fields
     DesignedBy.clear();
     PlySelectedBy.clear();
     BladeSelectedBy.clear();
@@ -521,8 +518,6 @@ class NewFormState extends State<NewForm> {
     HoleSelectedBy.clear();
     Perforation.clear();
     PartyName.clear();
-
-
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -536,9 +531,7 @@ class NewFormState extends State<NewForm> {
     EmbossPcs.text = "No";
     TotalSize.text = "No";
     Unknown.text = "";
-    // Add all fields that have initialValue
 
-    // Example Toggles (default values):
     AutoBendingStatus.text = "Pending";
     ManualBendingStatus.text="Pending";
     DesigningStatus.text = "Pending";
@@ -547,11 +540,8 @@ class NewFormState extends State<NewForm> {
     LaserCuttingStatus.text = "Pending";
     LaserPunchNew.text = "No";
 
-
-    // Dropdowns default
     PlyType.text = "No";
     Creasing.text = "No";
-    // Reset dropdown / address selection state
     setState(() {
       HouseNo = "";
       Appartment = "";
@@ -586,13 +576,10 @@ class NewFormState extends State<NewForm> {
       setState(() {});
     } catch (e) {
       print("❌ loadCurrentLpm error: $e");
-      // ✅ fallback so UI doesn't spin forever
       LpmAutoIncrement.text = "1001";
       setState(() {});
     }
   }
-
-
 
   Future<void> incrementLpmAfterSubmit() async {
     final counterRef =
@@ -613,7 +600,7 @@ class NewFormState extends State<NewForm> {
   Future<void> submitDesignerForm() async {
     final data = buildFormData();
 
-    final lpm = LpmAutoIncrement.text; // 🔥 unique ID
+    final lpm = LpmAutoIncrement.text;
 
     final jobRef =
     FirebaseFirestore.instance.collection("jobs").doc(lpm);
@@ -646,7 +633,7 @@ class NewFormState extends State<NewForm> {
   Future<void> submitDepartmentForm(String nextDepartment) async {
     final data = buildFormData();
 
-    final lpm = LpmAutoIncrement.text; // already loaded
+    final lpm = LpmAutoIncrement.text;
 
     await FirebaseFirestore.instance
         .collection("jobs")
@@ -656,10 +643,8 @@ class NewFormState extends State<NewForm> {
       "${_deptKey(department)}.data": data,
       "currentDepartment": nextDepartment,
       "updatedAt": FieldValue.serverTimestamp(),
-  });
+    });
   }
-
-
 
   Future<void> submitForm() async {
     try {
@@ -680,8 +665,6 @@ class NewFormState extends State<NewForm> {
     }
   }
 
-
-
   @override
   void initState() {
     super.initState();
@@ -689,14 +672,11 @@ class NewFormState extends State<NewForm> {
     department = widget.department;
 
     if (widget.lpm != null) {
-      // 🔥 Existing job
       LpmAutoIncrement.text = widget.lpm!;
     } else {
-      // 🔥 New job (Designer only)
       loadCurrentLpm();
     }
 
-    // defaults
     Remark.text = "NO REMARK";
     Ups.text = "NO";
     PartyworkName.text = "NO";
@@ -716,10 +696,6 @@ class NewFormState extends State<NewForm> {
     Creasing.text = "No";
   }
 
-
-
-
-  // Dispose controllers to prevent memory leaks
   @override
   void dispose() {
     BuyerOrderNo.dispose();
@@ -805,7 +781,6 @@ class NewFormState extends State<NewForm> {
     AddressOutput.dispose();
     RubberFixingDone.dispose();
     WhiteProfileRubber.dispose();
-    //new
     DesignedBy.dispose();
     PlySelectedBy.dispose();
     BladeSelectedBy.dispose();
@@ -821,7 +796,6 @@ class NewFormState extends State<NewForm> {
   }
 
   @override
-
   Widget build(BuildContext context) {
     debugPrint(
       'NEWFORM BUILD → '
@@ -838,22 +812,35 @@ class NewFormState extends State<NewForm> {
             // 🔹 FORM PAGE
             Expanded(child: widget.child),
 
-            // 🔹 PREV / NEXT BUTTONS
+            // 🔹 PREV / NEXT / SUBMIT BUTTONS
             if (isJobFormRoute)
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // ✅ PREVIOUS BUTTON
                     ElevatedButton(
                       onPressed: _goPrev,
                       child: const Text("Previous"),
                     ),
 
+                    // ✅ NEXT BUTTON (Hide on Designer 6 - last page)
                     if (!(department == "Designer" && isLastDesignerPage))
                       ElevatedButton(
                         onPressed: _goNext,
                         child: const Text("Next"),
+                      ),
+
+                    // ✅ SUBMIT BUTTON (Only on Designer 6)
+                    if (department == "Designer" && isLastDesignerPage)
+                      ElevatedButton(
+                        onPressed: submitForm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                        ),
+                        child: const Text("Submit"),
                       ),
                   ],
                 ),
@@ -868,7 +855,7 @@ class NewFormState extends State<NewForm> {
 
   void _goDesignerNext() {
     final uri = GoRouterState.of(context).uri;
-    final path = uri.path; // 👈 IMPORTANT: path only
+    final path = uri.path;
 
     const designerPages = [
       '/jobform/designer-1',
@@ -883,11 +870,10 @@ class NewFormState extends State<NewForm> {
 
     if (index != -1 && index < designerPages.length - 1) {
       context.push(
-        designerPages[index + 1] + '?${uri.query}', // 👈 preserve params
+        designerPages[index + 1] + '?${uri.query}',
       );
     }
   }
-
 
   void _goNext() {
     if (department == "Designer") {
@@ -895,12 +881,12 @@ class NewFormState extends State<NewForm> {
     }
   }
 
-
   void _goPrev() {
     if (context.canPop()) {
-      context.pop(); // ✅ Goes back without rebuilding state
+      context.pop();
     }
   }
+
   String _nextDepartment(String current) {
     const flow = [
       "Designer",
@@ -943,5 +929,4 @@ class NewFormState extends State<NewForm> {
         throw Exception("Unknown department: $dept");
     }
   }
-
 }
