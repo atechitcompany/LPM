@@ -552,35 +552,27 @@ class NewFormState extends State<NewForm> {
 
   Future<void> loadCurrentLpm() async {
     try {
-      final now = DateTime.now();
-      final month = now.month.toString().padLeft(2, '0');
-      final year = (now.year % 100).toString().padLeft(2, '0');
-
-      final counterDocId = "${now.year}_$month";
-
-      final counterRef = FirebaseFirestore.instance
-          .collection("counters")
-          .doc(counterDocId);
+      final counterRef =
+      FirebaseFirestore.instance.collection("counters").doc("jobCounter");
 
       final snap = await counterRef.get();
 
-      int lastOrderNo = 0;
+      int last = 1000;
 
       if (snap.exists) {
-        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+        final val = snap.data()?["lastLpm"];
+
+        if (val is int) {
+          last = val;
+        } else if (val is String) {
+          last = int.tryParse(val) ?? 1000;
+        }
       } else {
-        await counterRef.set({"lastOrderNo": 0});
+        await counterRef.set({"lastLpm": 1000});
+        last = 1000;
       }
 
-      final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
-
-      // Default sub order = 01
-      final subOrder = "01";
-
-      final fullLpm = "LPM-$newOrderNo-$month-$year-$subOrder";
-
-      LpmAutoIncrement.text = fullLpm;
-
+      LpmAutoIncrement.text = (last + 1).toString();
       setState(() {});
     } catch (e) {
       print("❌ loadCurrentLpm error: $e");
@@ -591,70 +583,51 @@ class NewFormState extends State<NewForm> {
 
   Future<void> incrementLpmAfterSubmit() async {
     final counterRef =
-    FirebaseFirestore.instance.collection("counters").doc(counterDocId);
+    FirebaseFirestore.instance.collection("counters").doc("jobCounter");
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
 
-      int lastOrderNo = 0;
-
+      int last = 1000;
       if (snap.exists) {
-        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+        last = (snap.data()?["lastLpm"] ?? 1000);
       }
 
-      transaction.set(
-        counterRef,
-        {"lastOrderNo": lastOrderNo + 1},
-        SetOptions(merge: true),
-      );
+      transaction.set(counterRef, {"lastLpm": last + 1}, SetOptions(merge: true));
     });
   }
 
   Future<void> submitDesignerForm() async {
-    final fullLpm = LpmAutoIncrement.text;
-
-    // Extract main order part
-    final parts = fullLpm.split("-");
-    final mainOrderId = "LPM-${parts[1]}-${parts[2]}-${parts[3]}";
-    final subOrderNo = parts[4];
+    final data = buildFormData();
 
     final lpm = LpmAutoIncrement.text;
 
-    final itemRef = mainOrderRef.collection("items").doc(subOrderNo);
+    final jobRef =
+    FirebaseFirestore.instance.collection("jobs").doc(lpm);
 
-    final data = buildFormData();
-
-    await mainOrderRef.set({
-      "orderNo": parts[1],
-      "month": parts[2],
-      "year": parts[3],
-
-      "currentDepartment": "AutoBending",
-
-      // 🔥 IMPORTANT: Add data here too
-      "designer": {
-        "submitted": true,
-        "data": data,
-      },
-
-      "createdAt": FieldValue.serverTimestamp(),
-      "updatedAt": FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await itemRef.set({
-      "fullLpm": fullLpm,
-      "subOrderNo": subOrderNo,
+    await jobRef.set({
+      "lpm": lpm,
       "currentDepartment": "AutoBending",
       "status": "InProgress",
+
       "designer": {
         "submitted": true,
         "data": data,
       },
+
+      "autoBending": {"submitted": false},
+      "manualBending": {"submitted": false},
+      "laserCut": {"submitted": false},
+      "emboss": {"submitted": false},
+      "rubber": {"submitted": false},
+      "account": {"submitted": false},
+      "delivery": {"submitted": false},
+
       "createdAt": FieldValue.serverTimestamp(),
       "updatedAt": FieldValue.serverTimestamp(),
     });
 
-    await incrementMonthlyCounter();
+    await incrementLpmAfterSubmit();
   }
 
   Future<void> submitDepartmentForm(String nextDepartment) async {
