@@ -18,6 +18,7 @@ class CustomerRequestDetailScreen extends StatefulWidget {
 class _CustomerRequestDetailScreenState
     extends State<CustomerRequestDetailScreen> {
   late Future<DocumentSnapshot> _docFuture;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -26,6 +27,275 @@ class _CustomerRequestDetailScreenState
         .collection('customers')
         .doc(widget.docId)
         .get();
+  }
+
+  // ✅ Accept customer request - creates job with LPM
+  Future<void> _acceptRequest(Map<String, dynamic> customerData) async {
+    if (_isProcessing) return;
+
+    setState(() => _isProcessing = true);
+
+    try {
+      // Step 1: Get next LPM
+      final counterRef =
+      FirebaseFirestore.instance.collection("counters").doc("jobCounter");
+
+      int nextLpm = 1001;
+      final snap = await counterRef.get();
+
+      if (snap.exists) {
+        final val = snap.data()?["lastLpm"];
+        if (val is int) {
+          nextLpm = val + 1;
+        } else if (val is String) {
+          nextLpm = (int.tryParse(val) ?? 1000) + 1;
+        }
+      } else {
+        await counterRef.set({"lastLpm": 1001});
+        nextLpm = 1002;
+      }
+
+      // Step 2: Create job document in jobs collection
+      final jobRef =
+      FirebaseFirestore.instance.collection("jobs").doc(nextLpm.toString());
+
+      await jobRef.set({
+        "lpm": nextLpm.toString(),
+        "currentDepartment": "Designer",
+        "status": "pending_designer_review",
+        "acceptedAt": FieldValue.serverTimestamp(),
+
+        "designer": {
+          "submitted": false,
+          "data": {
+            // Customer provided data
+            "name": customerData["name"] ?? "",
+            "partyName": customerData["partyName"] ?? "",
+            "particularJobName": customerData["particularJobName"] ?? "",
+            "orderBy": customerData["orderBy"] ?? "",
+            "deliveryAt": customerData["deliveryAt"] ?? "",
+            "priority": customerData["priority"] ?? "Normal",
+            "remark": customerData["remark"] ?? "",
+
+            // Fields for Designer to fill
+            "designedBy": "",
+            "plyType": "No",
+            "plySelectedBy": "",
+            "blade": "No",
+            "bladeSelectedBy": "",
+            "creasing": "No",
+            "creasingSelectedBy": "",
+            "capsuleType": "",
+            "unknown": "",
+            "perforation": "No",
+            "perforationSelectedBy": "",
+            "zigZagBlade": "No",
+            "zigZagBladeSelectedBy": "",
+            "rubberType": "No",
+            "rubberSelectedBy": "",
+            "holeType": "No",
+            "holeSelectedBy": "",
+            "embossStatus": "No",
+            "embossPcs": "",
+            "maleEmbossType": "No",
+            "femaleEmbossType": "No",
+            "x": "",
+            "y": "",
+            "x2": "",
+            "y2": "",
+            "strippingType": "No",
+            "laserCuttingStatus": "Pending",
+            "rubberFixingDone": "No",
+            "whiteProfileRubber": "No",
+          },
+        },
+
+        "autoBending": {"submitted": false},
+        "manualBending": {"submitted": false},
+        "laserCut": {"submitted": false},
+        "emboss": {"submitted": false},
+        "rubber": {"submitted": false},
+        "account": {"submitted": false},
+        "delivery": {"submitted": false},
+
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      });
+
+      // Step 3: Increment LPM counter
+      await counterRef.update({"lastLpm": nextLpm});
+
+      // Step 4: Delete from customers collection (optional - or mark as processed)
+      await FirebaseFirestore.instance
+          .collection("customers")
+          .doc(widget.docId)
+          .delete();
+
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Request accepted! LPM: $nextLpm'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Auto-close after 2 seconds
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          context.pop();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  // ✅ Show confirmation dialog for Accept
+  void _showConfirmationDialog(Map<String, dynamic> customerData) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Accept"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Are you sure you want to accept this request?"),
+            const SizedBox(height: 12),
+            Text(
+              "Customer: ${customerData['partyName'] ?? 'N/A'}",
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Text(
+              "Job: ${customerData['particularJobName'] ?? 'N/A'}",
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _acceptRequest(customerData);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Accept"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ Show confirmation dialog for Reject
+  void _showRejectConfirmationDialog(Map<String, dynamic> customerData) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Rejection"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "⚠️ Are you sure you want to reject this request?",
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Customer: ${customerData['partyName'] ?? 'N/A'}",
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Text(
+              "Job: ${customerData['particularJobName'] ?? 'N/A'}",
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "This action cannot be undone. The request will be deleted.",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _rejectRequest();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Reject"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ Reject request - deletes from customers collection
+  Future<void> _rejectRequest() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("customers")
+          .doc(widget.docId)
+          .delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Request rejected and deleted'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          context.pop();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -128,6 +398,55 @@ class _CustomerRequestDetailScreenState
 
                 const SizedBox(height: 20),
 
+                // ✅ ACTION BUTTONS - REJECT & ACCEPT (REJECT LEFT, ACCEPT RIGHT)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isProcessing
+                            ? null
+                            : () {
+                          _showRejectConfirmationDialog(data);
+                        },
+                        icon: const Icon(Icons.cancel),
+                        label: const Text('Reject'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isProcessing
+                            ? null
+                            : () {
+                          _showConfirmationDialog(data);
+                        },
+                        icon: _isProcessing
+                            ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                            : const Icon(Icons.check_circle),
+                        label: Text(
+                            _isProcessing ? 'Processing...' : 'Accept'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
                 // ✅ FORM 1 - BASIC INFO
                 _buildSectionHeader("📋 Basic Information"),
                 _buildDetailRow("Name", data["name"]),
@@ -207,52 +526,6 @@ class _CustomerRequestDetailScreenState
                 _buildDetailRow(
                   "Created At",
                   _formatTimestamp(data["createdAt"]),
-                ),
-
-                const SizedBox(height: 30),
-
-                // ✅ ACTION BUTTONS
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                              Text('This feature will be added soon!'),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Edit'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Approved!'),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text('Approve'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
