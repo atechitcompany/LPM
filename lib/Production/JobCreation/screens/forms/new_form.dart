@@ -562,85 +562,114 @@ class NewFormState extends State<NewForm> {
 
   Future<void> loadCurrentLpm() async {
     try {
-      final counterRef =
-      FirebaseFirestore.instance.collection("counters").doc("jobCounter");
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+
+      final counterDocId = "${now.year}_$month";
+
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc(counterDocId);
 
       final snap = await counterRef.get();
 
-      int last = 1000;
+      int lastOrderNo = 0;
 
       if (snap.exists) {
-        final val = snap.data()?["lastLpm"];
-
-        if (val is int) {
-          last = val;
-        } else if (val is String) {
-          last = int.tryParse(val) ?? 1000;
-        }
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
       } else {
-        await counterRef.set({"lastLpm": 1000});
-        last = 1000;
+        await counterRef.set({"lastOrderNo": 0});
       }
 
-      LpmAutoIncrement.text = (last + 1).toString();
+      final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
+
+      // Default sub order = 01
+      final subOrder = "01";
+
+      final fullLpm = "LPM-$newOrderNo-$month-$year-$subOrder";
+
+      LpmAutoIncrement.text = fullLpm;
+
       setState(() {});
     } catch (e) {
-      print("❌ loadCurrentLpm error: $e");
-      // ✅ fallback so UI doesn't spin forever
-      LpmAutoIncrement.text = "1001";
-      setState(() {});
+      print("LPM Load Error: $e");
     }
   }
 
 
 
-  Future<void> incrementLpmAfterSubmit() async {
+  Future<void> incrementMonthlyCounter() async {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final counterDocId = "${now.year}_$month";
+
     final counterRef =
-    FirebaseFirestore.instance.collection("counters").doc("jobCounter");
+    FirebaseFirestore.instance.collection("counters").doc(counterDocId);
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
 
-      int last = 1000;
+      int lastOrderNo = 0;
+
       if (snap.exists) {
-        last = (snap.data()?["lastLpm"] ?? 1000);
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
       }
 
-      transaction.set(counterRef, {"lastLpm": last + 1}, SetOptions(merge: true));
+      transaction.set(
+        counterRef,
+        {"lastOrderNo": lastOrderNo + 1},
+        SetOptions(merge: true),
+      );
     });
   }
 
   Future<void> submitDesignerForm() async {
+    final fullLpm = LpmAutoIncrement.text;
+
+    // Extract main order part
+    final parts = fullLpm.split("-");
+    final mainOrderId = "LPM-${parts[1]}-${parts[2]}-${parts[3]}";
+    final subOrderNo = parts[4];
+
+    final mainOrderRef =
+    FirebaseFirestore.instance.collection("jobs").doc(mainOrderId);
+
+    final itemRef = mainOrderRef.collection("items").doc(subOrderNo);
+
     final data = buildFormData();
 
-    final lpm = LpmAutoIncrement.text; // 🔥 unique ID
+    await mainOrderRef.set({
+      "orderNo": parts[1],
+      "month": parts[2],
+      "year": parts[3],
 
-    final jobRef =
-    FirebaseFirestore.instance.collection("jobs").doc(lpm);
-
-    await jobRef.set({
-      "lpm": lpm,
       "currentDepartment": "AutoBending",
-      "status": "InProgress",
 
+      // 🔥 IMPORTANT: Add data here too
       "designer": {
         "submitted": true,
         "data": data,
       },
 
-      "autoBending": {"submitted": false},
-      "manualBending": {"submitted": false},
-      "laserCut": {"submitted": false},
-      "emboss": {"submitted": false},
-      "rubber": {"submitted": false},
-      "account": {"submitted": false},
-      "delivery": {"submitted": false},
+      "createdAt": FieldValue.serverTimestamp(),
+      "updatedAt": FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
+    await itemRef.set({
+      "fullLpm": fullLpm,
+      "subOrderNo": subOrderNo,
+      "currentDepartment": "AutoBending",
+      "status": "InProgress",
+      "designer": {
+        "submitted": true,
+        "data": data,
+      },
       "createdAt": FieldValue.serverTimestamp(),
       "updatedAt": FieldValue.serverTimestamp(),
     });
 
-    await incrementLpmAfterSubmit();
+    await incrementMonthlyCounter();
   }
 
   Future<void> submitDepartmentForm(String nextDepartment) async {
