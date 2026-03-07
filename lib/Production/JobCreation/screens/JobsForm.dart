@@ -548,13 +548,7 @@ class NewFormState extends State<NewForm> {
     final data = buildFormData();
 
     try {
-      await FirebaseFirestore.instance.collection("jobs").add({
-        ...data,
-        "lpm": "TEMP-${DateTime.now().millisecondsSinceEpoch}",
-        "currentDepartment": "Designer",
-        "status": "InProgress",
-        "createdAt": FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance.collection("jobs").add(data);
 
       // Clear the form after successful upload
       clearForm();
@@ -862,7 +856,7 @@ class NewFormState extends State<NewForm> {
                 if ((fieldAccess['lpmAutoIncrement'] ?? false) ||
                     User == "Designer" ||
                     User == "Admin")
-                  AutoIncrementField(value: "LPM-00001-01-26-01"),
+                  AutoIncrementField(value: 1004),
 
                 if ((fieldAccess['lpmAutoIncrement'] ?? false) ||
                     User == "Designer" ||
