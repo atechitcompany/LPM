@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/core/session/session_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,23 +14,32 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    checkLogin();
+  }
 
-    /// ⏳ Auto navigate after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
+  void checkLogin() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    bool loggedIn = SessionManager.isLoggedIn();
+
+    if (!mounted) return;
+
+    if (loggedIn) {
+      context.go('/dashboard');
+    } else {
       context.go('/login');
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8D94B), // ✅ Yellow Brand Color
+      backgroundColor: const Color(0xFFF8D94B),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
 
-            /// 🖼 Company Logo
             Container(
               height: 130,
               width: 130,
@@ -53,7 +63,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const SizedBox(height: 40),
 
-            /// 🏷 App Name
             const Text(
               "Light Punch Maker",
               style: TextStyle(
@@ -66,7 +75,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const SizedBox(height: 8),
 
-            /// ⚡ Subtitle
             const Text(
               "Powered by A Tech",
               style: TextStyle(
@@ -78,7 +86,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const SizedBox(height: 60),
 
-            /// ⏳ Loader
             const SizedBox(
               width: 32,
               height: 32,

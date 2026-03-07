@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
-
 
 // Intro
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
@@ -15,11 +13,10 @@ import 'package:lightatech/Features/Intro/screens/fill_profile_screen.dart';
 import 'package:lightatech/Features/Intro/screens/create_pin_screen.dart';
 import 'package:lightatech/Features/Intro/auth/screens/lets_you_in_screen.dart';
 
-// Login / Admin
+// Login
 import 'package:lightatech/Login/LoginScreen.dart';
 import 'package:lightatech/Login/Admin/Admin.dart';
 import 'package:lightatech/core/session/session_manager.dart';
-
 
 // Dashboard
 import 'package:lightatech/Features/Dashboard/screens/dashboard_screen.dart';
@@ -33,7 +30,6 @@ import 'package:lightatech/Features/Dashboard/screens/pending_form_edit_screen.d
 import '../customer/intro/viewmodel/order_detail_view.dart';
 
 // Job Forms
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_1.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_2.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_3.dart';
@@ -64,15 +60,11 @@ import 'package:lightatech/Features/Target/screens/profile_screen.dart';
 // Payment
 import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
 
-//Firebase
+// Firebase
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// 🔑 Navigator Keys
-final GlobalKey<NavigatorState> _rootNavigatorKey =
-GlobalKey<NavigatorState>();
-
-final GlobalKey<NavigatorState> _shellNavigatorKey =
-GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 String _normalizeDepartment(String d) {
   switch (d.toLowerCase()) {
@@ -97,18 +89,21 @@ String _normalizeDepartment(String d) {
   }
 }
 
-
 class AppRoutes {
   AppRoutes._();
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: SessionManager.isLoggedIn() ? '/dashboard' : '/',
-
+    initialLocation: '/',
 
     routes: [
 
-      // ================= AUTH =================
+      // AUTH
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
       GoRoute(
         path: '/login',
         builder: (_, __) => const LoginScreen(),
@@ -123,11 +118,6 @@ class AppRoutes {
         path: '/order-details',
         name: 'orderDetails',
         builder: (context, state) => OrderDetailScreen(),
-      ),
-
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const SplashScreen(),
       ),
 
       GoRoute(
@@ -155,7 +145,6 @@ class AppRoutes {
         builder: (context, state) => const LetsYouInScreen(),
       ),
 
-
       GoRoute(
         path: '/productivity',
         builder: (context, state) {
@@ -166,7 +155,7 @@ class AppRoutes {
         },
       ),
 
-      // ================= DASHBOARD SHELL =================
+      // DASHBOARD SHELL
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
@@ -177,15 +166,18 @@ class AppRoutes {
         },
         routes: [
 
+          // FIXED DASHBOARD ROUTE
           GoRoute(
             path: '/dashboard',
-            builder: (context, state) {
-              final dept = SessionManager.getDepartment();
-              final email = SessionManager.getEmail();
-
-              if (dept == null || email == null) {
-                return const LoginScreen();
+            redirect: (context, state) {
+              if (!SessionManager.isLoggedIn()) {
+                return '/login';
               }
+              return null;
+            },
+            builder: (context, state) {
+              final dept = SessionManager.getDepartment()!;
+              final email = SessionManager.getEmail()!;
 
               return DashboardScreen(
                 department: dept,
@@ -194,13 +186,11 @@ class AppRoutes {
             },
           ),
 
-          // ✅ NEW ROUTE: Customer Requests Screen
           GoRoute(
             path: '/customer-requests',
             builder: (context, state) => const CustomerRequestsScreen(),
           ),
 
-          // ✅ NEW ROUTE: Customer Request Detail
           GoRoute(
             path: '/customer-request-detail/:docId',
             builder: (context, state) {
@@ -209,7 +199,6 @@ class AppRoutes {
             },
           ),
 
-          // ✅ NEW ROUTE: Pending Form Edit (Designer fills the form)
           GoRoute(
             path: '/pending-form-edit/:lpm',
             builder: (context, state) {
@@ -248,20 +237,12 @@ class AppRoutes {
         ],
       ),
 
-      // ================= JOB FORM SHELL =================
+      // JOB FORM SHELL
       ShellRoute(
         builder: (context, state, child) {
-          final dept =
-              state.uri.queryParameters['department'] ?? 'designer';
-
-          final email =
-          state.uri.queryParameters['email'];
-
-          final lpm =
-          state.uri.queryParameters['lpm'];
-
-          final mode =
-          state.uri.queryParameters['mode'];
+          final dept = state.uri.queryParameters['department'] ?? 'designer';
+          final lpm = state.uri.queryParameters['lpm'];
+          final mode = state.uri.queryParameters['mode'];
 
           return NewForm(
             department: _normalizeDepartment(dept),
@@ -277,7 +258,6 @@ class AppRoutes {
             redirect: (_, __) => '/jobform/designer-1?department=designer',
           ),
 
-          // Designer flow
           GoRoute(path: '/jobform/designer-1', builder: (_, __) => const DesignerPage1()),
           GoRoute(path: '/jobform/designer-2', builder: (_, __) => const DesignerPage2()),
           GoRoute(path: '/jobform/designer-3', builder: (_, __) => const DesignerPage3()),
@@ -285,7 +265,6 @@ class AppRoutes {
           GoRoute(path: '/jobform/designer-5', builder: (_, __) => const DesignerPage5()),
           GoRoute(path: '/jobform/designer-6', builder: (_, __) => const DesignerPage6()),
 
-          // Departments
           GoRoute(path: '/jobform/autobending', builder: (_, __) => const AutoBendingPage()),
           GoRoute(path: '/jobform/manualbending', builder: (_, __) => const ManualBendingPage()),
           GoRoute(path: '/jobform/laser', builder: (_, __) => const LaserPage()),
@@ -296,7 +275,7 @@ class AppRoutes {
         ],
       ),
 
-      //Other routes
+      // TASK
       GoRoute(
         path: '/task',
         builder: (context, state) {
@@ -305,7 +284,6 @@ class AppRoutes {
           return TaskDetailPage(
             task: task,
             onChanged: () async {
-              // Update in Firebase directly
               if (task.id != null) {
                 await FirebaseFirestore.instance
                     .collection('tasks')
@@ -314,7 +292,6 @@ class AppRoutes {
               }
             },
             onDelete: () async {
-              // Delete from Firebase
               if (task.id != null) {
                 await FirebaseFirestore.instance
                     .collection('tasks')
