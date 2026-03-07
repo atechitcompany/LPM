@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
-import '../utils/web_file_helper_stub.dart'
-if (dart.library.html) '../utils/web_file_helper.dart';
+import 'dart:html' as html show Blob, Url;
 
 class FileUploadBox extends StatelessWidget {
   final Function(PlatformFile) onFileSelected;
@@ -25,7 +24,8 @@ class FileUploadBox extends StatelessWidget {
         if (kIsWeb) {
           // For web: Create blob URL from bytes
           if (pickedFile.bytes != null) {
-            final blobUrl = createBlobUrl(pickedFile.bytes!);
+            final blob = html.Blob([pickedFile.bytes!]);
+            final blobUrl = html.Url.createObjectUrlFromBlob(blob);
 
             // Create a new PlatformFile with the blob URL as path
             final webFile = PlatformFile(

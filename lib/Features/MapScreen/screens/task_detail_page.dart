@@ -7,8 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../utils/web_download_helper_stub.dart'
-if (dart.library.html) '../../../utils/web_download_helper.dart';
+import 'dart:html' as html show AnchorElement;
 
 
 class TaskDetailPage extends StatefulWidget {
@@ -806,9 +805,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       // For web: Check if we have a stored URL (for existing files)
       if (file.path != null && file.path!.startsWith('blob:')) {
         // Open blob URL directly
-        if (file.path != null) {
-          openFileInWeb(file.path!);
-        }
+        html.AnchorElement(href: file.path!)
+          ..setAttribute('download', file.name)
+          ..click();
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
