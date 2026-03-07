@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lightatech/core/session/session_manager.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -34,6 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
   ];
 
   List<String> selectedDepartments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    rememberMe = SessionManager.isRememberMe();
+  }
 
   // 🔐 LOGIN
   Future<void> login() async {
@@ -127,10 +132,11 @@ class _LoginScreenState extends State<LoginScreen> {
       department: department,
     );
 
-    // ✅ Save Session permanently
+    // ✅ Save Session with Remember Me value
     await SessionManager.saveSession(
       email: emailController.text.trim(),
       department: department,
+      rememberMe: true,
     );
 
     context.go(
@@ -142,7 +148,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-
   Future<void> saveLoginLog({
     required String email,
     required String department,
@@ -153,7 +158,6 @@ class _LoginScreenState extends State<LoginScreen> {
       'LoginTime': FieldValue.serverTimestamp(),
     });
   }
-
 
   Widget safeIcon(IconData icon) {
     return Icon(icon, size: 18, color: Colors.grey);
