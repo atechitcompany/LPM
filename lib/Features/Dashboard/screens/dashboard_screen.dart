@@ -13,9 +13,12 @@ import 'package:lightatech/FormComponents/FLoatingButton.dart';
 class DashboardScreen extends StatefulWidget {
   final String department;
   final String email;
-  const DashboardScreen({super.key,
+
+  const DashboardScreen({
+    super.key,
     required this.department,
-    required this.email,});
+    required this.email,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -33,6 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       drawer: SidebarMenu(),
       appBar: DashboardAppBar(
         showBack: false,
@@ -41,19 +45,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
-          // ✅ Top Section (Cards + Chips + Search)
+          // ── Top Section (white card) ──────────────────────────────────
           Container(
-            color: Colors.blueGrey.shade50,
+            color: Colors.white,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ Status Cards (static for now)
+                // ── 1. Search Bar (top, above cards) ─────────────────────
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            hintText: 'Search for..',
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 13,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.grey.shade400,
+                              size: 20,
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            contentPadding: EdgeInsets.zero,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Filter button
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Advanced filters coming soon!'),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8D94B),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.tune,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── 2. Status Cards ───────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, bottom: 4),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.maxWidth;
 
-                      // 📱 MOBILE → KEEP OLD UI (NO CHANGE)
+                      // 📱 MOBILE → horizontal scroll
                       if (width < 600) {
                         return SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -89,7 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       }
 
-                      // 🖥 TABLET / WEB → GRID VIEW
+                      // 🖥 TABLET / WEB → Grid
                       int crossAxisCount = 2;
                       if (width > 1024) crossAxisCount = 4;
 
@@ -132,13 +196,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                   ),
-
                 ),
 
-
-                // ✅ Payment Chips
+                // ── 3. Payment Chips ──────────────────────────────────────
                 SizedBox(
-                  height: 52,
+                  height: 50,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -148,10 +210,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           label: 'Payments',
                           count: 4,
                           color: Colors.red,
-                          icon: Icons.account_balance_wallet,
+                          icon: Icons.credit_card_rounded,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Viewing Payments')),
+                              const SnackBar(
+                                  content: Text('Viewing Payments')),
                             );
                           },
                         ),
@@ -159,76 +222,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           label: 'Upcoming',
                           count: 4,
                           color: Colors.blue,
-                          icon: Icons.access_time,
+                          icon: Icons.access_time_rounded,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Viewing Upcoming')),
+                              const SnackBar(
+                                  content: Text('Viewing Upcoming')),
                             );
                           },
                         ),
                         PaymentStatusCard(
-                          label: 'Done',
+                          label: 'Completed',
                           count: 4,
                           color: Colors.green,
-                          icon: Icons.check_circle,
+                          icon: Icons.check_circle_outline_rounded,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Viewing Done')),
                             );
                           },
                         ),
-
                         const SizedBox(width: 12),
                       ],
                     ),
                   ),
                 ),
 
-                // ✅ Search Bar (UI only for now)
-                SearchBarWidget(
-                  controller: searchController,
-                  onFilterTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Advanced filters coming soon!'),
-                      ),
-                    );
-                  },
-                  onSearchChanged: (_) {
-                    // ✅ We will connect search to Firestore later
-                    setState(() {});
-                  },
-                ),
+                const SizedBox(height: 4),
               ],
             ),
           ),
 
-          // ✅ Recent Activities Header
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Recent Activities',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-
-          // ✅ Firebase Jobs List
+          // ── Firebase Jobs List (contains its own tabs) ────────────────
           Expanded(
             child: ActivityListFirestore(
               searchText: searchController.text,
               department: widget.department,
             ),
           ),
-
         ],
       ),
 
-      // ✅ Floating Add Button → open Job Form
-      floatingActionButton:
-      widget.department == 'Designer'
+      // ── Floating Add Button → open Job Form ───────────────────────────
+      floatingActionButton: widget.department == 'Designer'
           ? FloatingButton(
         onPressed: () {
           context.push(
@@ -241,7 +276,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
       )
           : null,
-
     );
   }
 }

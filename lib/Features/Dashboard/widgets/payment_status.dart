@@ -21,40 +21,26 @@ class PaymentStatusCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 125,
-        height: 38, // ⬅️ smaller height to avoid overflow
-        margin: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // tight
+        height: 34,
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withOpacity(0.5)),
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color, width: 1.4),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
-
           children: [
-            Icon(icon, color: color, size: 16), // smaller icon
-            SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // center vertically
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$count $label',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 11, // compact text
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                ],
+            Icon(icon, color: color, size: 15),
+            const SizedBox(width: 5),
+            Text(
+              '$count $label',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

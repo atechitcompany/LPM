@@ -14,33 +14,69 @@ class StatusCard extends StatelessWidget {
     required this.onTap,
   }) : super(key: key);
 
+  String get _subtitle {
+    switch (status) {
+      case 'Hot':
+        return 'Immediate Follow-up';
+      case 'Paid':
+        return 'Immediate Follow-up';
+      case 'Cold':
+        return 'Immediate Follow-up';
+      case 'Done':
+        return 'Completed Jobs';
+      default:
+        return 'Immediate Follow-up';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 160,
-        height: 120,
-        margin: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        padding: EdgeInsets.all(20),
+        height: 110,
+        margin: const EdgeInsets.only(right: 10, top: 10, bottom: 4),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('$count $status',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-            SizedBox(height: 4),
-            Text('Immediate Follow-up',
-                style: TextStyle(color: Colors.white70, fontSize: 12)),
-            SizedBox(height: 4),
-            Text('Tap for details',
-                style: TextStyle(color: Colors.white70, fontSize: 12)),
+            // Top: "3 Hot"
+            Text(
+              '$count $status',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                height: 1.1,
+              ),
+            ),
+            // Middle: "Immediate Follow-up"
+            Text(
+              _subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 1.3,
+              ),
+            ),
+            // Bottom: "Tap for Details"
+            const Text(
+              'Tap for Details',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),
