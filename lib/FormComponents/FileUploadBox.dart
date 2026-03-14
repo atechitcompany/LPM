@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
-import 'dart:html' as html show Blob, Url;
+
+// dart:html is NOT imported here directly — it is only used via conditional
+// import below so Android/iOS builds never see it.
+// ignore: avoid_web_libraries_in_flutter
+import 'web_utils_stub.dart'
+if (dart.library.html) 'web_utils.dart' as web_utils;
 
 class FileUploadBox extends StatelessWidget {
   final Function(PlatformFile) onFileSelected;
@@ -22,16 +27,15 @@ class FileUploadBox extends StatelessWidget {
         final pickedFile = result.files.first;
 
         if (kIsWeb) {
-          // For web: Create blob URL from bytes
+          // Web: create blob URL from bytes
           if (pickedFile.bytes != null) {
-            final blob = html.Blob([pickedFile.bytes!]);
-            final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+            final blobUrl =
+            web_utils.createBlobUrl(pickedFile.bytes!);
 
-            // Create a new PlatformFile with the blob URL as path
             final webFile = PlatformFile(
               name: pickedFile.name,
               size: pickedFile.size,
-              path: blobUrl, // Store blob URL as path for web
+              path: blobUrl,
               bytes: pickedFile.bytes,
             );
 
@@ -44,7 +48,7 @@ class FileUploadBox extends StatelessWidget {
             }
           }
         } else {
-          // For native platforms: Use the file path directly
+          // Android / iOS: use file path directly
           onFileSelected(pickedFile);
         }
       }
@@ -62,15 +66,19 @@ class FileUploadBox extends StatelessWidget {
     return InkWell(
       onTap: () => _pickFile(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding:
+        const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+          border: Border.all(
+              color: Colors.grey.shade300,
+              style: BorderStyle.solid),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.upload_file, color: Colors.grey.shade600, size: 24),
+            Icon(Icons.upload_file,
+                color: Colors.grey.shade600, size: 24),
             const SizedBox(width: 8),
             Text(
               'Upload File',

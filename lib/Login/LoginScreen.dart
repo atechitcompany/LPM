@@ -1,7 +1,9 @@
 import 'dart:core';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lightatech/core/session/session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,10 +17,14 @@ class _LoginScreenState extends State<LoginScreen> {
   bool rememberMe = false;
   bool showPassword = false;
   bool isLoading = false;
+  bool isGoogleLoading = false;
   bool showDepartmentForm = false;
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  // ── After Google login, store the verified email here ──────────────────
+  String? _googleEmail;
 
   final List<String> departments = [
     "Admin",
@@ -40,7 +46,85 @@ class _LoginScreenState extends State<LoginScreen> {
     rememberMe = SessionManager.isRememberMe();
   }
 
-  // 🔐 LOGIN
+  // ──────────────────────────────────────────────────────────────────────────
+  // GOOGLE SIGN IN
+  // ──────────────────────────────────────────────────────────────────────────
+  Future<void> signInWithGoogle() async {
+    setState(() => isGoogleLoading = true);
+
+    try {
+      // Step 1: Trigger the Google sign-in flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        setState(() => isGoogleLoading = false);
+        return;
+      }
+
+      // Step 2: Get auth details from the Google account
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser.authentication;
+
+      // Step 3: Create Firebase credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Step 4: Sign in to Firebase
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      final String googleEmail = googleUser.email;
+
+      // Step 5: Check if this Google email exists in Staff collection
+      final snapshot = await FirebaseFirestore.instance
+          .collection('Staff')
+          .where('Email', isEqualTo: googleEmail)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        // Email not registered as staff — sign out and show error
+        await FirebaseAuth.instance.signOut();
+        await GoogleSignIn().signOut();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  "This Google account is not registered as staff. Contact admin."),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Step 6: Valid staff — store email and show department picker
+      _googleEmail = googleEmail;
+
+      if (mounted) {
+        setState(() => showDepartmentForm = true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Google Sign-In failed: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isGoogleLoading = false);
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // EXISTING EMAIL/PASSWORD LOGIN — UNCHANGED
+  // ──────────────────────────────────────────────────────────────────────────
   Future<void> login() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,6 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (data['Email'] == emailController.text.trim() &&
             data['Password'] == passwordController.text.trim()) {
           found = true;
+          _googleEmail = null; // email/password login, not Google
           setState(() => showDepartmentForm = true);
           break;
         }
@@ -80,16 +165,33 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ✅ APPROVE
+  // ──────────────────────────────────────────────────────────────────────────
+  // APPROVE — UNCHANGED, works for both login methods
+  // ──────────────────────────────────────────────────────────────────────────
   Future<void> approve() async {
     setState(() => isLoading = true);
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection("Staff")
-          .where('Email', isEqualTo: emailController.text.trim())
-          .where('Password', isEqualTo: passwordController.text.trim())
-          .get();
+      // Use Google email if signed in via Google, else use text field
+      final String activeEmail =
+          _googleEmail ?? emailController.text.trim();
+
+      QuerySnapshot snapshot;
+
+      if (_googleEmail != null) {
+        // Google login — verify by email only (no password)
+        snapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where('Email', isEqualTo: activeEmail)
+            .get();
+      } else {
+        // Email/password login — verify both
+        snapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where('Email', isEqualTo: activeEmail)
+            .where('Password', isEqualTo: passwordController.text.trim())
+            .get();
+      }
 
       if (snapshot.docs.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,17 +200,17 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final userData = snapshot.docs.first.data();
+      final userData = snapshot.docs.first.data() as Map<String, dynamic>;
       final userDepartment = userData['Role'];
 
       if (selectedDepartments.length == 1 &&
           userDepartment.contains(selectedDepartments.first)) {
-        navigateDepartment(selectedDepartments.first);
+        navigateDepartment(selectedDepartments.first, activeEmail);
         return;
       }
 
       await FirebaseFirestore.instance.collection("Approvals").add({
-        "Email": emailController.text.trim(),
+        "Email": activeEmail,
         "RequestedDepartments": selectedDepartments,
         "UserCurrentDepartment": userDepartment,
         "Status": "Pending",
@@ -126,15 +228,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> navigateDepartment(String department) async {
-    await saveLoginLog(
-      email: emailController.text.trim(),
-      department: department,
-    );
+  // ──────────────────────────────────────────────────────────────────────────
+  // NAVIGATE — UNCHANGED logic, added email param for Google flow
+  // ──────────────────────────────────────────────────────────────────────────
+  Future<void> navigateDepartment(String department, String email) async {
+    await saveLoginLog(email: email, department: department);
 
-    // ✅ Save Session with Remember Me value
     await SessionManager.saveSession(
-      email: emailController.text.trim(),
+      email: email,
       department: department,
       rememberMe: true,
     );
@@ -143,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
       '/dashboard',
       extra: {
         'department': department,
-        'email': emailController.text.trim(),
+        'email': email,
       },
     );
   }
@@ -163,6 +264,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Icon(icon, size: 18, color: Colors.grey);
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ──────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,6 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 60),
 
+              // ── Logo ────────────────────────────────────────────────
               Center(
                 child: CircleAvatar(
                   radius: 45,
@@ -190,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 50),
 
               const Text(
-                "Let’s Sign In!",
+                "Let's Sign In!",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
@@ -207,6 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
+              // ── Email field ─────────────────────────────────────────
               inputBox(
                 icon: safeIcon(Icons.email),
                 child: TextField(
@@ -220,6 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
+              // ── Password field ──────────────────────────────────────
               inputBox(
                 icon: safeIcon(Icons.lock),
                 child: TextField(
@@ -231,7 +338,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 trailing: GestureDetector(
-                  onTap: () => setState(() => showPassword = !showPassword),
+                  onTap: () =>
+                      setState(() => showPassword = !showPassword),
                   child: Icon(
                     showPassword
                         ? Icons.visibility
@@ -244,6 +352,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 18),
 
+              // ── Remember Me ─────────────────────────────────────────
               CheckboxListTile(
                 value: rememberMe,
                 onChanged: (v) => setState(() => rememberMe = v!),
@@ -254,15 +363,132 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 35),
 
-              primaryButton("Sign In", login),
+              // ── Sign In button ──────────────────────────────────────
+              primaryButton(
+                isLoading ? "Signing in..." : "Sign In",
+                isLoading ? () {} : login,
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Divider ─────────────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      "OR",
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Google Sign-In button ───────────────────────────────
+              GestureDetector(
+                onTap: isGoogleLoading ? null : signInWithGoogle,
+                child: Container(
+                  width: double.infinity,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey.shade300),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black12, blurRadius: 8),
+                    ],
+                  ),
+                  child: isGoogleLoading
+                      ? const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Google "G" logo drawn with text
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border:
+                          Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "G",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF4285F4),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Sign in with Google",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF202244),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 40),
 
+              // ── Department picker (shown after successful login) ─────
               if (showDepartmentForm) ...[
+                // Show which account is signed in via Google
+                if (_googleEmail != null)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Colors.green, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Signed in as $_googleEmail",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 const Text(
                   "Select Department",
-                  style:
-                  TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 20),
                 ...departments.map((dept) => CheckboxListTile(
@@ -279,6 +505,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 primaryButton("Continue", approve),
               ],
+
+              const SizedBox(height: 40),
             ],
           ),
         ),
