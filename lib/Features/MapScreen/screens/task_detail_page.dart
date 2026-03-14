@@ -7,8 +7,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:html' as html show AnchorElement;
 
+// Conditional import — dart:html only on web, stub on Android/iOS
+// ignore: avoid_web_libraries_in_flutter
+import '../../../FormComponents/web_utils_stub.dart'
+if (dart.library.html) '../../../FormComponents/web_utils.dart'
+as web_utils;
 
 class TaskDetailPage extends StatefulWidget {
   final Task task;
@@ -68,58 +72,46 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
   Future<List<String>> _loadWorkTypesFromFirestore() async {
     if (_workTypesCache != null) return _workTypesCache!;
-
-    final snap = await FirebaseFirestore.instance.collection('WorkType').get();
-
+    final snap =
+    await FirebaseFirestore.instance.collection('WorkType').get();
     final values = snap.docs
         .map((d) => (d.data()['workType'] ?? '').toString())
         .where((e) => e.isNotEmpty)
         .toList();
-
     _workTypesCache = values;
     return values;
   }
 
   Future<List<String>> _loadAssigneesFromFirestore() async {
     if (_assigneesCache != null) return _assigneesCache!;
-
-    final snap = await FirebaseFirestore.instance.collection('Assignee').get();
-
-    final values = snap.docs
-        .map((d) {
+    final snap =
+    await FirebaseFirestore.instance.collection('Assignee').get();
+    final values = snap.docs.map((d) {
       final data = d.data();
       final nameField = data['name'];
       if (nameField != null && nameField.toString().isNotEmpty) {
         return nameField.toString();
       }
       return d.id;
-    })
-        .where((e) => e.isNotEmpty)
-        .toList();
-
+    }).where((e) => e.isNotEmpty).toList();
     _assigneesCache = values;
     return values;
   }
 
   Future<List<String>> _loadClientsFromFirestore() async {
     if (_clientsCache != null) return _clientsCache!;
-
-    final snap = await FirebaseFirestore.instance.collection('Client').get();
-
+    final snap =
+    await FirebaseFirestore.instance.collection('Client').get();
     final values = snap.docs
         .map((d) => d['name']?.toString() ?? '')
         .where((e) => e.isNotEmpty)
         .toList();
-
     _clientsCache = values;
     return values;
   }
 
   Future<List<String>> _loadFoldersFromFirestore() async {
     if (_foldersCache != null) return _foldersCache!;
-
-    // You can change this to load from Firestore if you have a Folder collection
-    // For now, returning hardcoded values like in map_screen
     _foldersCache = ['Personal', 'Office', 'Freelance'];
     return _foldersCache!;
   }
@@ -129,13 +121,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     _overlayEntry = null;
   }
 
-  /// Helper: show date picker then time picker and return combined DateTime (or null if cancelled)
   Future<DateTime?> pickDateTimeWithTabs(BuildContext context,
       {DateTime? initial}) async {
     DateTime selectedDate = initial ?? DateTime.now();
     TimeOfDay selectedTime =
     TimeOfDay.fromDateTime(initial ?? DateTime.now());
-
     int tabIndex = 0;
 
     return showDialog<DateTime>(
@@ -145,13 +135,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           builder: (context, setState) {
             return Dialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+                  borderRadius: BorderRadius.circular(12)),
               child: SizedBox(
                 height: 430,
                 child: Column(
                   children: [
-                    // ---------- DATE | TIME TABS ----------
                     Row(
                       children: [
                         _tabButton(
@@ -175,8 +163,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                         ),
                       ],
                     ),
-
-                    // ---------- CONTENT ----------
                     Expanded(
                       child: tabIndex == 0
                           ? CalendarDatePicker(
@@ -197,8 +183,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                         ),
                       ),
                     ),
-
-                    // ---------- ACTIONS ----------
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
@@ -273,11 +257,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       FloatingSheetType type, {
         String? fieldKey,
       }) async {
-    if (_overlayEntry != null) {
-      _hideOverlay();
-    }
+    if (_overlayEntry != null) _hideOverlay();
 
-    // resolve key same as before (no default)
     String resolvedKey;
     if (fieldKey != null) {
       resolvedKey = fieldKey;
@@ -307,7 +288,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       }
     }
 
-    // Load values from Firestore (async)
     List<String>? workTypes;
     List<String>? assignees;
     List<String>? clients;
@@ -324,7 +304,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     }
 
     final OverlayState overlayState = Overlay.of(buttonContext);
-    final RenderBox button = buttonContext.findRenderObject() as RenderBox;
+    final RenderBox button =
+    buttonContext.findRenderObject() as RenderBox;
     final RenderBox overlayBox =
     overlayState.context.findRenderObject() as RenderBox;
 
@@ -353,53 +334,70 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         case 'reminder':
           return const [
             ListTile(
-                leading: Icon(Icons.access_time), title: Text("Today (1 hour)")),
+                leading: Icon(Icons.access_time),
+                title: Text("Today (1 hour)")),
             ListTile(
-                leading: Icon(Icons.access_time), title: Text("Today (3 hour)")),
+                leading: Icon(Icons.access_time),
+                title: Text("Today (3 hour)")),
             ListTile(
-                leading: Icon(Icons.access_time), title: Text("Today (6 hour)")),
+                leading: Icon(Icons.access_time),
+                title: Text("Today (6 hour)")),
             ListTile(
                 leading: Icon(Icons.access_time),
                 title: Text("Tomorrow (12 pm)")),
             ListTile(
-                leading: Icon(Icons.calendar_month), title: Text("Custom")),
+                leading: Icon(Icons.calendar_month),
+                title: Text("Custom")),
           ];
         case 'assignee':
           if (assignees == null || assignees.isEmpty) {
             return const [
               ListTile(
-                  leading: Icon(Icons.person), title: Text("Assign to me")),
+                  leading: Icon(Icons.person),
+                  title: Text("Assign to me")),
               ListTile(
                   leading: Icon(Icons.group),
                   title: Text("Assign to someone else")),
             ];
           }
-          return assignees.map((v) => ListTile(title: Text(v))).toList();
+          return assignees
+              .map((v) => ListTile(title: Text(v)))
+              .toList();
         case 'deadline':
           return const [
             ListTile(
-                leading: Icon(Icons.access_time), title: Text("Today (1 hour)")),
+                leading: Icon(Icons.access_time),
+                title: Text("Today (1 hour)")),
             ListTile(
-                leading: Icon(Icons.access_time), title: Text("Today (3 hour)")),
+                leading: Icon(Icons.access_time),
+                title: Text("Today (3 hour)")),
             ListTile(
-                leading: Icon(Icons.access_time), title: Text("Today (6 hour)")),
+                leading: Icon(Icons.access_time),
+                title: Text("Today (6 hour)")),
             ListTile(
                 leading: Icon(Icons.access_time),
                 title: Text("Tomorrow (12 pm)")),
             ListTile(
-                leading: Icon(Icons.calendar_month), title: Text("Custom")),
+                leading: Icon(Icons.calendar_month),
+                title: Text("Custom")),
           ];
         case 'workType':
-          return (workTypes ?? []).map((v) => ListTile(title: Text(v))).toList();
+          return (workTypes ?? [])
+              .map((v) => ListTile(title: Text(v)))
+              .toList();
         case 'clientName':
           if (clients == null || clients.isEmpty) {
             return const [
               ListTile(title: Text("No clients found")),
             ];
           }
-          return clients.map((v) => ListTile(title: Text(v))).toList();
+          return clients
+              .map((v) => ListTile(title: Text(v)))
+              .toList();
         case 'folder':
-          return (folders ?? []).map((v) => ListTile(title: Text(v))).toList();
+          return (folders ?? [])
+              .map((v) => ListTile(title: Text(v)))
+              .toList();
         default:
           return [];
       }
@@ -407,7 +405,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
     final tileWidgets = tilesFor(resolvedKey);
 
-    // Positioning
     const double menuWidth = 260;
     const double menuHeightEstimate = 220;
     const double padding = 8;
@@ -418,16 +415,23 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     }
     if (left < padding) left = padding;
 
-    double topBelow = buttonPosition.dy + buttonSize.height + padding;
-    double topAbove = buttonPosition.dy - menuHeightEstimate - padding;
+    double topBelow =
+        buttonPosition.dy + buttonSize.height + padding;
+    double topAbove =
+        buttonPosition.dy - menuHeightEstimate - padding;
     double top;
-    if (topBelow + menuHeightEstimate <= overlaySize.height - padding) {
+    if (topBelow + menuHeightEstimate <=
+        overlaySize.height - padding) {
       top = topBelow;
     } else if (topAbove >= padding) {
       top = topAbove;
     } else {
       top = (overlaySize.height - menuHeightEstimate - padding)
-          .clamp(padding, overlaySize.height - menuHeightEstimate - padding);
+          .clamp(
+          padding,
+          overlaySize.height -
+              menuHeightEstimate -
+              padding);
     }
 
     _overlayEntry = OverlayEntry(
@@ -457,43 +461,54 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       return InkWell(
                         onTap: () async {
                           if (tile is ListTile) {
-                            final label = (tile.title as Text).data ?? '';
+                            final label =
+                                (tile.title as Text).data ?? '';
 
-                            // handle reminder/deadline specially: want to store concrete datetime (ISO)
                             if (resolvedKey == 'reminder' ||
                                 resolvedKey == 'deadline') {
                               DateTime? computed;
 
-                              // If 'Custom' => hide overlay first then open pickers
-                              if (label.toLowerCase().contains('custom')) {
-                                // hide list immediately so picker appears without the list behind
+                              if (label
+                                  .toLowerCase()
+                                  .contains('custom')) {
                                 _hideOverlay();
-
-                                computed = await pickDateTimeWithTabs(context);
+                                computed =
+                                await pickDateTimeWithTabs(
+                                    context);
                               } else {
-                                // Preset options: compute concrete DateTime
                                 final now = DateTime.now();
                                 final lower = label.toLowerCase();
-                                if (lower.contains('today (1 hour)')) {
-                                  computed = now.add(const Duration(hours: 1));
-                                } else if (lower.contains('today (3 hour)')) {
-                                  computed = now.add(const Duration(hours: 3));
-                                } else if (lower.contains('today (6 hour)')) {
-                                  computed = now.add(const Duration(hours: 6));
-                                } else if (lower.contains('tomorrow (12 pm)')) {
-                                  final tomorrow = DateTime(
-                                      now.year, now.month, now.day)
+                                if (lower.contains(
+                                    'today (1 hour)')) {
+                                  computed = now.add(
+                                      const Duration(hours: 1));
+                                } else if (lower.contains(
+                                    'today (3 hour)')) {
+                                  computed = now.add(
+                                      const Duration(hours: 3));
+                                } else if (lower.contains(
+                                    'today (6 hour)')) {
+                                  computed = now.add(
+                                      const Duration(hours: 6));
+                                } else if (lower.contains(
+                                    'tomorrow (12 pm)')) {
+                                  final tomorrow = DateTime(now.year,
+                                      now.month, now.day)
                                       .add(const Duration(days: 1));
-                                  computed = DateTime(tomorrow.year,
-                                      tomorrow.month, tomorrow.day, 12, 0);
+                                  computed = DateTime(
+                                      tomorrow.year,
+                                      tomorrow.month,
+                                      tomorrow.day,
+                                      12,
+                                      0);
                                 } else {
-                                  // fallback - shouldn't usually happen
                                   computed = null;
                                 }
                               }
 
                               if (computed != null) {
-                                final iso = computed.toIso8601String();
+                                final iso =
+                                computed.toIso8601String();
                                 setState(() {
                                   if (resolvedKey == 'reminder') {
                                     task.reminder = iso;
@@ -503,7 +518,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 });
                                 widget.onChanged();
                               } else {
-                                // fallback: store label text
                                 setState(() {
                                   if (resolvedKey == 'reminder') {
                                     task.reminder = label;
@@ -512,17 +526,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                   }
                                 });
                                 widget.onChanged();
-                                // ensure overlay hidden
                                 _hideOverlay();
                               }
                             } else {
-                              // Non-date fields (priority, assignee, workType, clientName, folder)
                               setState(() {
                                 switch (resolvedKey) {
                                   case 'priority':
                                     task.priority = label;
-                                    task.priorityUpdatedAt =
-                                        DateTime.now().millisecondsSinceEpoch;
+                                    task.priorityUpdatedAt = DateTime
+                                        .now()
+                                        .millisecondsSinceEpoch;
                                     break;
                                   case 'assignee':
                                     task.assignee = label;
@@ -559,11 +572,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       },
     );
 
-    // Insert overlay now
     overlayState.insert(_overlayEntry!);
   }
 
-  // ---------- title editing ----------
   void _saveTitle(String value) {
     final text = value.trim();
     if (text.isEmpty) return;
@@ -572,14 +583,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       _titleController.text = text;
       _isEditingTitle = false;
     });
-    widget.onChanged(); // pushes to Firebase
+    widget.onChanged();
   }
 
-  // ---------- steps logic ----------
   void _saveStep(String value) {
     final text = value.trim();
     if (text.isEmpty) return;
-
     setState(() {
       task.steps.add(TaskStep(title: text));
       _isAddingStep = false;
@@ -599,7 +608,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   void _saveEditedStep(int index, String value) {
     final text = value.trim();
     if (text.isEmpty) return;
-
     setState(() {
       task.steps[index].title = text;
       _editingStepIndex = null;
@@ -614,8 +622,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Delete step'),
-          content:
-          const Text('Are you sure you want to delete this sub-step?'),
+          content: const Text(
+              'Are you sure you want to delete this sub-step?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -642,20 +650,19 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
   Widget _buildStepTile(TaskStep step, int index) {
     final isEditing = _editingStepIndex == index;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
           GestureDetector(
             onTap: () {
-              setState(() {
-                step.isDone = !step.isDone;
-              });
+              setState(() => step.isDone = !step.isDone);
               widget.onChanged();
             },
             child: Icon(
-              step.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+              step.isDone
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked,
               size: 22,
             ),
           ),
@@ -669,7 +676,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 isDense: true,
                 border: InputBorder.none,
               ),
-              onSubmitted: (val) => _saveEditedStep(index, val),
+              onSubmitted: (val) =>
+                  _saveEditedStep(index, val),
             )
                 : GestureDetector(
               onTap: () => _startEditStep(index),
@@ -695,7 +703,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               },
             )
           else
-          // show delete icon when not editing
             IconButton(
               icon: const Icon(Icons.delete_outline,
                   size: 20, color: Colors.redAccent),
@@ -707,7 +714,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-  // ---------- generic UI helpers ----------
   Widget _borderedTile({required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -742,14 +748,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     if (value == null || value.isEmpty) {
       return Text(
         "None",
-        style: TextStyle(
-          color: Colors.grey.shade500,
-          fontSize: 13,
-        ),
+        style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
       );
     }
-
-    // if looks like ISO datetime, show a friendly formatted string
     try {
       final dt = DateTime.parse(value);
       final formatted =
@@ -763,7 +764,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
       );
     } catch (_) {
-      // not an ISO string - show as-is
       return Text(
         value,
         style: const TextStyle(
@@ -775,15 +775,15 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     }
   }
 
-  bool _isSelected(String? value) => value != null && value.isNotEmpty;
+  bool _isSelected(String? value) =>
+      value != null && value.isNotEmpty;
 
   Widget _priorityBadgeHeader() {
     final p = task.priority;
-    if (p == null || p.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (p == null || p.isEmpty) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding:
+      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.brown),
@@ -799,26 +799,23 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-  // Open file helper
+  // ── Open file — no dart:html import needed here anymore ──────────────
   Future<void> _openFile(TaskFile file) async {
     if (kIsWeb) {
-      // For web: Check if we have a stored URL (for existing files)
       if (file.path != null && file.path!.startsWith('blob:')) {
-        // Open blob URL directly
-        html.AnchorElement(href: file.path!)
-          ..setAttribute('download', file.name)
-          ..click();
+        // Use web_utils to trigger download via anchor element
+        web_utils.downloadViaAnchor(file.path!, file.name);
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('File cannot be opened. Web files need to be re-uploaded to open.'),
+              content: Text(
+                  'File cannot be opened. Web files need to be re-uploaded.'),
             ),
           );
         }
       }
     } else {
-      // For native platforms
       if (file.path != null && file.path!.isNotEmpty) {
         final uri = Uri.file(file.path!);
         if (await canLaunchUrl(uri)) {
@@ -826,7 +823,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Cannot open file: ${file.name}')),
+              SnackBar(
+                  content: Text('Cannot open file: ${file.name}')),
             );
           }
         }
@@ -837,13 +835,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Task"),
-      ),
+      appBar: AppBar(title: const Text("Task")),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWeb = constraints.maxWidth >= 1024;
-
           return Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -854,14 +849,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 padding: const EdgeInsets.all(16.0),
                 child: ListView(
                   children: [
-                    // ---------- main title row ----------
+                    // ── Title row ───────────────────────────────────
                     Row(
                       children: [
                         GestureDetector(
                           onTap: () {
-                            setState(() {
-                              task.isDone = !task.isDone;
-                            });
+                            setState(() => task.isDone = !task.isDone);
                             widget.onChanged();
                           },
                           child: Icon(
@@ -878,8 +871,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             controller: _titleController,
                             autofocus: true,
                             decoration: const InputDecoration(
-                              border: InputBorder.none,
-                            ),
+                                border: InputBorder.none),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
@@ -890,7 +882,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             onTap: () {
                               setState(() {
                                 _isEditingTitle = true;
-                                _titleController.text = task.title;
+                                _titleController.text =
+                                    task.title;
                               });
                             },
                             child: Text(
@@ -911,25 +904,29 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const SizedBox(height: 10),
 
-                    // ---------- steps ----------
+                    // ── Steps ────────────────────────────────────────
                     if (task.steps.isNotEmpty)
                       ...task.steps
                           .asMap()
                           .entries
-                          .map((e) => _buildStepTile(e.value, e.key)),
+                          .map((e) =>
+                          _buildStepTile(e.value, e.key)),
 
                     if (_isAddingStep)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           children: [
-                            const Icon(Icons.radio_button_unchecked, size: 22),
+                            const Icon(
+                                Icons.radio_button_unchecked,
+                                size: 22),
                             const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
                                 controller: _stepController,
                                 autofocus: true,
-                                decoration: const InputDecoration(
+                                decoration:
+                                const InputDecoration(
                                   hintText: "Add step",
                                   border: InputBorder.none,
                                 ),
@@ -937,7 +934,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close, size: 18),
+                              icon: const Icon(Icons.close,
+                                  size: 18),
                               onPressed: () {
                                 setState(() {
                                   _isAddingStep = false;
@@ -958,15 +956,18 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           });
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0),
                           child: Row(
                             children: const [
-                              Icon(Icons.add, color: Colors.blue, size: 20),
+                              Icon(Icons.add,
+                                  color: Colors.blue, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 "Add step",
-                                style:
-                                TextStyle(color: Colors.blue, fontSize: 15),
+                                style: TextStyle(
+                                    color: Colors.blue,
+                                    fontSize: 15),
                               ),
                             ],
                           ),
@@ -975,122 +976,133 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const SizedBox(height: 8),
 
-                    // ---------- Priority / Remind / Assign / Deadline / Work Type / Client Name / Folder ----------
+                    // ── Fields ───────────────────────────────────────
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.priority),
-                        child: ListTile(
-                          leading: const Icon(Icons.flag_sharp,
-                              color: Colors.brown),
-                          title: const Text("Priority"),
-                          trailing: _infoTrailing(task.priority),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.priority,
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.priority),
+                            child: ListTile(
+                              leading: const Icon(Icons.flag_sharp,
+                                  color: Colors.brown),
+                              title: const Text("Priority"),
+                              trailing:
+                              _infoTrailing(task.priority),
+                              onTap: () => _showOverlay(buttonContext,
+                                  FloatingSheetType.priority),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.reminder),
-                        child: ListTile(
-                          leading: const Icon(Icons.notifications_active,
-                              color: Colors.brown),
-                          title: const Text("Remind Me"),
-                          trailing: _infoTrailing(task.reminder),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.remind,
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.reminder),
+                            child: ListTile(
+                              leading: const Icon(
+                                  Icons.notifications_active,
+                                  color: Colors.brown),
+                              title: const Text("Remind Me"),
+                              trailing:
+                              _infoTrailing(task.reminder),
+                              onTap: () => _showOverlay(buttonContext,
+                                  FloatingSheetType.remind),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.assignee),
-                        child: ListTile(
-                          leading: const Icon(Icons.checklist,
-                              color: Colors.brown),
-                          title: const Text("Assign"),
-                          trailing: _infoTrailing(task.assignee),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.assign,
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.assignee),
+                            child: ListTile(
+                              leading: const Icon(Icons.checklist,
+                                  color: Colors.brown),
+                              title: const Text("Assign"),
+                              trailing:
+                              _infoTrailing(task.assignee),
+                              onTap: () => _showOverlay(buttonContext,
+                                  FloatingSheetType.assign),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.deadline),
-                        child: ListTile(
-                          leading:
-                          const Icon(Icons.alarm, color: Colors.brown),
-                          title: const Text("Deadline"),
-                          trailing: _infoTrailing(task.deadline),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.deadline,
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.deadline),
+                            child: ListTile(
+                              leading: const Icon(Icons.alarm,
+                                  color: Colors.brown),
+                              title: const Text("Deadline"),
+                              trailing:
+                              _infoTrailing(task.deadline),
+                              onTap: () => _showOverlay(buttonContext,
+                                  FloatingSheetType.deadline),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.workType),
-                        child: ListTile(
-                          leading: const Icon(Icons.insert_drive_file,
-                              color: Colors.brown),
-                          title: const Text("Work Type"),
-                          trailing: _infoTrailing(task.workType),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.workType,
-                            fieldKey: 'workType',
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.workType),
+                            child: ListTile(
+                              leading: const Icon(
+                                  Icons.insert_drive_file,
+                                  color: Colors.brown),
+                              title: const Text("Work Type"),
+                              trailing:
+                              _infoTrailing(task.workType),
+                              onTap: () => _showOverlay(
+                                buttonContext,
+                                FloatingSheetType.workType,
+                                fieldKey: 'workType',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.clientName),
-                        child: ListTile(
-                          leading: const Icon(Icons.business_center_outlined,
-                              color: Colors.brown),
-                          title: const Text("Client Name"),
-                          trailing: _infoTrailing(task.clientName),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.clientName,
-                            fieldKey: 'clientName',
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected:
+                            _isSelected(task.clientName),
+                            child: ListTile(
+                              leading: const Icon(
+                                  Icons.business_center_outlined,
+                                  color: Colors.brown),
+                              title: const Text("Client Name"),
+                              trailing:
+                              _infoTrailing(task.clientName),
+                              onTap: () => _showOverlay(
+                                buttonContext,
+                                FloatingSheetType.clientName,
+                                fieldKey: 'clientName',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     Builder(
-                      builder: (buttonContext) => _animatedBorderedTile(
-                        isSelected: _isSelected(task.folder),
-                        child: ListTile(
-                          leading: const Icon(Icons.folder_outlined,
-                              color: Colors.brown),
-                          title: const Text("Folder"),
-                          trailing: _infoTrailing(task.folder),
-                          onTap: () => _showOverlay(
-                            buttonContext,
-                            FloatingSheetType.folder,
-                            fieldKey: 'folder',
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.folder),
+                            child: ListTile(
+                              leading: const Icon(
+                                  Icons.folder_outlined,
+                                  color: Colors.brown),
+                              title: const Text("Folder"),
+                              trailing: _infoTrailing(task.folder),
+                              onTap: () => _showOverlay(
+                                buttonContext,
+                                FloatingSheetType.folder,
+                                fieldKey: 'folder',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
 
                     const SizedBox(height: 12),
 
-                    // ---------- UPLOADED FILES (shown above upload button) ----------
+                    // ── Uploaded files ───────────────────────────────
                     if (task.files.isNotEmpty)
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
                         children: [
                           const Text(
                             "Uploaded Files",
@@ -1100,54 +1112,71 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...task.files.asMap().entries.map((entry) {
+                          ...task.files
+                              .asMap()
+                              .entries
+                              .map((entry) {
                             final index = entry.key;
                             final file = entry.value;
-
                             return InkWell(
                               onTap: () => _openFile(file),
                               child: Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                                margin: const EdgeInsets.only(
+                                    bottom: 8),
+                                padding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10),
                                 decoration: BoxDecoration(
-                                  border:
-                                  Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                      color:
+                                      Colors.grey.shade300),
+                                  borderRadius:
+                                  BorderRadius.circular(6),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.insert_drive_file,
+                                    const Icon(
+                                        Icons.insert_drive_file,
                                         color: Colors.blue),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment
+                                            .start,
                                         children: [
                                           Text(
                                             file.name,
                                             maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            overflow: TextOverflow
+                                                .ellipsis,
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.w500),
+                                                fontWeight:
+                                                FontWeight
+                                                    .w500),
                                           ),
-                                          const SizedBox(height: 4),
+                                          const SizedBox(
+                                              height: 4),
                                           Text(
                                             "${(file.size / 1024).toStringAsFixed(1)} KB",
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: Colors.grey.shade600,
+                                              color: Colors
+                                                  .grey.shade600,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.close, size: 20),
+                                      icon: const Icon(
+                                          Icons.close,
+                                          size: 20),
                                       onPressed: () {
                                         setState(() {
-                                          task.files.removeAt(index);
+                                          task.files
+                                              .removeAt(index);
                                         });
                                         widget.onChanged();
                                       },
@@ -1161,20 +1190,19 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                         ],
                       ),
 
-                    // ---------- ADD FILE ----------
+                    // ── Upload button ────────────────────────────────
                     _borderedTile(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0),
                         child: FileUploadBox(
                           onFileSelected: (PlatformFile file) {
                             setState(() {
-                              task.files.add(
-                                TaskFile(
-                                  name: file.name,
-                                  size: file.size,
-                                  path: file.path,
-                                ),
-                              );
+                              task.files.add(TaskFile(
+                                name: file.name,
+                                size: file.size,
+                                path: file.path,
+                              ));
                             });
                             widget.onChanged();
                           },
@@ -1186,8 +1214,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const Text(
                       "Add note",
-                      style:
-                      TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -1205,9 +1234,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const SizedBox(height: 15),
 
-                    // ---------- Created + delete ----------
+                    // ── Created + delete ─────────────────────────────
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           "Created: ${task.createdDate}",
