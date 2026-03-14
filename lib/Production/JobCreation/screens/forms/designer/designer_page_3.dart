@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
+import 'dart:convert';
 
 class DesignerPage3 extends StatefulWidget {
   const DesignerPage3({super.key});
@@ -13,6 +15,47 @@ class DesignerPage3 extends StatefulWidget {
 }
 
 class _DesignerPage3State extends State<DesignerPage3> {
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    if (NewFormScope.of(context).mode == "edit") {
+      _loadDesignerData();
+    }
+  }
+
+  Future<void> _loadDesignerData() async {
+    final form = NewFormScope.of(context);
+    final uri = GoRouterState.of(context).uri;
+    final dataJson = uri.queryParameters['data'];
+
+    if (dataJson == null || dataJson.isEmpty) {
+      return;
+    }
+
+    try {
+      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+
+      setState(() {
+        form.Blade.text = decodedData["blade"] ?? "No";
+        form.BladeSelectedBy.text = decodedData["bladeSelectedBy"] ?? "";
+        form.Creasing.text = decodedData["creasing"] ?? "No";
+        form.CreasingSelectedBy.text = decodedData["creasingSelectedBy"] ?? "";
+        form.Unknown.text = decodedData["unknown"] ?? "";
+        form.CapsuleType.text = decodedData["capsuleType"] ?? "";
+      });
+
+      debugPrint("✅ DesignerPage3 loaded data from route");
+    } catch (e) {
+      debugPrint("❌ Error decoding data: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
@@ -164,7 +207,7 @@ class _DesignerPage3State extends State<DesignerPage3> {
               AddableSearchDropdown(
                 label: "Capsule",
                 items: form.jobs,
-                initialValue: "No",
+                initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
                 onChanged: (v) {
                   form.CapsuleType.text = v ?? "";
                 },

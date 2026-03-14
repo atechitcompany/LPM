@@ -1,87 +1,255 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+/// Pure UI widget.
+/// Receives already-filtered [docs] from ActivityListFirestore.
+/// No Firestore queries here — only rendering.
 class ActivityList extends StatelessWidget {
-  final List<Map<String, String>> activities;
-  final Color Function(String) getStatusColor;
+  final List<QueryDocumentSnapshot> docs;
+  final bool isPending;
+  final bool isQuotation;
 
   const ActivityList({
-    Key? key,
-    required this.activities,
-    required this.getStatusColor,
-  }) : super(key: key);
+    super.key,
+    required this.docs,
+    required this.isPending,
+    required this.isQuotation,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (activities.isEmpty) {
-      return Center(
-        child: Text(
-          'No entries available',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+    return Container(
+      color: Colors.white,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        itemCount: docs.length,
+        itemBuilder: (context, index) {
+          final data = docs[index].data() as Map<String, dynamic>;
+          final designerData = data["designer"]?["data"] ?? {};
+          final lpm = docs[index].id;
+
+          // ── Data fields ──────────────────────────────────────────────
+          final name =
+              designerData["name"] ?? designerData["PartyName"] ?? "No Name";
+          final party =
+              designerData["partyName"] ?? designerData["PartyName"] ?? "No Party";
+
+          // ── Badge ────────────────────────────────────────────────────
+          final String rawStatus = (data["status"] ?? "").toString();
+          final _BadgeStyle badge = _resolveBadge(rawStatus, isPending);
+
+          return InkWell(
+            // ── Navigation ───────────────────────────────────────────
+            // Both Pending AND Jobs items open job-summary screen
+            onTap: () => context.push('/job-summary/$lpm'),
+            child: Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade100, width: 1),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // ── Avatar ──────────────────────────────────────────
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.person_outline,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // ── Name + Party ─────────────────────────────────────
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name.toString(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          party.toString(),
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Status badge ─────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badge.bgColor,
+                      borderRadius: BorderRadius.circular(6),
+                      border:
+                      Border.all(color: badge.borderColor, width: 1),
+                    ),
+                    child: Text(
+                      badge.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: badge.textColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // ── Call button ──────────────────────────────────────
+                  _CircleButton(
+                    color: const Color(0xFF2196F3),
+                    child: const Icon(
+                      Icons.phone,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // ── WhatsApp button ──────────────────────────────────
+                  _CircleButton(
+                    color: const Color(0xFF25D366),
+                    child: Image.asset(
+                      'assets/whatsapp-logo.png',
+                      width: 16,
+                      height: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Badge resolver ───────────────────────────────────────────────────────
+  _BadgeStyle _resolveBadge(String rawStatus, bool isPending) {
+    if (isPending) {
+      return _BadgeStyle(
+        label: 'Pending',
+        textColor: const Color(0xFFFF9800),
+        bgColor: const Color(0xFFFFF3E0),
+        borderColor: const Color(0xFFFFCC80),
       );
     }
-
-    return ListView.builder(
-      itemCount: activities.length,
-      itemBuilder: (context, index) {
-        final activity = activities[index];
-        return ListTile(
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-          leading: CircleAvatar(
-            backgroundColor: Colors.grey.shade200,
-            child: Text(
-              activity['name']![0].toUpperCase(),
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          title: Text(
-            activity['name']!,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          subtitle: Text(
-            '${activity['company']} · ${activity['role']}',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: getStatusColor(activity['status']!).withOpacity(0.1),
-                  border: Border.all(color: getStatusColor(activity['status']!).withOpacity(0.6)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  activity['status']!,
-                  style: TextStyle(
-                    color: getStatusColor(activity['status']!),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              SizedBox(width: 6),
-              IconButton(
-                icon: Image.asset('assets/telephone.png', width: 30, height: 30),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Calling ${activity['name']}')),
-                  );
-                },
-              ),
-              IconButton(
-                icon: Image.asset('assets/whatsapp.png', width: 30, height: 40),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Messaging ${activity['name']} via WhatsApp')),
-                  );
-                },
-              ),
-            ],
-          ),
+    switch (rawStatus.toLowerCase()) {
+      case 'hot':
+        return _BadgeStyle(
+          label: 'Hot',
+          textColor: const Color(0xFFE53935),
+          bgColor: const Color(0xFFFFEBEE),
+          borderColor: const Color(0xFFEF9A9A),
         );
-      },
+      case 'paid':
+        return _BadgeStyle(
+          label: 'Paid',
+          textColor: const Color(0xFF2E7D32),
+          bgColor: const Color(0xFFE8F5E9),
+          borderColor: const Color(0xFFA5D6A7),
+        );
+      case 'cold':
+        return _BadgeStyle(
+          label: 'Cold',
+          textColor: const Color(0xFF1565C0),
+          bgColor: const Color(0xFFE3F2FD),
+          borderColor: const Color(0xFF90CAF9),
+        );
+      case 'hold':
+        return _BadgeStyle(
+          label: 'Hold',
+          textColor: const Color(0xFFE65100),
+          bgColor: const Color(0xFFFFF3E0),
+          borderColor: const Color(0xFFFFCC80),
+        );
+      case 'cancel':
+      case 'cancelled':
+        return _BadgeStyle(
+          label: 'Cancel',
+          textColor: const Color(0xFF616161),
+          bgColor: const Color(0xFFF5F5F5),
+          borderColor: const Color(0xFFBDBDBD),
+        );
+      case 'pending_designer_review':
+        return _BadgeStyle(
+          label: 'Pending',
+          textColor: const Color(0xFFFF9800),
+          bgColor: const Color(0xFFFFF3E0),
+          borderColor: const Color(0xFFFFCC80),
+        );
+      case 'completed':
+        return _BadgeStyle(
+          label: 'Active',
+          textColor: const Color(0xFF1565C0),
+          bgColor: const Color(0xFFE3F2FD),
+          borderColor: const Color(0xFF90CAF9),
+        );
+      default:
+        return _BadgeStyle(
+          label: 'Active',
+          textColor: const Color(0xFF1565C0),
+          bgColor: const Color(0xFFE3F2FD),
+          borderColor: const Color(0xFF90CAF9),
+        );
+    }
+  }
+}
+
+// ── Small UI helpers ─────────────────────────────────────────────────────────
+
+class _BadgeStyle {
+  final String label;
+  final Color textColor;
+  final Color bgColor;
+  final Color borderColor;
+  const _BadgeStyle({
+    required this.label,
+    required this.textColor,
+    required this.bgColor,
+    required this.borderColor,
+  });
+}
+
+class _CircleButton extends StatelessWidget {
+  final Color color;
+  final Widget child;
+  const _CircleButton({required this.color, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: Center(child: child),
     );
   }
 }

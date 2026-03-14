@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import '../../../../../FormComponents/AddableSearchDropdown.dart';
 import '../../../../../FormComponents/AutoIncrementField.dart';
 import '../../../../../FormComponents/TextInput.dart';
 import '../new_form_scope.dart';
+import 'dart:convert';
 
 class DesignerPage1 extends StatefulWidget {
   const DesignerPage1({super.key});
@@ -39,7 +41,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
     if (form.mode != "edit") {
       form.clearDesignerData();
     }
-    // ✏️ EDIT MODE → LOAD DATA
+    // ✏️ EDIT MODE → LOAD DATA FROM ROUTE PARAMETERS
     else {
       _loadDesignerData(form);
     }
@@ -47,39 +49,52 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
 
   Future<void> _loadDesignerData(dynamic form) async {
-    final lpm = form.lpm;
-    if (lpm == null) return;
+    // ✅ NEW: Get data from route parameters instead of Firestore
+    final uri = GoRouterState.of(context).uri;
+    final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
-    final snap = await FirebaseFirestore.instance
-        .collection("jobs")
-        .doc(lpm)
-        .get();
+    debugPrint("✅ DesignerPage1 - Received data from route: $dataJson");
+    debugPrint("✅ LPM Parameter: $lpmParam");
 
-    if (!snap.exists) return;
+    // ✅ SET LPM FIRST (critical for submission)
+    if (lpmParam != null && lpmParam.isNotEmpty) {
+      form.LpmAutoIncrement.text = lpmParam;
+      debugPrint("✅ Set LPM to: $lpmParam");
+    } else {
+      // If no LPM in route, this shouldn't happen in edit mode
+      debugPrint("⚠️ No LPM found in route parameter");
+    }
 
-    final data = snap.data()!;
-    final designer =
-    Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+    if (dataJson == null || dataJson.isEmpty) {
+      debugPrint("❌ No data in route parameters, skipping load");
+      return;
+    }
 
-    form.PartyName.text = designer["PartyName"] ?? "";
-    form.DesignerCreatedBy.text =
-        designer["DesignerCreatedBy"] ?? "";
-    form.DeliveryAt.text = designer["DeliveryAt"] ?? "";
-    form.Orderby.text = designer["Orderby"] ?? "";
-    selectedJob = designer["ParticularJobName"];
-    form.ParticularJobName.text = selectedJob ?? "";
+    try {
+      // Decode JSON data
+      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    form.Priority.text = designer["Priority"] ?? "";
-    form.Remark.text = designer["Remark"] ?? "";
+      debugPrint("✅ Decoded data: ${decodedData.keys.toList()}");
 
+      // ✅ Populate form fields from decoded data (using camelCase keys)
+      setState(() {
+        form.PartyName.text = decodedData["partyName"] ?? "";
+        form.DesignerCreatedBy.text = decodedData["designerCreatedBy"] ?? "";
+        form.DeliveryAt.text = decodedData["deliveryAt"] ?? "";
+        form.Orderby.text = decodedData["orderBy"] ?? "";
+        form.ParticularJobName.text = decodedData["particularJobName"] ?? "";
+        form.Priority.text = decodedData["priority"] ?? "";
+        form.Remark.text = decodedData["remark"] ?? "";
 
+        selectedJob = decodedData["particularJobName"];
+      });
 
-    // LPM must be preserved
-    form.LpmAutoIncrement.text = lpm.toString();
-    if (mounted) setState(() {});
-    debugPrint("DesignerPage1 MODE = ${form.mode}");
-    debugPrint("DesignerPage1 LPM = ${form.lpm}");
+      debugPrint("✅ DesignerPage1 loaded data from route parameters");
 
+    } catch (e) {
+      debugPrint("❌ Error decoding data: $e");
+    }
   }
 
 

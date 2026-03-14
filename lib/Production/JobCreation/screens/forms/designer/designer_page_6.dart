@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../FormComponents/SearchableDropdownWithInitial.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lightatech/routes/app_route_config.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
+import 'dart:convert';
 
 class DesignerPage6 extends StatefulWidget {
   const DesignerPage6({super.key});
@@ -16,11 +17,54 @@ class DesignerPage6 extends StatefulWidget {
 
 class _DesignerPage6State extends State<DesignerPage6> {
   bool isSubmitting = false;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    if (NewFormScope.of(context).mode == "edit") {
+      _loadDesignerData();
+    }
+  }
+
+  Future<void> _loadDesignerData() async {
+    final form = NewFormScope.of(context);
+    final uri = GoRouterState.of(context).uri;
+    final dataJson = uri.queryParameters['data'];
+
+    if (dataJson == null || dataJson.isEmpty) {
+      return;
+    }
+
+    try {
+      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+
+      setState(() {
+        form.StrippingType.text = decodedData["strippingType"] ?? "No";
+        form.LaserCuttingStatus.text = decodedData["laserCuttingStatus"] ?? "Pending";
+        form.RubberFixingDone.text = decodedData["rubberFixingDone"] ?? "No";
+        form.WhiteProfileRubber.text = decodedData["whiteProfileRubber"] ?? "No";
+        form.DesigningStatus.text = decodedData["designingStatus"] ?? "Pending";
+        form.DesignerCreatedBy.text = decodedData["designerCreatedBy"] ?? "";
+      });
+
+      debugPrint("✅ DesignerPage6 loaded data from route");
+    } catch (e) {
+      debugPrint("❌ Error decoding data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
-    bool isDesigningDone = false;
+
+    // ✅ Check if Designing is done (this is the key field)
+    final bool isDesigningDone =
+        form.DesigningStatus.text.trim().toLowerCase() == "done";
 
     final bool laserDone =
         form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
@@ -45,11 +89,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
             if (form.canView("StrippingType")) ...[
               AddableSearchDropdown(
                 label: "Stripping",
-                items: form.jobs,
+                items: form.strippingTypes,
                 initialValue: form.StrippingType.text.isEmpty
                     ? "No"
                     : form.StrippingType.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.strippingTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.StrippingType.text = (v ?? "No").trim();
@@ -110,6 +154,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
               const SizedBox(height: 30),
             ],
 
+            /// ✅ Designing Status (CRITICAL FIELD)
             if (form.canView("DesigningStatus")) ...[
               FlexibleToggle(
                 label: "Designing *",
@@ -118,11 +163,9 @@ class _DesignerPage6State extends State<DesignerPage6> {
                 initialValue: isDesigningDone,
                 onChanged: (val) {
                   setState(() {
-                    isDesigningDone = val;
+                    form.DesigningStatus.text =
+                    val ? "Done" : "Pending";
                   });
-
-                  form.DesigningStatus.text =
-                  val ? "Done" : "Pending";
 
                   if (!val) {
                     form.DesignedBy.clear();
@@ -166,18 +209,23 @@ class _DesignerPage6State extends State<DesignerPage6> {
                     try {
                       await form.submitForm();
 
-                      context.go('/dashboard');
+                      // ✅ Navigate to dashboard
+                      if (mounted) {
+                        context.go('/dashboard');
+                      }
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                          Text("Error submitting form"),
+                        SnackBar(
+                          content: Text("Error submitting form: $e"),
+                          backgroundColor: Colors.red,
                         ),
                       );
                     } finally {
-                      setState(() {
-                        isSubmitting = false;
-                      });
+                      if (mounted) {
+                        setState(() {
+                          isSubmitting = false;
+                        });
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

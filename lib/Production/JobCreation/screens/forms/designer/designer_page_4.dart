@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
+import 'dart:convert';
 
 class DesignerPage4 extends StatefulWidget {
   const DesignerPage4({super.key});
@@ -12,6 +14,51 @@ class DesignerPage4 extends StatefulWidget {
 }
 
 class _DesignerPage4State extends State<DesignerPage4> {
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    if (NewFormScope.of(context).mode == "edit") {
+      _loadDesignerData();
+    }
+  }
+
+  Future<void> _loadDesignerData() async {
+    final form = NewFormScope.of(context);
+    final uri = GoRouterState.of(context).uri;
+    final dataJson = uri.queryParameters['data'];
+
+    if (dataJson == null || dataJson.isEmpty) {
+      return;
+    }
+
+    try {
+      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+
+      setState(() {
+        form.Perforation.text = decodedData["perforation"] ?? "No";
+        form.PerforationSelectedBy.text = decodedData["perforationSelectedBy"] ?? "";
+        form.ZigZagBlade.text = decodedData["zigZagBlade"] ?? "No";
+        form.ZigZagBladeSelectedBy.text = decodedData["zigZagBladeSelectedBy"] ?? "";
+        form.RubberType.text = decodedData["rubberType"] ?? "No";
+        form.RubberSelectedBy.text = decodedData["rubberSelectedBy"] ?? "";
+        form.HoleType.text = decodedData["holeType"] ?? "No";
+        form.HoleSelectedBy.text = decodedData["holeSelectedBy"] ?? "";
+        form.EmbossStatus.text = decodedData["embossStatus"] ?? "No";
+        form.EmbossPcs.text = decodedData["embossPcs"] ?? "";
+      });
+
+      debugPrint("✅ DesignerPage4 loaded data from route");
+    } catch (e) {
+      debugPrint("❌ Error decoding data: $e");
+    }
+  }
+
   String selectedByText(BuildContext context) {
     return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
         "at ${TimeOfDay.now().format(context)}";
@@ -47,7 +94,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
               AddableSearchDropdown(
                 label: "Perforation",
                 items: form.jobs,
-                initialValue: "No",
+                initialValue: form.Perforation.text.isEmpty ? "No" : form.Perforation.text,
                 onAdd: (newJob) => form.jobs.add(newJob),
                 onChanged: (v) {
                   setState(() {
@@ -91,9 +138,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
             if (form.canView("ZigZagBlade")) ...[
               AddableSearchDropdown(
                 label: "Zig Zag Blade",
-                items: form.jobs,
-                initialValue: "No",
-                onAdd: (newJob) => form.jobs.add(newJob),
+                items: form.bladeTypes,
+                initialValue: form.ZigZagBlade.text.isEmpty ? "No" : form.ZigZagBlade.text,
+                onAdd: (newJob) => form.bladeTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.ZigZagBlade.text = v ?? "";
@@ -136,9 +183,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
             if (form.canView("RubberType")) ...[
               AddableSearchDropdown(
                 label: "Rubber",
-                items: form.jobs,
-                initialValue: "No",
-                onAdd: (newJob) => form.jobs.add(newJob),
+                items: form.rubberTypes,
+                initialValue: form.RubberType.text.isEmpty ? "No" : form.RubberType.text,
+                onAdd: (newJob) => form.rubberTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.RubberType.text = v ?? "";
@@ -181,9 +228,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
             if (form.canView("HoleType")) ...[
               AddableSearchDropdown(
                 label: "Hole",
-                items: form.jobs,
-                initialValue: "No",
-                onAdd: (newJob) => form.jobs.add(newJob),
+                items: form.holeTypes,
+                initialValue: form.HoleType.text.isEmpty ? "No" : form.HoleType.text,
+                onAdd: (newJob) => form.holeTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.HoleType.text = v ?? "";
@@ -228,6 +275,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                 label: "Emboss",
                 inactiveText: "No",
                 activeText: "Yes",
+                initialValue: form.EmbossStatus.text.toLowerCase() == "yes",
                 onChanged: (v) {
                   form.EmbossStatus.text = v ? "Yes" : "No";
                 },
@@ -241,7 +289,6 @@ class _DesignerPage4State extends State<DesignerPage4> {
                 label: "Emboss Pcs",
                 hint: "No of Pcs",
                 controller: form.EmbossPcs,
-                initialValue: "No",
               ),
               const SizedBox(height: 26),
             ],
