@@ -1,10 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/NumberStepper.dart';
+import 'dart:convert';
 
-class DesignerPage5 extends StatelessWidget {
+class DesignerPage5 extends StatefulWidget {
   const DesignerPage5({super.key});
+
+  @override
+  State<DesignerPage5> createState() => _DesignerPage5State();
+}
+
+class _DesignerPage5State extends State<DesignerPage5> {
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    if (NewFormScope.of(context).mode == "edit") {
+      _loadDesignerData();
+    }
+  }
+
+  Future<void> _loadDesignerData() async {
+    final form = NewFormScope.of(context);
+    final uri = GoRouterState.of(context).uri;
+    final dataJson = uri.queryParameters['data'];
+
+    if (dataJson == null || dataJson.isEmpty) {
+      return;
+    }
+
+    try {
+      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+
+      setState(() {
+        form.MaleEmbossType.text = decodedData["maleEmbossType"] ?? "";
+        form.X.text = decodedData["x"] ?? "";
+        form.Y.text = decodedData["y"] ?? "";
+        form.XYSize.text = decodedData["xySize"] ?? "";
+        form.FemaleEmbossType.text = decodedData["femaleEmbossType"] ?? "";
+        form.X2.text = decodedData["x2"] ?? "";
+        form.Y2.text = decodedData["y2"] ?? "";
+        form.XY2Size.text = decodedData["xy2Size"] ?? "";
+      });
+
+      debugPrint("✅ DesignerPage5 loaded data from route");
+    } catch (e) {
+      debugPrint("❌ Error decoding data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +77,7 @@ class DesignerPage5 extends StatelessWidget {
               AddableSearchDropdown(
                 label: "Male Emboss",
                 items: form.jobs,
-                initialValue: "No",
+                initialValue: form.MaleEmbossType.text.isEmpty ? "No" : form.MaleEmbossType.text,
                 onAdd: (newJob) => form.jobs.add(newJob),
                 onChanged: (v) {
                   form.MaleEmbossType.text = v ?? "";
@@ -77,7 +127,7 @@ class DesignerPage5 extends StatelessWidget {
               AddableSearchDropdown(
                 label: "Female Emboss",
                 items: form.jobs,
-                initialValue: "No",
+                initialValue: form.FemaleEmbossType.text.isEmpty ? "No" : form.FemaleEmbossType.text,
                 onAdd: (newJob) => form.jobs.add(newJob),
                 onChanged: (v) {
                   form.FemaleEmbossType.text = v ?? "";

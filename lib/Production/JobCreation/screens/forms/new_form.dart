@@ -646,7 +646,10 @@ class NewFormState extends State<NewForm> {
       "month": parts[2],
       "year": parts[3],
 
-      "currentDepartment": "AutoBending",
+      // ✅ FIXED: Check if Designing is "Done" to determine next department
+      "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
+          ? "AutoBending"
+          : "Designer",
 
       // 🔥 IMPORTANT: Add data here too
       "designer": {
@@ -661,7 +664,10 @@ class NewFormState extends State<NewForm> {
     await itemRef.set({
       "fullLpm": fullLpm,
       "subOrderNo": subOrderNo,
-      "currentDepartment": "AutoBending",
+      // ✅ FIXED: Check if Designing is "Done" to determine next department
+      "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
+          ? "AutoBending"
+          : "Designer",
       "status": "InProgress",
       "designer": {
         "submitted": true,
@@ -687,7 +693,7 @@ class NewFormState extends State<NewForm> {
       "${_deptKey(department)}.data": data,
       "currentDepartment": nextDepartment,
       "updatedAt": FieldValue.serverTimestamp(),
-  });
+    });
   }
 
 
@@ -696,13 +702,36 @@ class NewFormState extends State<NewForm> {
     try {
       if (department == "Designer") {
         await submitDesignerForm();
+
+        // ✅ FIXED: Show notification if Designing is not Done
+        if (DesigningStatus.text.toLowerCase() != "done") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Designing is Pending - Job stays in Designer queue"),
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Designing is Done - Job moves to AutoBending"),
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Always go to dashboard
+        context.go('/dashboard');
       } else {
         await submitDepartmentForm(_nextDepartment(department));
-      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Form submitted successfully")),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Form submitted successfully")),
+        );
+        context.go('/dashboard');
+      }
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
