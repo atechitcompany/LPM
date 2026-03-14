@@ -21,6 +21,8 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final FocusNode _focusNode = FocusNode();
   final TextEditingController taskName = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   OverlayEntry? _floatingSheetOverlay;
 
@@ -80,6 +82,25 @@ class _MapScreenState extends State<MapScreen> {
       _loadTasksFromFirebase();
     });
   }
+  //Reminder Format
+  String _formatDateTime(String isoString) {
+    try {
+      final dt = DateTime.parse(isoString);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      final date = DateTime(dt.year, dt.month, dt.day);
+
+      final timeStr =
+          '${dt.hour % 12 == 0 ? 12 : dt.hour % 12}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}';
+
+      if (date == today) return 'Today $timeStr';
+      if (date == tomorrow) return 'Tomorrow $timeStr';
+      return '${dt.day}/${dt.month} $timeStr';
+    } catch (_) {
+      return 'Set';
+    }
+  }
 
   Future<void> _saveButtonOrder() async {
     final prefs = await SharedPreferences.getInstance();
@@ -116,7 +137,7 @@ class _MapScreenState extends State<MapScreen> {
       case FloatingSheetType.remind:
         icon = Icons.notifications_active;
         label = "Remind Me";
-        selectedValue = _newTaskReminder != null ? "Set" : null;
+        selectedValue = _newTaskReminder != null ? _formatDateTime(_newTaskReminder!) : null;
         onSelected = (v) {
           setState(() => _newTaskReminder = v);
           setModalState(() {});
@@ -142,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
       case FloatingSheetType.deadline:
         icon = Icons.alarm;
         label = "Deadline";
-        selectedValue = _newTaskDeadline != null ? "Set" : null;
+        selectedValue = _newTaskDeadline != null ? _formatDateTime(_newTaskDeadline!) : null;
         onSelected = (v) {
           setState(() => _newTaskDeadline = v);
           setModalState(() {});
@@ -197,91 +218,96 @@ class _MapScreenState extends State<MapScreen> {
     final String displayText = isSelected ? selectedValue : label;
 
     return Builder(
-      builder: (buttonContext) => AnimatedContainer(
+      builder: (buttonContext) => AnimatedSize(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.brown.shade50 : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.brown : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.brown.shade50 : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
-            onTap: () =>
-                _showFloatingSheet(buttonContext, type, onSelected: onSelected),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      return ScaleTransition(
-                        scale: animation,
-                        child: FadeTransition(opacity: animation, child: child),
-                      );
-                    },
-                    child: Icon(
-                      icon,
-                      key: ValueKey('icon_$isSelected'),
-                      size: 18,
-                      color: isSelected ? Colors.brown : Colors.grey.shade700,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      return SizeTransition(
-                        sizeFactor: animation,
-                        axis: Axis.horizontal,
-                        axisAlignment: -1,
-                        child: FadeTransition(opacity: animation, child: child),
-                      );
-                    },
-                    child: Text(
-                      displayText,
-                      key: ValueKey('text_$displayText'),
-                      style: TextStyle(
+            border: Border.all(
+              color: isSelected ? Colors.brown : Colors.grey.shade300,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () =>
+                  _showFloatingSheet(buttonContext, type, onSelected: onSelected),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 17),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) {
+                        return ScaleTransition(
+                          scale: animation,
+                          child: FadeTransition(opacity: animation, child: child),
+                        );
+                      },
+                      child: Icon(
+                        icon,
+                        key: ValueKey('icon_$isSelected'),
+                        size: 18,
                         color: isSelected ? Colors.brown : Colors.grey.shade700,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        fontSize: 14,
                       ),
                     ),
-                  ),
-                  // Show cross button only when selected
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: isSelected ? 24 : 0,
-                    child: AnimatedOpacity(
+                    const SizedBox(width: 8),
+                    AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
-                      opacity: isSelected ? 1.0 : 0.0,
-                      child: isSelected
-                          ? GestureDetector(
-                        onTap: () {
-                          onClear();
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.brown,
-                          ),
+                      transitionBuilder: (child, animation) {
+                        return SizeTransition(
+                          sizeFactor: animation,
+                          axis: Axis.horizontal,
+                          axisAlignment: -1,
+                          child: FadeTransition(opacity: animation, child: child),
+                        );
+                      },
+                      child: Text(
+                        displayText,
+                        key: ValueKey('text_$displayText'),
+                        style: TextStyle(
+                          color: isSelected ? Colors.brown : Colors.grey.shade700,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          fontSize: 14,
                         ),
-                      )
-                          : const SizedBox.shrink(),
+                      ),
                     ),
-                  ),
-                ],
+                    // Show cross button only when selected
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: isSelected ? 24 : 0,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: isSelected ? 1.0 : 0.0,
+                        child: isSelected
+                            ? GestureDetector(
+                          onTap: () {
+                            onClear();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.brown,
+                            ),
+                          ),
+                        )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -295,6 +321,7 @@ class _MapScreenState extends State<MapScreen> {
     _hideFloatingSheet();
     _focusNode.dispose();
     taskName.dispose();
+    _searchController.dispose(); // ADD THIS
     super.dispose();
   }
 
@@ -621,7 +648,7 @@ class _MapScreenState extends State<MapScreen> {
   int _taskComparator(Task a, Task b) {
     // Completed (isDone == true) come first
     if (a.isDone != b.isDone) {
-      return a.isDone ? -1 : 1;
+      return a.isDone ? 1 : -1;
     }
 
     final pa = _priorityOrder(a.priority);
@@ -683,6 +710,8 @@ class _MapScreenState extends State<MapScreen> {
   void _hideFloatingSheet() {
     _floatingSheetOverlay?.remove();
     _floatingSheetOverlay = null;
+    _searchController.clear();
+    _searchQuery = '';
   }
 
   // note: made async so we can await loading assignees when needed
@@ -811,8 +840,13 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     const double menuWidth = 240;
-    const double menuHeightEstimate = 220;
     const double padding = 8;
+
+    final bool hasSearchBar = type == FloatingSheetType.assign ||
+        type == FloatingSheetType.workType ||
+        type == FloatingSheetType.clientName;
+
+    final double menuHeightEstimate = hasSearchBar ? 280 : 220;
 
     double left = buttonPosition.dx;
     if (left + menuWidth > overlaySize.width - padding) {
@@ -821,9 +855,16 @@ class _MapScreenState extends State<MapScreen> {
     if (left < padding) left = padding;
 
     double top = buttonPosition.dy - menuHeightEstimate;
-    if (top < padding) {
-      top = buttonPosition.dy + button.size.height + padding;
+    if (hasSearchBar) {
+      if (top < padding) top = padding;
+    } else {
+      if (top < padding) {
+        top = buttonPosition.dy + button.size.height + padding;
+      }
     }
+
+    final TextEditingController _searchController = TextEditingController();
+    String _searchQuery = '';
 
     _floatingSheetOverlay = OverlayEntry(
       builder: (_) {
@@ -845,62 +886,125 @@ class _MapScreenState extends State<MapScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
                   width: menuWidth,
-                  height: menuHeightEstimate,
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: buildOptions().map((tile) {
-                      return InkWell(
-                        onTap: () async {
-                          if (onSelected == null || tile is! ListTile) {
-                            _hideFloatingSheet();
-                            return;
-                          }
+                  child: StatefulBuilder(
+                    builder: (context, setOverlayState) {
+                      final bool showSearch = type == FloatingSheetType.assign ||
+                          type == FloatingSheetType.workType ||
+                          type == FloatingSheetType.clientName;
 
-                          final label = (tile.title as Text).data ?? '';
-                          final now = DateTime.now();
-                          final lower = label.toLowerCase();
-                          DateTime? computed;
+                      final allOptions = buildOptions();
 
-                          if (type == FloatingSheetType.remind ||
-                              type == FloatingSheetType.deadline) {
-                            if (lower.contains('custom')) {
-                              _hideFloatingSheet();
-                              computed = await pickDateTimeWithTabs(
-                                rootContext,
-                              );
-                            } else if (lower.contains('1 hour')) {
-                              computed = now.add(const Duration(hours: 1));
-                            } else if (lower.contains('3 hour')) {
-                              computed = now.add(const Duration(hours: 3));
-                            } else if (lower.contains('6 hour')) {
-                              computed = now.add(const Duration(hours: 6));
-                            } else if (lower.contains('tomorrow')) {
-                              final t = DateTime(
-                                now.year,
-                                now.month,
-                                now.day,
-                              ).add(const Duration(days: 1));
-                              computed = DateTime(
-                                t.year,
-                                t.month,
-                                t.day,
-                                12,
-                                0,
-                              );
-                            }
+                      final filteredOptions = showSearch && _searchQuery.isNotEmpty
+                          ? allOptions.where((tile) {
+                        if (tile is! ListTile) return true;
+                        final text = (tile.title as Text).data ?? '';
+                        return text.toLowerCase().contains(_searchQuery.toLowerCase());
+                      }).toList()
+                          : allOptions;
 
-                            if (computed != null) {
-                              onSelected(computed.toIso8601String());
-                            }
-                          } else {
-                            onSelected(label);
-                          }
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (showSearch)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+                              child: TextField(
+                                controller: _searchController,
+                                autofocus: true,
+                                decoration: InputDecoration(
+                                  hintText: 'Search...',
+                                  hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    size: 18,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  isDense: true,
+                                  filled: true,
+                                  fillColor: Colors.grey.shade100,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  _searchQuery = val;
+                                  setOverlayState(() {});
+                                },
+                              ),
+                            ),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 220),
+                            child: filteredOptions.isEmpty
+                                ? Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'No results found',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            )
+                                : ListView(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              children: filteredOptions.map((tile) {
+                                return InkWell(
+                                  onTap: () async {
+                                    if (onSelected == null || tile is! ListTile) {
+                                      _hideFloatingSheet();
+                                      return;
+                                    }
 
-                          _hideFloatingSheet();
-                        },
-                        child: tile,
+                                    final label = (tile.title as Text).data ?? '';
+                                    final now = DateTime.now();
+                                    final lower = label.toLowerCase();
+                                    DateTime? computed;
+
+                                    if (type == FloatingSheetType.remind ||
+                                        type == FloatingSheetType.deadline) {
+                                      if (lower.contains('custom')) {
+                                        _hideFloatingSheet();
+                                        computed = await pickDateTimeWithTabs(rootContext);
+                                      } else if (lower.contains('1 hour')) {
+                                        computed = now.add(const Duration(hours: 1));
+                                      } else if (lower.contains('3 hour')) {
+                                        computed = now.add(const Duration(hours: 3));
+                                      } else if (lower.contains('6 hour')) {
+                                        computed = now.add(const Duration(hours: 6));
+                                      } else if (lower.contains('tomorrow')) {
+                                        final t = DateTime(now.year, now.month, now.day)
+                                            .add(const Duration(days: 1));
+                                        computed = DateTime(t.year, t.month, t.day, 12, 0);
+                                      }
+
+                                      if (computed != null) {
+                                        onSelected(computed.toIso8601String());
+                                      }
+                                    } else {
+                                      onSelected(label);
+                                    }
+
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                    _hideFloatingSheet();
+                                  },
+                                  child: tile,
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
               ),
@@ -956,9 +1060,10 @@ class _MapScreenState extends State<MapScreen> {
             final isMobileWeb = kIsWeb && screenWidth < 600;
 
             // For mobile web, add extra padding to push content above keyboard
+            final systemNavBar = MediaQuery.of(sheetContext).padding.bottom;
             final bottomPadding = isMobileWeb
-                ? 350.0 // Fixed padding for mobile web keyboard
-                : (kIsWeb ? 16.0 : (16.0 + viewInsets.bottom));
+                ? 350.0
+                : (kIsWeb ? 16.0 : (16.0 + viewInsets.bottom + systemNavBar));
 
             return SingleChildScrollView(
               // ✅ KEPT
@@ -1198,7 +1303,7 @@ class _MapScreenState extends State<MapScreen> {
 
     // bigger, more breathable section per task
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: InkWell(
         onLongPress: () {
           setState(() {
@@ -1230,7 +1335,7 @@ class _MapScreenState extends State<MapScreen> {
             color: isSelected ? Colors.blue.withAlpha(20) : Colors.white,
             borderRadius: BorderRadius.circular(8),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -1511,6 +1616,21 @@ class _MapScreenState extends State<MapScreen> {
 
             final children = <Widget>[];
 
+            // pending tasks
+            for (int i = 0; i < pending.length; i++) {
+              children.add(_buildTaskTile(pending[i], i));
+              children.add(
+                _thinHairline(indent: 15, endIndent: 15, opacity: 0.05),
+              );
+            }
+
+            // separator between sections (very subtle)
+            if (pending.isNotEmpty && completed.isNotEmpty) {
+              children.add(
+                _thinHairline(indent: 0, endIndent: 0, opacity: 0.06),
+              );
+            }
+
             // Completed header + items (collapsible)
             if (completed.isNotEmpty) {
               children.add(
@@ -1561,21 +1681,6 @@ class _MapScreenState extends State<MapScreen> {
                 }
                 children.add(const SizedBox(height: 8));
               }
-            }
-
-            // separator between sections (very subtle)
-            if (pending.isNotEmpty && completed.isNotEmpty) {
-              children.add(
-                _thinHairline(indent: 0, endIndent: 0, opacity: 0.06),
-              );
-            }
-
-            // pending tasks
-            for (int i = 0; i < pending.length; i++) {
-              children.add(_buildTaskTile(pending[i], i));
-              children.add(
-                _thinHairline(indent: 15, endIndent: 15, opacity: 0.05),
-              );
             }
 
             return LayoutBuilder(

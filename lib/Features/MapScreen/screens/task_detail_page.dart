@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/task.dart';
 import '../models/floating_sheet_type.dart';
 import '../../../FormComponents/FileUploadBox.dart';
@@ -7,7 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:html' as html show AnchorElement;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 
 class TaskDetailPage extends StatefulWidget {
@@ -29,6 +28,8 @@ class TaskDetailPage extends StatefulWidget {
 class _TaskDetailPageState extends State<TaskDetailPage> {
   OverlayEntry? _overlayEntry;
   late TextEditingController _noteController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   // for steps
   late TextEditingController _stepController;
@@ -62,6 +63,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     task.title = _titleController.text;
     _noteController.dispose();
     _stepController.dispose();
+    _searchController.dispose();
     _titleController.dispose();
     super.dispose();
   }
@@ -127,6 +129,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   void _hideOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
+    _searchController.clear();
+    _searchQuery = '';
   }
 
   /// Helper: show date picker then time picker and return combined DateTime (or null if cancelled)
@@ -408,27 +412,18 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     final tileWidgets = tilesFor(resolvedKey);
 
     // Positioning
-    const double menuWidth = 260;
-    const double menuHeightEstimate = 220;
-    const double padding = 8;
+    final bool hasSearchBar = resolvedKey == 'assignee' ||
+        resolvedKey == 'workType' ||
+        resolvedKey == 'clientName';
 
-    double left = buttonPosition.dx;
-    if (left + menuWidth > overlaySize.width - padding) {
-      left = overlaySize.width - menuWidth - padding;
-    }
+    const double menuWidth = 260;
+    const double padding = 8;
+    final double menuHeightEstimate = hasSearchBar ? 280 : 220;
+
+    double left = buttonPosition.dx + buttonSize.width - menuWidth;
     if (left < padding) left = padding;
 
-    double topBelow = buttonPosition.dy + buttonSize.height + padding;
-    double topAbove = buttonPosition.dy - menuHeightEstimate - padding;
-    double top;
-    if (topBelow + menuHeightEstimate <= overlaySize.height - padding) {
-      top = topBelow;
-    } else if (topAbove >= padding) {
-      top = topAbove;
-    } else {
-      top = (overlaySize.height - menuHeightEstimate - padding)
-          .clamp(padding, overlaySize.height - menuHeightEstimate - padding);
-    }
+    double top = buttonPosition.dy + buttonSize.height + padding;
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
@@ -450,106 +445,178 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
                   width: menuWidth,
-                  height: menuHeightEstimate,
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: tileWidgets.map((tile) {
-                      return InkWell(
-                        onTap: () async {
-                          if (tile is ListTile) {
-                            final label = (tile.title as Text).data ?? '';
+                  child: StatefulBuilder(
+                    builder: (context, setOverlayState) {
+                      final allTiles = tileWidgets;
+                      final filteredTiles = hasSearchBar && _searchQuery.isNotEmpty
+                          ? allTiles.where((tile) {
+                        if (tile is! ListTile) return true;
+                        final text = (tile.title as Text).data ?? '';
+                        return text
+                            .toLowerCase()
+                            .contains(_searchQuery.toLowerCase());
+                      }).toList()
+                          : allTiles;
 
-                            // handle reminder/deadline specially: want to store concrete datetime (ISO)
-                            if (resolvedKey == 'reminder' ||
-                                resolvedKey == 'deadline') {
-                              DateTime? computed;
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hasSearchBar)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+                              child: TextField(
+                                controller: _searchController,
+                                autofocus: true,
+                                decoration: InputDecoration(
+                                  hintText: 'Search...',
+                                  hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    size: 18,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  isDense: true,
+                                  filled: true,
+                                  fillColor: Colors.grey.shade100,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  _searchQuery = val;
+                                  setOverlayState(() {});
+                                },
+                              ),
+                            ),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 220),
+                            child: filteredTiles.isEmpty
+                                ? Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'No results found',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            )
+                                : ListView(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              children: filteredTiles.map((tile) {
+                                return InkWell(
+                                  onTap: () async {
+                                    if (tile is ListTile) {
+                                      final label =
+                                          (tile.title as Text).data ?? '';
 
-                              // If 'Custom' => hide overlay first then open pickers
-                              if (label.toLowerCase().contains('custom')) {
-                                // hide list immediately so picker appears without the list behind
-                                _hideOverlay();
+                                      if (resolvedKey == 'reminder' ||
+                                          resolvedKey == 'deadline') {
+                                        DateTime? computed;
 
-                                computed = await pickDateTimeWithTabs(context);
-                              } else {
-                                // Preset options: compute concrete DateTime
-                                final now = DateTime.now();
-                                final lower = label.toLowerCase();
-                                if (lower.contains('today (1 hour)')) {
-                                  computed = now.add(const Duration(hours: 1));
-                                } else if (lower.contains('today (3 hour)')) {
-                                  computed = now.add(const Duration(hours: 3));
-                                } else if (lower.contains('today (6 hour)')) {
-                                  computed = now.add(const Duration(hours: 6));
-                                } else if (lower.contains('tomorrow (12 pm)')) {
-                                  final tomorrow = DateTime(
-                                      now.year, now.month, now.day)
-                                      .add(const Duration(days: 1));
-                                  computed = DateTime(tomorrow.year,
-                                      tomorrow.month, tomorrow.day, 12, 0);
-                                } else {
-                                  // fallback - shouldn't usually happen
-                                  computed = null;
-                                }
-                              }
+                                        if (label
+                                            .toLowerCase()
+                                            .contains('custom')) {
+                                          _hideOverlay();
+                                          computed =
+                                          await pickDateTimeWithTabs(
+                                              context);
+                                        } else {
+                                          final now = DateTime.now();
+                                          final lower = label.toLowerCase();
+                                          if (lower
+                                              .contains('today (1 hour)')) {
+                                            computed = now.add(
+                                                const Duration(hours: 1));
+                                          } else if (lower
+                                              .contains('today (3 hour)')) {
+                                            computed = now.add(
+                                                const Duration(hours: 3));
+                                          } else if (lower
+                                              .contains('today (6 hour)')) {
+                                            computed = now.add(
+                                                const Duration(hours: 6));
+                                          } else if (lower.contains(
+                                              'tomorrow (12 pm)')) {
+                                            final tomorrow = DateTime(
+                                                now.year,
+                                                now.month,
+                                                now.day)
+                                                .add(
+                                                const Duration(days: 1));
+                                            computed = DateTime(
+                                                tomorrow.year,
+                                                tomorrow.month,
+                                                tomorrow.day,
+                                                12,
+                                                0);
+                                          }
+                                        }
 
-                              if (computed != null) {
-                                final iso = computed.toIso8601String();
-                                setState(() {
-                                  if (resolvedKey == 'reminder') {
-                                    task.reminder = iso;
-                                  } else {
-                                    task.deadline = iso;
-                                  }
-                                });
-                                widget.onChanged();
-                              } else {
-                                // fallback: store label text
-                                setState(() {
-                                  if (resolvedKey == 'reminder') {
-                                    task.reminder = label;
-                                  } else {
-                                    task.deadline = label;
-                                  }
-                                });
-                                widget.onChanged();
-                                // ensure overlay hidden
-                                _hideOverlay();
-                              }
-                            } else {
-                              // Non-date fields (priority, assignee, workType, clientName, folder)
-                              setState(() {
-                                switch (resolvedKey) {
-                                  case 'priority':
-                                    task.priority = label;
-                                    task.priorityUpdatedAt =
-                                        DateTime.now().millisecondsSinceEpoch;
-                                    break;
-                                  case 'assignee':
-                                    task.assignee = label;
-                                    break;
-                                  case 'workType':
-                                    task.workType = label;
-                                    break;
-                                  case 'clientName':
-                                    task.clientName = label;
-                                    break;
-                                  case 'folder':
-                                    task.folder = label;
-                                    break;
-                                  default:
-                                    break;
-                                }
-                              });
-                              widget.onChanged();
-                              _hideOverlay();
-                            }
-                          } else {
-                            _hideOverlay();
-                          }
-                        },
-                        child: tile,
+                                        if (computed != null) {
+                                          final iso =
+                                          computed.toIso8601String();
+                                          setState(() {
+                                            if (resolvedKey == 'reminder') {
+                                              task.reminder = iso;
+                                            } else {
+                                              task.deadline = iso;
+                                            }
+                                          });
+                                          widget.onChanged();
+                                        }
+                                      } else {
+                                        setState(() {
+                                          switch (resolvedKey) {
+                                            case 'priority':
+                                              task.priority = label;
+                                              task.priorityUpdatedAt =
+                                                  DateTime.now()
+                                                      .millisecondsSinceEpoch;
+                                              break;
+                                            case 'assignee':
+                                              task.assignee = label;
+                                              break;
+                                            case 'workType':
+                                              task.workType = label;
+                                              break;
+                                            case 'clientName':
+                                              task.clientName = label;
+                                              break;
+                                            case 'folder':
+                                              task.folder = label;
+                                              break;
+                                            default:
+                                              break;
+                                          }
+                                        });
+                                        widget.onChanged();
+                                      }
+
+                                      _searchController.clear();
+                                      _searchQuery = '';
+                                      _hideOverlay();
+                                    } else {
+                                      _hideOverlay();
+                                    }
+                                  },
+                                  child: tile,
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
               ),
@@ -742,20 +809,31 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     if (value == null || value.isEmpty) {
       return Text(
         "None",
-        style: TextStyle(
-          color: Colors.grey.shade500,
-          fontSize: 13,
-        ),
+        style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
       );
     }
 
-    // if looks like ISO datetime, show a friendly formatted string
     try {
       final dt = DateTime.parse(value);
-      final formatted =
-          "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      final date = DateTime(dt.year, dt.month, dt.day);
+
+      final timeStr =
+          '${dt.hour % 12 == 0 ? 12 : dt.hour % 12}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}';
+
+      String display;
+      if (date == today) {
+        display = 'Today $timeStr';
+      } else if (date == tomorrow) {
+        display = 'Tomorrow $timeStr';
+      } else {
+        display = '${dt.day}/${dt.month} $timeStr';
+      }
+
       return Text(
-        formatted,
+        display,
         style: const TextStyle(
           color: Colors.brown,
           fontWeight: FontWeight.w600,
@@ -763,7 +841,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
       );
     } catch (_) {
-      // not an ISO string - show as-is
       return Text(
         value,
         style: const TextStyle(
@@ -802,23 +879,21 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   // Open file helper
   Future<void> _openFile(TaskFile file) async {
     if (kIsWeb) {
-      // For web: Check if we have a stored URL (for existing files)
-      if (file.path != null && file.path!.startsWith('blob:')) {
-        // Open blob URL directly
-        html.AnchorElement(href: file.path!)
-          ..setAttribute('download', file.name)
-          ..click();
+      if (file.path != null && file.path!.isNotEmpty) {
+        final uri = Uri.parse(file.path!);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('File cannot be opened. Web files need to be re-uploaded to open.'),
+              content: Text('File cannot be opened on web.'),
             ),
           );
         }
       }
     } else {
-      // For native platforms
       if (file.path != null && file.path!.isNotEmpty) {
         final uri = Uri.file(file.path!);
         if (await canLaunchUrl(uri)) {
