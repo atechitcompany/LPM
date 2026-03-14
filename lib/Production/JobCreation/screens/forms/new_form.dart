@@ -65,6 +65,12 @@ class NewFormState extends State<NewForm> {
 
   List<String> parties = ["Tata", "Jindal", "Infosys"];
   List<String> jobs = ["Laser", "Bending", "Cutting"];
+  List<String> embossTypes = ["Type A", "Type B", "Type C"];
+  List<String> bladeTypes = ["Zig Zag 1", "Zig Zag 2", "Zig Zag 3"];
+  List<String> rubberTypes = ["Rubber A", "Rubber B", "Rubber C"];
+  List<String> holeTypes = ["Hole 1", "Hole 2", "Hole 3"];
+  List<String> capsuleTypes = ["Capsule A", "Capsule B", "Capsule C"];
+  List<String> strippingTypes = ["Strip 1", "Strip 2", "Strip 3"];
   List<String> ply = [
     "No",
     "18mm CHW Ply",
@@ -627,57 +633,118 @@ class NewFormState extends State<NewForm> {
   }
 
   Future<void> submitDesignerForm() async {
-    final fullLpm = LpmAutoIncrement.text;
+    try {
+      final fullLpm = LpmAutoIncrement.text.trim();
 
-    // Extract main order part
-    final parts = fullLpm.split("-");
-    final mainOrderId = "LPM-${parts[1]}-${parts[2]}-${parts[3]}";
-    final subOrderNo = parts[4];
+      debugPrint("📝 Starting Designer Form Submission");
+      debugPrint("🔑 Full LPM: $fullLpm");
 
-    final mainOrderRef =
-    FirebaseFirestore.instance.collection("jobs").doc(mainOrderId);
+      // ✅ VALIDATION: Check if LPM is empty
+      if (fullLpm.isEmpty) {
+        throw Exception("❌ LPM Auto Increment is empty. Cannot submit form.");
+      }
 
-    final itemRef = mainOrderRef.collection("items").doc(subOrderNo);
+      // ✅ VALIDATION: Check LPM format
+      final parts = fullLpm.split("-");
+      debugPrint("🔍 LPM Parts: $parts (Total: ${parts.length} parts)");
 
-    final data = buildFormData();
+      if (parts.length < 5) {
+        throw Exception(
+            "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
+                "Got: $fullLpm (${parts.length} parts instead of 5)"
+        );
+      }
 
-    await mainOrderRef.set({
-      "orderNo": parts[1],
-      "month": parts[2],
-      "year": parts[3],
+      // ✅ PARSE: Extract LPM components safely
+      String orderNo = parts[1];
+      String month = parts[2];
+      String year = parts[3];
+      String subOrderNo = parts[4];
 
-      // ✅ FIXED: Check if Designing is "Done" to determine next department
-      "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
-          ? "AutoBending"
-          : "Designer",
+      debugPrint("✅ Parsed LPM: orderNo=$orderNo, month=$month, year=$year, sub=$subOrderNo");
 
-      // 🔥 IMPORTANT: Add data here too
-      "designer": {
-        "submitted": true,
-        "data": data,
-      },
+      // ✅ BUILD: Create main order ID
+      final mainOrderId = "LPM-$orderNo-$month-$year";
+      debugPrint("📋 Main Order ID: $mainOrderId");
 
-      "createdAt": FieldValue.serverTimestamp(),
-      "updatedAt": FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+      // ✅ GET: References
+      final mainOrderRef = FirebaseFirestore.instance.collection("jobs").doc(mainOrderId);
+      final itemRef = mainOrderRef.collection("items").doc(subOrderNo);
 
-    await itemRef.set({
-      "fullLpm": fullLpm,
-      "subOrderNo": subOrderNo,
-      // ✅ FIXED: Check if Designing is "Done" to determine next department
-      "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
-          ? "AutoBending"
-          : "Designer",
-      "status": "InProgress",
-      "designer": {
-        "submitted": true,
-        "data": data,
-      },
-      "createdAt": FieldValue.serverTimestamp(),
-      "updatedAt": FieldValue.serverTimestamp(),
-    });
+      debugPrint("📌 Document References created");
 
-    await incrementMonthlyCounter();
+      // ✅ VALIDATE: Required fields for Designer
+      if (PartyName.text.trim().isEmpty) {
+        throw Exception("❌ Party Name is required");
+      }
+      if (ParticularJobName.text.trim().isEmpty) {
+        throw Exception("❌ Particular Job Name is required");
+      }
+
+      debugPrint("✅ Required fields validated");
+
+      // ✅ BUILD: Form data
+      final data = buildFormData();
+      debugPrint("📦 Form data prepared: ${data.keys.length} fields");
+
+      // ✅ SAVE: Main order document
+      debugPrint("💾 Writing main order document...");
+      await mainOrderRef.set({
+        "orderNo": orderNo,
+        "month": month,
+        "year": year,
+        "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
+            ? "AutoBending"
+            : "Designer",
+        "designer": {
+          "submitted": true,
+          "submittedAt": FieldValue.serverTimestamp(),
+          "submittedBy": DesignerCreatedBy.text.isNotEmpty
+              ? DesignerCreatedBy.text
+              : "Unknown",
+          "data": data,
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint("✅ Main order document written");
+
+      // ✅ SAVE: Sub-order item document
+      debugPrint("💾 Writing sub-order item document...");
+      await itemRef.set({
+        "fullLpm": fullLpm,
+        "subOrderNo": subOrderNo,
+        "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
+            ? "AutoBending"
+            : "Designer",
+        "status": "InProgress",
+        "designer": {
+          "submitted": true,
+          "submittedAt": FieldValue.serverTimestamp(),
+          "submittedBy": DesignerCreatedBy.text.isNotEmpty
+              ? DesignerCreatedBy.text
+              : "Unknown",
+          "data": data,
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      });
+
+      debugPrint("✅ Sub-order item document written");
+
+      // ✅ INCREMENT: Monthly counter
+      debugPrint("⏱️ Incrementing monthly counter...");
+      await incrementMonthlyCounter();
+      debugPrint("✅ Monthly counter incremented");
+
+      debugPrint("🎉 Designer form submission successful!");
+
+    } catch (e, stackTrace) {
+      debugPrint("❌ ERROR in submitDesignerForm: $e");
+      debugPrint("📍 Stack trace: $stackTrace");
+      rethrow; // Re-throw to be caught by submitForm()
+    }
   }
 
   Future<void> submitDepartmentForm(String nextDepartment) async {
@@ -698,46 +765,166 @@ class NewFormState extends State<NewForm> {
 
 
 
+// 🔧 FIXED submitForm() Method
+// Replace the existing submitForm() in new_form.dart with this version
+
   Future<void> submitForm() async {
     try {
-      if (department == "Designer") {
-        await submitDesignerForm();
+      debugPrint("🚀 Starting form submission...");
 
-        // ✅ FIXED: Show notification if Designing is not Done
-        if (DesigningStatus.text.toLowerCase() != "done") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Designing is Pending - Job stays in Designer queue"),
-              duration: Duration(seconds: 3),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Designing is Done - Job moves to AutoBending"),
-              duration: Duration(seconds: 3),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-
-        // Always go to dashboard
-        context.go('/dashboard');
-      } else {
-        await submitDepartmentForm(_nextDepartment(department));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Form submitted successfully")),
-        );
-        context.go('/dashboard');
+      // ✅ STEP 1: Validate required fields FIRST
+      final validationError = _validateRequiredFields();
+      if (validationError != null) {
+        throw Exception(validationError);
       }
 
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      debugPrint("✅ Validation passed");
+
+      // ✅ STEP 2: Build form data
+      final formData = buildFormData();
+      debugPrint("📦 Form data built: ${formData.keys.length} fields");
+
+      // ✅ STEP 3: Clean up data (remove empty/null values that cause index errors)
+      final cleanData = _sanitizeFormData(formData);
+      debugPrint("🧹 Cleaned data: ${cleanData.keys.length} fields");
+
+      // ✅ STEP 4: Get the LPM (primary key)
+      final lpm = LpmAutoIncrement.text.trim();
+      if (lpm.isEmpty) {
+        throw Exception("LPM Auto Increment is missing");
+      }
+
+      debugPrint("💾 Submitting to Firestore with LPM: $lpm");
+
+      // ✅ STEP 5: Submit to Firestore with merge option
+      await FirebaseFirestore.instance
+          .collection('Jobs')
+          .doc(lpm)
+          .set(cleanData, SetOptions(merge: true));
+
+      debugPrint("✅ Form submitted successfully!");
+
+      // ✅ STEP 6: Show success message and navigate
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("✅ Form submitted successfully"),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Navigate back to dashboard
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          context.go('/dashboard');
+        }
+      }
+
+    } on FirebaseException catch (e) {
+      debugPrint("❌ Firebase Error: ${e.code} - ${e.message}");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Firebase Error: ${e.message}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint("❌ Unexpected Error: $e");
+      debugPrint("📍 Stack Trace: $stackTrace");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
+  }
+
+  /// ✅ Validates all required fields
+  String? _validateRequiredFields() {
+    // Required fields for Designer module
+    if (LpmAutoIncrement.text.trim().isEmpty) {
+      return "❌ LPM Auto Increment is required";
+    }
+    if (PartyName.text.trim().isEmpty) {
+      return "❌ Party Name is required";
+    }
+    if (ParticularJobName.text.trim().isEmpty) {
+      return "❌ Particular Job Name is required";
+    }
+    if (DesigningStatus.text.trim().isEmpty) {
+      return "❌ Designing Status is required";
+    }
+
+    // Add more validations as needed
+    return null; // ✅ All validations passed
+  }
+
+  /// ✅ Cleans and sanitizes form data to prevent index errors
+  Map<String, dynamic> _sanitizeFormData(Map<String, dynamic> rawData) {
+    final cleanData = <String, dynamic>{};
+
+    rawData.forEach((key, value) {
+      // ✅ Skip null values
+      if (value == null) {
+        debugPrint("⏭️  Skipping null field: $key");
+        return;
+      }
+
+      // ✅ Skip empty strings
+      if (value is String && value.trim().isEmpty) {
+        debugPrint("⏭️  Skipping empty field: $key");
+        return;
+      }
+
+      // ✅ Skip empty lists
+      if (value is List && value.isEmpty) {
+        debugPrint("⏭️  Skipping empty list: $key");
+        return;
+      }
+
+      // ✅ Skip empty maps
+      if (value is Map && value.isEmpty) {
+        debugPrint("⏭️  Skipping empty map: $key");
+        return;
+      }
+
+      // ✅ Keep valid values
+      cleanData[key] = value;
+    });
+
+    return cleanData;
+  }
+
+  /// 🔍 Debug helper - prints all form field values
+  void debugPrintFormData() {
+    debugPrint("""
+  ╔════════════════════ FORM DATA DEBUG ════════════════════╗
+  LpmAutoIncrement: ${LpmAutoIncrement.text}
+  PartyName: ${PartyName.text}
+  DesignerCreatedBy: ${DesignerCreatedBy.text}
+  DeliveryAt: ${DeliveryAt.text}
+  Orderby: ${Orderby.text}
+  ParticularJobName: ${ParticularJobName.text}
+  Priority: ${Priority.text}
+  Remark: ${Remark.text}
+  DesigningStatus: ${DesigningStatus.text}
+  PlyType: ${PlyType.text}
+  Blade: ${Blade.text}
+  Creasing: ${Creasing.text}
+  Perforation: ${Perforation.text}
+  ZigZagBlade: ${ZigZagBlade.text}
+  RubberType: ${RubberType.text}
+  HoleType: ${HoleType.text}
+  ╚═══════════════════════════════════════════════════════════╝
+  """);
   }
 
 

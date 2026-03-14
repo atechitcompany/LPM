@@ -138,9 +138,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
             if (form.canView("ZigZagBlade")) ...[
               AddableSearchDropdown(
                 label: "Zig Zag Blade",
-                items: form.jobs,
+                items: form.bladeTypes,
                 initialValue: form.ZigZagBlade.text.isEmpty ? "No" : form.ZigZagBlade.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.bladeTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.ZigZagBlade.text = v ?? "";
@@ -183,9 +183,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
             if (form.canView("RubberType")) ...[
               AddableSearchDropdown(
                 label: "Rubber",
-                items: form.jobs,
+                items: form.rubberTypes,
                 initialValue: form.RubberType.text.isEmpty ? "No" : form.RubberType.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.rubberTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.RubberType.text = v ?? "";
@@ -228,9 +228,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
             if (form.canView("HoleType")) ...[
               AddableSearchDropdown(
                 label: "Hole",
-                items: form.jobs,
+                items: form.holeTypes,
                 initialValue: form.HoleType.text.isEmpty ? "No" : form.HoleType.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.holeTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.HoleType.text = v ?? "";

@@ -89,11 +89,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
             if (form.canView("StrippingType")) ...[
               AddableSearchDropdown(
                 label: "Stripping",
-                items: form.jobs,
+                items: form.strippingTypes,
                 initialValue: form.StrippingType.text.isEmpty
                     ? "No"
                     : form.StrippingType.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.strippingTypes.add(newJob),
                 onChanged: (v) {
                   setState(() {
                     form.StrippingType.text = (v ?? "No").trim();

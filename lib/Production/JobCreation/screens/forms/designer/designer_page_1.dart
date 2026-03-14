@@ -52,8 +52,19 @@ class _DesignerPage1State extends State<DesignerPage1> {
     // ✅ NEW: Get data from route parameters instead of Firestore
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
     debugPrint("✅ DesignerPage1 - Received data from route: $dataJson");
+    debugPrint("✅ LPM Parameter: $lpmParam");
+
+    // ✅ SET LPM FIRST (critical for submission)
+    if (lpmParam != null && lpmParam.isNotEmpty) {
+      form.LpmAutoIncrement.text = lpmParam;
+      debugPrint("✅ Set LPM to: $lpmParam");
+    } else {
+      // If no LPM in route, this shouldn't happen in edit mode
+      debugPrint("⚠️ No LPM found in route parameter");
+    }
 
     if (dataJson == null || dataJson.isEmpty) {
       debugPrint("❌ No data in route parameters, skipping load");
@@ -83,12 +94,6 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
     } catch (e) {
       debugPrint("❌ Error decoding data: $e");
-    }
-
-    // LPM must be preserved
-    final lpm = form.lpm;
-    if (lpm != null) {
-      form.LpmAutoIncrement.text = lpm;
     }
   }
 
