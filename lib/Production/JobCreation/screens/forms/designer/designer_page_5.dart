@@ -76,9 +76,9 @@ class _DesignerPage5State extends State<DesignerPage5> {
             if (form.canView("MaleEmbossType")) ...[
               AddableSearchDropdown(
                 label: "Male Emboss",
-                items: form.jobs,
+                items: form.embossTypes,
                 initialValue: form.MaleEmbossType.text.isEmpty ? "No" : form.MaleEmbossType.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.embossTypes.add(newJob),
                 onChanged: (v) {
                   form.MaleEmbossType.text = v ?? "";
                 },
@@ -126,9 +126,9 @@ class _DesignerPage5State extends State<DesignerPage5> {
             if (form.canView("FemaleEmbossType")) ...[
               AddableSearchDropdown(
                 label: "Female Emboss",
-                items: form.jobs,
+                items: form.embossTypes,
                 initialValue: form.FemaleEmbossType.text.isEmpty ? "No" : form.FemaleEmbossType.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newJob) => form.embossTypes.add(newJob),
                 onChanged: (v) {
                   form.FemaleEmbossType.text = v ?? "";
                 },
