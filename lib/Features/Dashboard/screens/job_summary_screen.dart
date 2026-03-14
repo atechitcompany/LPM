@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/session/session_manager.dart';
+import 'dart:convert';
 
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
@@ -64,10 +65,10 @@ class JobSummaryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Job Summary")),
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection("jobs")
-            .doc(lpm)
-            .get(),
+          future: FirebaseFirestore.instance
+              .collection("jobs")
+              .doc(lpm)
+              .get(),
           builder: (context, snap) {
             if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -158,7 +159,13 @@ class JobSummaryScreen extends StatelessWidget {
                           return;
                         }
 
-                        context.push("$route?lpm=$lpm&mode=edit");
+                        // ✅ PASS DATA VIA ROUTE PARAMETERS
+                        // Encode summaryData as JSON and pass it
+                        final dataJson = jsonEncode(summaryData);
+
+                        context.push(
+                            "$route?lpm=$lpm&mode=edit&data=$dataJson"
+                        );
                       },
                       child: const Text("Edit"),
                     ),

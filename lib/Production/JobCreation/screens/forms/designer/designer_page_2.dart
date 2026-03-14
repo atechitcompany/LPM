@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/PrioritySelector.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/FileUploadBox.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
+import 'dart:convert';
 
 class DesignerPage2 extends StatefulWidget {
   const DesignerPage2({super.key});
@@ -15,6 +17,45 @@ class DesignerPage2 extends StatefulWidget {
 
 class _DesignerPage2State extends State<DesignerPage2> {
   bool isDesigningDone = false;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    // ✅ Load data from route parameters if in edit mode
+    if (NewFormScope.of(context).mode == "edit") {
+      _loadDesignerData();
+    }
+  }
+
+  Future<void> _loadDesignerData() async {
+    final form = NewFormScope.of(context);
+    final uri = GoRouterState.of(context).uri;
+    final dataJson = uri.queryParameters['data'];
+
+    if (dataJson == null || dataJson.isEmpty) {
+      return;
+    }
+
+    try {
+      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+
+      setState(() {
+        form.Priority.text = decodedData["priority"] ?? "";
+        form.Remark.text = decodedData["remark"] ?? "NO REMARK";
+        form.PlyType.text = decodedData["plyType"] ?? "No";
+        form.PlySelectedBy.text = decodedData["plySelectedBy"] ?? "";
+      });
+
+      debugPrint("✅ DesignerPage2 loaded data from route");
+    } catch (e) {
+      debugPrint("❌ Error decoding data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +95,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 label: "Remark",
                 hint: "Remark",
                 controller: form.Remark,
-                initialValue: "NO REMARK",
               ),
               const SizedBox(height: 30),
             ],
@@ -110,7 +150,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
               AddableSearchDropdown(
                 label: "Ply",
                 items: form.ply,
-                initialValue: "No",
+                initialValue: form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
                 onChanged: (v) {
                   setState(() {
                     form.PlyType.text = v ?? "";
