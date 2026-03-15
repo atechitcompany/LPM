@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import 'activity_list.dart';
 
 class ActivityListFirestore extends StatefulWidget {
@@ -19,38 +17,173 @@ class ActivityListFirestore extends StatefulWidget {
 }
 
 class _ActivityListFirestoreState extends State<ActivityListFirestore> {
-  // _jobsStream   → designer.submitted == true  (Jobs tab)
-  // _pendingStream → status == "pending_designer_review"  (Pending tab)
-  Stream<QuerySnapshot>? _jobsStream;
-  Stream<QuerySnapshot>? _pendingStream;
+  static const int _pageSize = 10;
+
+  List<QueryDocumentSnapshot> _jobsDocs = [];
+  List<QueryDocumentSnapshot> _pendingDocs = [];
+
+  DocumentSnapshot? _lastJobsDoc;
+  DocumentSnapshot? _lastPendingDoc;
+
+  bool _hasMoreJobs = true;
+  bool _hasMorePending = true;
+
+  bool _isLoadingJobs = false;
+  bool _isLoadingPending = false;
+
+  // Scroll controllers for each tab
+  final ScrollController _jobsScrollController = ScrollController();
+  final ScrollController _pendingScrollController = ScrollController();
+  final ScrollController _quotationsScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
 
-    debugPrint("🏢 ActivityListFirestore department = '${widget.department}'");
+    // Attach scroll listeners
+    _jobsScrollController.addListener(_onJobsScroll);
+    _pendingScrollController.addListener(_onPendingScroll);
+    _quotationsScrollController.addListener(_onJobsScroll); // Quotations reuse jobs data
 
-    if (!_isValidDepartment(widget.department)) {
-      debugPrint("❌ Invalid department: ${widget.department}");
-      return;
+    if (_isValidDepartment(widget.department)) {
+      _fetchJobs(isInitial: true);
+      if (widget.department == "Designer") {
+        _fetchPending(isInitial: true);
+      }
     }
+  }
 
-    final deptKey = _deptKey(widget.department);
+  @override
+  void dispose() {
+    _jobsScrollController.dispose();
+    _pendingScrollController.dispose();
+    _quotationsScrollController.dispose();
+    super.dispose();
+  }
 
-    // ── Jobs: only where designer has submitted ───────────────────────────
-    _jobsStream = FirebaseFirestore.instance
-        .collection("jobs")
-        .where("$deptKey.submitted", isEqualTo: true)
-        .snapshots();
+  /// Triggered when user scrolls near the bottom of the Jobs list.
+  void _onJobsScroll() {
+    final controller = _jobsScrollController.hasClients
+        ? _jobsScrollController
+        : null;
+    if (controller == null) return;
+    if (controller.position.pixels >=
+        controller.position.maxScrollExtent - 200) {
+      _fetchJobs();
+    }
+  }
 
-    // ── Pending: customer accepted, designer not yet reviewed ─────────────
+  /// Triggered when user scrolls near the bottom of the Pending list.
+  void _onPendingScroll() {
+    if (!_pendingScrollController.hasClients) return;
+    if (_pendingScrollController.position.pixels >=
+        _pendingScrollController.position.maxScrollExtent - 200) {
+      _fetchPending();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ActivityListFirestore oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.department != widget.department ||
+        oldWidget.searchText != widget.searchText) {
+      _refreshAll();
+    }
+  }
+
+  void _refreshAll() {
+    setState(() {
+      _jobsDocs = [];
+      _pendingDocs = [];
+      _lastJobsDoc = null;
+      _lastPendingDoc = null;
+      _hasMoreJobs = true;
+      _hasMorePending = true;
+    });
+    _fetchJobs(isInitial: true);
     if (widget.department == "Designer") {
-      _pendingStream = FirebaseFirestore.instance
+      _fetchPending(isInitial: true);
+    }
+  }
+
+  Future<void> _fetchJobs({bool isInitial = false}) async {
+    if (_isLoadingJobs || (!_hasMoreJobs && !isInitial)) return;
+
+    setState(() => _isLoadingJobs = true);
+
+    try {
+      final deptKey = _deptKey(widget.department);
+      Query query = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("$deptKey.submitted", isEqualTo: true)
+          .orderBy("updatedAt", descending: true)
+          .limit(_pageSize);
+
+      if (!isInitial && _lastJobsDoc != null) {
+        query = query.startAfterDocument(_lastJobsDoc!);
+      }
+
+      final snapshot = await query.get();
+
+      if (mounted) {
+        setState(() {
+          if (isInitial) _jobsDocs = [];
+          _jobsDocs.addAll(snapshot.docs);
+          _lastJobsDoc = snapshot.docs.isNotEmpty
+              ? snapshot.docs.last
+              : _lastJobsDoc;
+          _hasMoreJobs = snapshot.docs.length == _pageSize;
+          _isLoadingJobs = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching jobs: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingJobs = false;
+          _hasMoreJobs = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchPending({bool isInitial = false}) async {
+    if (_isLoadingPending || (!_hasMorePending && !isInitial)) return;
+
+    setState(() => _isLoadingPending = true);
+
+    try {
+      Query query = FirebaseFirestore.instance
           .collection("jobs")
           .where("status", isEqualTo: "pending_designer_review")
-          .snapshots();
+          .orderBy("updatedAt", descending: true)
+          .limit(_pageSize);
 
-      debugPrint("✅ _pendingStream initialised");
+      if (!isInitial && _lastPendingDoc != null) {
+        query = query.startAfterDocument(_lastPendingDoc!);
+      }
+
+      final snapshot = await query.get();
+
+      if (mounted) {
+        setState(() {
+          if (isInitial) _pendingDocs = [];
+          _pendingDocs.addAll(snapshot.docs);
+          _lastPendingDoc = snapshot.docs.isNotEmpty
+              ? snapshot.docs.last
+              : _lastPendingDoc;
+          _hasMorePending = snapshot.docs.length == _pageSize;
+          _isLoadingPending = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching pending: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingPending = false;
+          _hasMorePending = false;
+        });
+      }
     }
   }
 
@@ -71,15 +204,12 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                 labelColor: Colors.black,
                 unselectedLabelColor: Colors.grey.shade500,
                 labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
+                    fontWeight: FontWeight.w700, fontSize: 13),
                 unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
+                    fontWeight: FontWeight.w500, fontSize: 13),
                 indicator: const UnderlineTabIndicator(
-                  borderSide: BorderSide(width: 3, color: Color(0xFFF8D94B)),
+                  borderSide:
+                  BorderSide(width: 3, color: Color(0xFFF8D94B)),
                   insets: EdgeInsets.symmetric(horizontal: 12),
                 ),
                 tabs: const [
@@ -92,9 +222,30 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildJobsSection(),
-                  _buildPendingSection(),
-                  _buildQuotationsSection(),
+                  _buildSection(
+                    docs: _jobsDocs,
+                    isPending: false,
+                    isQuotation: false,
+                    hasMore: _hasMoreJobs,
+                    isLoading: _isLoadingJobs,
+                    scrollController: _jobsScrollController,
+                  ),
+                  _buildSection(
+                    docs: _pendingDocs,
+                    isPending: true,
+                    isQuotation: false,
+                    hasMore: _hasMorePending,
+                    isLoading: _isLoadingPending,
+                    scrollController: _pendingScrollController,
+                  ),
+                  _buildSection(
+                    docs: _jobsDocs,
+                    isPending: false,
+                    isQuotation: true,
+                    hasMore: _hasMoreJobs,
+                    isLoading: _isLoadingJobs,
+                    scrollController: _quotationsScrollController,
+                  ),
                 ],
               ),
             ),
@@ -103,201 +254,52 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       );
     }
 
-    return _buildJobsSection();
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // JOBS TAB — designer.submitted == true, sorted by updatedAt desc
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildJobsSection() {
-    if (_jobsStream == null) {
-      return const Center(
-          child: Text("Stream not ready",
-              style: TextStyle(color: Colors.grey)));
-    }
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: _jobsStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          debugPrint("❌ _jobsStream error: ${snapshot.error}");
-          return Center(child: Text("Error: ${snapshot.error}"));
-        }
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        var docs = snapshot.data!.docs;
-        debugPrint("📋 Jobs tab: ${docs.length} docs");
-
-        // Sort by updatedAt descending
-        docs.sort((a, b) {
-          final aT = (a.data() as Map<String, dynamic>)["updatedAt"]
-          as Timestamp?;
-          final bT = (b.data() as Map<String, dynamic>)["updatedAt"]
-          as Timestamp?;
-          if (aT == null || bT == null) return 0;
-          return bT.compareTo(aT);
-        });
-
-        if (docs.isEmpty) {
-          return const Center(
-              child: Text("No jobs yet",
-                  style: TextStyle(fontSize: 16, color: Colors.grey)));
-        }
-
-        final query = widget.searchText.trim().toLowerCase();
-        final filtered = docs.where((doc) {
-          final d = ((doc.data() as Map<String, dynamic>)["designer"]
-          ?["data"]) ??
-              {};
-          final party =
-          (d["partyName"] ?? d["PartyName"] ?? "").toString().toLowerCase();
-          final job =
-          (d["particularJobName"] ?? d["ParticularJobName"] ?? "")
-              .toString()
-              .toLowerCase();
-          if (query.isEmpty) return true;
-          return party.contains(query) || job.contains(query);
-        }).toList();
-
-        if (filtered.isEmpty) {
-          return const Center(child: Text("No matching jobs"));
-        }
-
-        return ActivityList(
-          docs: filtered,
-          isPending: false,
-          isQuotation: false,
-        );
-      },
+    return _buildSection(
+      docs: _jobsDocs,
+      isPending: false,
+      isQuotation: false,
+      hasMore: _hasMoreJobs,
+      isLoading: _isLoadingJobs,
+      scrollController: _jobsScrollController,
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PENDING TAB — status == "pending_designer_review"
-  // Sorted by acceptedAt descending → newest accepted form on top
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPendingSection() {
-    if (_pendingStream == null) {
-      debugPrint("⚠️ _pendingStream is null");
-      return const Center(
-          child: Text("Pending stream not ready",
-              style: TextStyle(color: Colors.grey)));
+  Widget _buildSection({
+    required List<QueryDocumentSnapshot> docs,
+    required bool isPending,
+    required bool isQuotation,
+    required bool hasMore,
+    required bool isLoading,
+    required ScrollController scrollController,
+  }) {
+    // Full-screen loader only on the very first fetch
+    if (isLoading && docs.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: _pendingStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          debugPrint("❌ _pendingStream error: ${snapshot.error}");
-          return Center(child: Text("Error: ${snapshot.error}"));
-        }
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final query = widget.searchText.trim().toLowerCase();
+    final filtered = docs.where((doc) {
+      final d =
+          ((doc.data() as Map<String, dynamic>)["designer"]?["data"]) ?? {};
+      final party =
+      (d["partyName"] ?? d["PartyName"] ?? "").toString().toLowerCase();
+      final job = (d["particularJobName"] ?? d["ParticularJobName"] ?? "")
+          .toString()
+          .toLowerCase();
+      if (query.isEmpty) return true;
+      return party.contains(query) || job.contains(query);
+    }).toList();
 
-        var docs = snapshot.data!.docs;
-        debugPrint("⏳ Pending tab: ${docs.length} docs");
-
-        // ✅ Sort by acceptedAt descending — newest accepted form on top
-        docs.sort((a, b) {
-          final aT = (a.data() as Map<String, dynamic>)["acceptedAt"]
-          as Timestamp?;
-          final bT = (b.data() as Map<String, dynamic>)["acceptedAt"]
-          as Timestamp?;
-          if (aT == null || bT == null) return 0;
-          return bT.compareTo(aT); // descending = newest first
-        });
-
-        if (docs.isEmpty) {
-          return const Center(
-              child: Text("No pending forms",
-                  style: TextStyle(fontSize: 16, color: Colors.grey)));
-        }
-
-        final query = widget.searchText.trim().toLowerCase();
-        final filtered = docs.where((doc) {
-          final d = ((doc.data() as Map<String, dynamic>)["designer"]
-          ?["data"]) ??
-              {};
-          // customer_request_detail_screen writes lowercase keys
-          final party = (d["partyName"] ?? "").toString().toLowerCase();
-          final job =
-          (d["particularJobName"] ?? "").toString().toLowerCase();
-          if (query.isEmpty) return true;
-          return party.contains(query) || job.contains(query);
-        }).toList();
-
-        if (filtered.isEmpty) {
-          return const Center(child: Text("No matching pending forms"));
-        }
-
-        return ActivityList(
-          docs: filtered,
-          isPending: true,
-          isQuotation: false,
-        );
-      },
+    return ActivityList(
+      docs: filtered,
+      isPending: isPending,
+      isQuotation: isQuotation,
+      hasMore: hasMore,
+      isLoadingMore: isLoading,
+      scrollController: scrollController, // pass controller down
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // QUOTATIONS TAB
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildQuotationsSection() {
-    if (_jobsStream == null) {
-      return const Center(
-          child: Text("Stream not ready",
-              style: TextStyle(color: Colors.grey)));
-    }
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: _jobsStream,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final docs = snapshot.data!.docs;
-
-        if (docs.isEmpty) {
-          return const Center(
-              child: Text("No quotations",
-                  style: TextStyle(fontSize: 16, color: Colors.grey)));
-        }
-
-        final query = widget.searchText.trim().toLowerCase();
-        final filtered = docs.where((doc) {
-          final d = ((doc.data() as Map<String, dynamic>)["designer"]
-          ?["data"]) ??
-              {};
-          final party =
-          (d["partyName"] ?? d["PartyName"] ?? "").toString().toLowerCase();
-          final job =
-          (d["particularJobName"] ?? d["ParticularJobName"] ?? "")
-              .toString()
-              .toLowerCase();
-          if (query.isEmpty) return true;
-          return party.contains(query) || job.contains(query);
-        }).toList();
-
-        if (filtered.isEmpty) {
-          return const Center(child: Text("No matching quotations"));
-        }
-
-        return ActivityList(
-          docs: filtered,
-          isPending: false,
-          isQuotation: true,
-        );
-      },
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // HELPERS
-  // ─────────────────────────────────────────────────────────────────────────
   bool _isValidDepartment(String dept) {
     return const [
       "Designer",
@@ -313,15 +315,24 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
 
   String _deptKey(String dept) {
     switch (dept) {
-      case "Designer":      return "designer";
-      case "AutoBending":   return "autoBending";
-      case "ManualBending": return "manualBending";
-      case "Lasercut":      return "laserCut";
-      case "Emboss":        return "emboss";
-      case "Rubber":        return "rubber";
-      case "Account":       return "account";
-      case "Delivery":      return "delivery";
-      default:              return "";
+      case "Designer":
+        return "designer";
+      case "AutoBending":
+        return "autoBending";
+      case "ManualBending":
+        return "manualBending";
+      case "Lasercut":
+        return "laserCut";
+      case "Emboss":
+        return "emboss";
+      case "Rubber":
+        return "rubber";
+      case "Account":
+        return "account";
+      case "Delivery":
+        return "delivery";
+      default:
+        return "";
     }
   }
 }

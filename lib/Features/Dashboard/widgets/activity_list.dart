@@ -9,22 +9,64 @@ class ActivityList extends StatelessWidget {
   final List<QueryDocumentSnapshot> docs;
   final bool isPending;
   final bool isQuotation;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final ScrollController scrollController; // ← NEW: passed from parent
 
   const ActivityList({
     super.key,
     required this.docs,
     required this.isPending,
     required this.isQuotation,
+    required this.scrollController,
+    this.hasMore = false,
+    this.isLoadingMore = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Empty state — no data and nothing more to load
+    if (docs.isEmpty && !hasMore && !isLoadingMore) {
+      return const Center(
+        child: Text(
+          "No items found",
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    // Still on first load
+    if (docs.isEmpty && isLoadingMore) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Container(
       color: Colors.white,
       child: ListView.builder(
+        controller: scrollController, // ← attach the scroll controller
         padding: const EdgeInsets.symmetric(vertical: 6),
-        itemCount: docs.length,
+        // +1 for the bottom loader row when there's more data
+        itemCount: docs.length + (hasMore || isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
+          // Bottom item: spinner while loading, nothing when done
+          if (index == docs.length) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: isLoadingMore
+                    ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Color(0xFFF8D94B),
+                  ),
+                )
+                    : const SizedBox.shrink(), // nothing if not loading
+              ),
+            );
+          }
+
           final data = docs[index].data() as Map<String, dynamic>;
           final designerData = data["designer"]?["data"] ?? {};
           final lpm = docs[index].id;
@@ -40,8 +82,6 @@ class ActivityList extends StatelessWidget {
           final _BadgeStyle badge = _resolveBadge(rawStatus, isPending);
 
           return InkWell(
-            // ── Navigation ───────────────────────────────────────────
-            // Both Pending AND Jobs items open job-summary screen
             onTap: () => context.push('/job-summary/$lpm'),
             child: Container(
               padding:
@@ -49,7 +89,8 @@ class ActivityList extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade100, width: 1),
+                  bottom:
+                  BorderSide(color: Colors.grey.shade100, width: 1),
                 ),
               ),
               child: Row(
@@ -140,6 +181,9 @@ class ActivityList extends StatelessWidget {
                       width: 16,
                       height: 16,
                       color: Colors.white,
+                      errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.message,
+                          color: Colors.white, size: 16),
                     ),
                   ),
                 ],
