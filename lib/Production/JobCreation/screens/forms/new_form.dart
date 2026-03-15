@@ -801,39 +801,20 @@ class NewFormState extends State<NewForm> {
     try {
       debugPrint("🚀 Starting form submission...");
 
-      // ✅ STEP 1: Validate required fields FIRST
-      final validationError = _validateRequiredFields();
-      if (validationError != null) {
-        throw Exception(validationError);
+      if (department == "Designer") {
+        // ✅ Designer: use submitDesignerForm() which writes to the "jobs"
+        //    collection with the correct nested structure expected by the
+        //    dashboard (designer.submitted, designer.data, etc.)
+        await submitDesignerForm();
+      } else {
+        // ✅ Other departments: use submitDepartmentForm()
+        final nextDept = _nextDepartment(department);
+        await submitDepartmentForm(nextDept);
       }
-
-      debugPrint("✅ Validation passed");
-
-      // ✅ STEP 2: Build form data
-      final formData = buildFormData();
-      debugPrint("📦 Form data built: ${formData.keys.length} fields");
-
-      // ✅ STEP 3: Clean up data (remove empty/null values that cause index errors)
-      final cleanData = _sanitizeFormData(formData);
-      debugPrint("🧹 Cleaned data: ${cleanData.keys.length} fields");
-
-      // ✅ STEP 4: Get the LPM (primary key)
-      final lpm = LpmAutoIncrement.text.trim();
-      if (lpm.isEmpty) {
-        throw Exception("LPM Auto Increment is missing");
-      }
-
-      debugPrint("💾 Submitting to Firestore with LPM: $lpm");
-
-      // ✅ STEP 5: Submit to Firestore with merge option
-      await FirebaseFirestore.instance
-          .collection('Jobs')
-          .doc(lpm)
-          .set(cleanData, SetOptions(merge: true));
 
       debugPrint("✅ Form submitted successfully!");
 
-      // ✅ STEP 6: Show success message and navigate
+      // ✅ Show success message and navigate
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
