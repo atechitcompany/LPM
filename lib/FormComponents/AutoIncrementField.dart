@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AutoIncrementField extends StatelessWidget {
-  final int value;
+  final String value;
   const AutoIncrementField({super.key, required this.value});
 
   @override
@@ -17,7 +17,7 @@ class AutoIncrementField extends StatelessWidget {
               border: Border.all(),
               borderRadius: BorderRadius.circular(6)),
           child: Text(
-            value.toString(),
+            value,
             style: const TextStyle(fontSize: 16, color: Color(0xFF4B5563)),
           ),
         )

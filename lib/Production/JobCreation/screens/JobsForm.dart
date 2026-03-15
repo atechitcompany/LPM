@@ -856,7 +856,8 @@ class NewFormState extends State<NewForm> {
                 if ((fieldAccess['lpmAutoIncrement'] ?? false) ||
                     User == "Designer" ||
                     User == "Admin")
-                  AutoIncrementField(value: 1004),
+                  AutoIncrementField(value: "1004"),
+
 
                 if ((fieldAccess['lpmAutoIncrement'] ?? false) ||
                     User == "Designer" ||
