@@ -573,17 +573,21 @@ class NewFormState extends State<NewForm> {
       final now = DateTime.now();
       final month = now.month.toString().padLeft(2, '0');
       final year = (now.year % 100).toString().padLeft(2, '0');
-
       final counterDocId = "${now.year}_$month";
+
+      debugPrint("⏳ Loading LPM... counterDoc=$counterDocId");
 
       final counterRef = FirebaseFirestore.instance
           .collection("counters")
           .doc(counterDocId);
 
-      final snap = await counterRef.get();
+      // ✅ Set a timeout so it doesn't hang forever if offline
+      final snap = await counterRef.get().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
+      );
 
       int lastOrderNo = 0;
-
       if (snap.exists) {
         lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
       } else {
@@ -591,17 +595,42 @@ class NewFormState extends State<NewForm> {
       }
 
       final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
+      final fullLpm = "LPM-$newOrderNo-$month-$year-01";
 
-      // Default sub order = 01
-      final subOrder = "01";
+      debugPrint("✅ LPM Generated: $fullLpm");
 
-      final fullLpm = "LPM-$newOrderNo-$month-$year-$subOrder";
+      if (mounted) {
+        setState(() {
+          LpmAutoIncrement.text = fullLpm;
+        });
+      }
 
-      LpmAutoIncrement.text = fullLpm;
-
-      setState(() {});
     } catch (e) {
-      print("LPM Load Error: $e");
+      debugPrint("❌ LPM Load Error: $e");
+
+      // ✅ Fallback: generate a temporary LPM from timestamp (no Firestore needed)
+      if (mounted) {
+        final now = DateTime.now();
+        final month = now.month.toString().padLeft(2, '0');
+        final year = (now.year % 100).toString().padLeft(2, '0');
+        final tempNo = now.millisecondsSinceEpoch.toString().substring(7); // last 6 digits
+        final fallbackLpm = "LPM-TEMP$tempNo-$month-$year-01";
+
+        debugPrint("⚠️ Using fallback LPM: $fallbackLpm");
+
+        setState(() {
+          LpmAutoIncrement.text = fallbackLpm;
+        });
+
+        // Show a warning to the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("⚠️ No internet — using temporary LPM. Please resubmit when online."),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
