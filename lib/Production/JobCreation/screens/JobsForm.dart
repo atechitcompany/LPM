@@ -875,6 +875,7 @@ class NewFormState extends State<NewForm> {
                     User == "Designer" ||
                     User == "Admin")
                   PrioritySelector(
+                    initialValue: Priority.text,
                     onChanged: (v) {
                       Priority.text = v ?? "";
                     },

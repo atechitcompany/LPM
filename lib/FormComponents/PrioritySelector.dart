@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 
 class PrioritySelector extends StatefulWidget {
   final Function(String) onChanged;
-  const PrioritySelector({super.key, required this.onChanged});
+  final String? initialValue;
+  const PrioritySelector({super.key, required this.onChanged, this.initialValue});
 
   @override
   State<PrioritySelector> createState() => _PrioritySelectorState();
 }
 
 class _PrioritySelectorState extends State<PrioritySelector> {
-  String selected = "";
+  late String selected;
+
+  @override
+  void initState() {
+    super.initState();
+    selected = widget.initialValue ?? "";
+  }
 
   List<String> items = [
     "Blade Change",

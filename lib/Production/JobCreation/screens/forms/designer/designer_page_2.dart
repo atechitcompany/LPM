@@ -82,6 +82,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               PrioritySelector(
+                initialValue: form.Priority.text,
                 onChanged: (v) {
                   form.Priority.text = v ?? "";
                 },
