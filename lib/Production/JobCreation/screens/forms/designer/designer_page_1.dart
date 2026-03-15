@@ -207,15 +207,13 @@ class _DesignerPage1State extends State<DesignerPage1> {
             ValueListenableBuilder(
               valueListenable: form.LpmAutoIncrement,
               builder: (context, value, child) {
-                final lpm =
-                    int.tryParse(form.LpmAutoIncrement.text) ?? 0;
+                final lpmText = form.LpmAutoIncrement.text.trim();
 
-                if (lpm == 0) {
-                  return const Center(
-                      child: CircularProgressIndicator());
+                if (lpmText.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                return AutoIncrementField(value: lpm);
+                return AutoIncrementField(value: lpmText); // ← pass the string directly
               },
             ),
 
