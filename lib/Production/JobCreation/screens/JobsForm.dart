@@ -907,7 +907,7 @@ class NewFormState extends State<NewForm> {
                     User == "Designer" ||
                     User == "Admin")
                   FlexibleToggle(
-                    label: "Designing *",
+                    label: "Designing",
                     inactiveText: "Pending",
                     activeText: "Done",
                     initialValue: false,

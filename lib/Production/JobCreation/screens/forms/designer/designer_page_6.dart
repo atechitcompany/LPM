@@ -157,7 +157,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
             /// ✅ Designing Status (CRITICAL FIELD)
             if (form.canView("DesigningStatus")) ...[
               FlexibleToggle(
-                label: "Designing *",
+                label: "Designing",
                 inactiveText: "Pending",
                 activeText: "Done",
                 initialValue: isDesigningDone,

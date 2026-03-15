@@ -888,10 +888,6 @@ class NewFormState extends State<NewForm> {
     if (ParticularJobName.text.trim().isEmpty) {
       return "❌ Particular Job Name is required";
     }
-    if (DesigningStatus.text.trim().isEmpty) {
-      return "❌ Designing Status is required";
-    }
-
     // Add more validations as needed
     return null; // ✅ All validations passed
   }
@@ -983,6 +979,7 @@ class NewFormState extends State<NewForm> {
     Size5.text = "NO";
     DeliveryURL.text = "URL";
 
+    DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
