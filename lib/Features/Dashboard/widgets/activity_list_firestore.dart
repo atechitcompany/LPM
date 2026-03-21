@@ -17,207 +17,6 @@ class ActivityListFirestore extends StatefulWidget {
 }
 
 class _ActivityListFirestoreState extends State<ActivityListFirestore> {
-  static const int _pageSize = 20;
-
-  // ── Jobs ──────────────────────────────────────────────────────────────────
-  Stream<QuerySnapshot>? _jobsStream;           // real-time first page
-  List<QueryDocumentSnapshot> _jobsExtra = [];  // older pages fetched manually
-  DocumentSnapshot? _lastJobsDoc;
-  bool _hasMoreJobs = true;
-  bool _isLoadingMoreJobs = false;
-
-  // ── Pending ───────────────────────────────────────────────────────────────
-  Stream<QuerySnapshot>? _pendingStream;
-  List<QueryDocumentSnapshot> _pendingExtra = [];
-  DocumentSnapshot? _lastPendingDoc;
-  bool _hasMorePending = true;
-  bool _isLoadingMorePending = false;
-
-  // ── Scroll controllers ────────────────────────────────────────────────────
-  final ScrollController _jobsScrollController = ScrollController();
-  final ScrollController _pendingScrollController = ScrollController();
-  final ScrollController _quotationsScrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _jobsScrollController.addListener(_onJobsScroll);
-    _pendingScrollController.addListener(_onPendingScroll);
-    _quotationsScrollController.addListener(_onQuotationsScroll);
-    _setupStreams();
-  }
-
-  @override
-  void dispose() {
-    _jobsScrollController.dispose();
-    _pendingScrollController.dispose();
-    _quotationsScrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(ActivityListFirestore oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.department != widget.department ||
-        oldWidget.searchText != widget.searchText) {
-      _resetAll();
-    }
-  }
-
-  // ── Stream setup ──────────────────────────────────────────────────────────
-
-  void _setupStreams() {
-    if (!_isValidDepartment(widget.department)) return;
-
-    final deptKey = _deptKey(widget.department);
-
-    // Stream listens to first page in real-time.
-    // Any new doc added to Firestore shows up here instantly — no refresh needed.
-    _jobsStream = FirebaseFirestore.instance
-        .collection("jobs")
-        .where("$deptKey.submitted", isEqualTo: true)
-        .orderBy("updatedAt", descending: true)
-        .limit(_pageSize)
-        .snapshots();
-
-    if (widget.department == "Designer") {
-      _pendingStream = FirebaseFirestore.instance
-          .collection("jobs")
-          .where("status", isEqualTo: "pending_designer_review")
-          .orderBy("updatedAt", descending: true)
-          .limit(_pageSize)
-          .snapshots();
-    }
-  }
-
-  void _resetAll() {
-    setState(() {
-      _jobsExtra = [];
-      _pendingExtra = [];
-      _lastJobsDoc = null;
-      _lastPendingDoc = null;
-      _hasMoreJobs = true;
-      _hasMorePending = true;
-      _isLoadingMoreJobs = false;
-      _isLoadingMorePending = false;
-    });
-    _setupStreams();
-  }
-
-  // ── Scroll listeners ──────────────────────────────────────────────────────
-
-  void _onJobsScroll() {
-    if (_jobsScrollController.hasClients &&
-        _jobsScrollController.position.pixels >=
-            _jobsScrollController.position.maxScrollExtent - 200) {
-      _loadMoreJobs();
-    }
-  }
-
-  void _onPendingScroll() {
-    if (_pendingScrollController.hasClients &&
-        _pendingScrollController.position.pixels >=
-            _pendingScrollController.position.maxScrollExtent - 200) {
-      _loadMorePending();
-    }
-  }
-
-  void _onQuotationsScroll() {
-    if (_quotationsScrollController.hasClients &&
-        _quotationsScrollController.position.pixels >=
-            _quotationsScrollController.position.maxScrollExtent - 200) {
-      _loadMoreJobs();
-    }
-  }
-
-  // ── Pagination (load older docs beyond first page) ────────────────────────
-
-  Future<void> _loadMoreJobs({List<QueryDocumentSnapshot>? streamDocs}) async {
-    if (_isLoadingMoreJobs || !_hasMoreJobs) return;
-    setState(() => _isLoadingMoreJobs = true);
-
-    try {
-      final deptKey = _deptKey(widget.department);
-
-      // Cursor: use last extra doc, or fall back to last doc from stream
-      final lastDoc = _lastJobsDoc ??
-          (streamDocs != null && streamDocs.isNotEmpty
-              ? streamDocs.last
-              : null);
-
-      if (lastDoc == null) {
-        setState(() {
-          _isLoadingMoreJobs = false;
-          _hasMoreJobs = false;
-        });
-        return;
-      }
-
-      final snapshot = await FirebaseFirestore.instance
-          .collection("jobs")
-          .where("$deptKey.submitted", isEqualTo: true)
-          .orderBy("updatedAt", descending: true)
-          .startAfterDocument(lastDoc)
-          .limit(_pageSize)
-          .get();
-
-      if (mounted) {
-        setState(() {
-          _jobsExtra.addAll(snapshot.docs);
-          if (snapshot.docs.isNotEmpty) _lastJobsDoc = snapshot.docs.last;
-          _hasMoreJobs = snapshot.docs.length == _pageSize;
-          _isLoadingMoreJobs = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("❌ Error loading more jobs: $e");
-      if (mounted) setState(() => _isLoadingMoreJobs = false);
-    }
-  }
-
-  Future<void> _loadMorePending(
-      {List<QueryDocumentSnapshot>? streamDocs}) async {
-    if (_isLoadingMorePending || !_hasMorePending) return;
-    setState(() => _isLoadingMorePending = true);
-
-    try {
-      final lastDoc = _lastPendingDoc ??
-          (streamDocs != null && streamDocs.isNotEmpty
-              ? streamDocs.last
-              : null);
-
-      if (lastDoc == null) {
-        setState(() {
-          _isLoadingMorePending = false;
-          _hasMorePending = false;
-        });
-        return;
-      }
-
-      final snapshot = await FirebaseFirestore.instance
-          .collection("jobs")
-          .where("status", isEqualTo: "pending_designer_review")
-          .orderBy("updatedAt", descending: true)
-          .startAfterDocument(lastDoc)
-          .limit(_pageSize)
-          .get();
-
-      if (mounted) {
-        setState(() {
-          _pendingExtra.addAll(snapshot.docs);
-          if (snapshot.docs.isNotEmpty) _lastPendingDoc = snapshot.docs.last;
-          _hasMorePending = snapshot.docs.length == _pageSize;
-          _isLoadingMorePending = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("❌ Error loading more pending: $e");
-      if (mounted) setState(() => _isLoadingMorePending = false);
-    }
-  }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     if (!_isValidDepartment(widget.department)) {
@@ -253,35 +52,23 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildStreamSection(
-                    stream: _jobsStream,
-                    extraDocs: _jobsExtra,
-                    isPending: false,
-                    isQuotation: false,
-                    hasMore: _hasMoreJobs,
-                    isLoadingMore: _isLoadingMoreJobs,
-                    scrollController: _jobsScrollController,
-                    onLoadMore: _loadMoreJobs,
+                  _KeepAliveTab(
+                    child: _FirestoreTab(
+                      department: widget.department,
+                      searchText: widget.searchText,
+                      isPending: false,
+                    ),
                   ),
-                  _buildStreamSection(
-                    stream: _pendingStream,
-                    extraDocs: _pendingExtra,
-                    isPending: true,
-                    isQuotation: false,
-                    hasMore: _hasMorePending,
-                    isLoadingMore: _isLoadingMorePending,
-                    scrollController: _pendingScrollController,
-                    onLoadMore: _loadMorePending,
+                  _KeepAliveTab(
+                    child: _FirestoreTab(
+                      department: widget.department,
+                      searchText: widget.searchText,
+                      isPending: true,
+                    ),
                   ),
-                  _buildStreamSection(
-                    stream: _jobsStream,
-                    extraDocs: _jobsExtra,
-                    isPending: false,
-                    isQuotation: true,
-                    hasMore: _hasMoreJobs,
-                    isLoadingMore: _isLoadingMoreJobs,
-                    scrollController: _quotationsScrollController,
-                    onLoadMore: _loadMoreJobs,
+                  // ── Quotations: empty for now ─────────────────────────
+                  const _KeepAliveTab(
+                    child: _EmptyQuotations(),
                   ),
                 ],
               ),
@@ -291,50 +78,234 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       );
     }
 
-    return _buildStreamSection(
-      stream: _jobsStream,
-      extraDocs: _jobsExtra,
+    return _FirestoreTab(
+      department: widget.department,
+      searchText: widget.searchText,
       isPending: false,
-      isQuotation: false,
-      hasMore: _hasMoreJobs,
-      isLoadingMore: _isLoadingMoreJobs,
-      scrollController: _jobsScrollController,
-      onLoadMore: _loadMoreJobs,
     );
   }
 
-  Widget _buildStreamSection({
-    required Stream<QuerySnapshot>? stream,
-    required List<QueryDocumentSnapshot> extraDocs,
-    required bool isPending,
-    required bool isQuotation,
-    required bool hasMore,
-    required bool isLoadingMore,
-    required ScrollController scrollController,
-    required Function({List<QueryDocumentSnapshot>? streamDocs}) onLoadMore,
-  }) {
-    if (stream == null) {
-      return const Center(child: Text("No data available"));
+  bool _isValidDepartment(String dept) {
+    return const [
+      "Designer",
+      "AutoBending",
+      "ManualBending",
+      "Lasercut",
+      "Emboss",
+      "Rubber",
+      "Account",
+      "Delivery",
+    ].contains(dept);
+  }
+}
+
+// ── Empty Quotations placeholder ──────────────────────────────────────────────
+class _EmptyQuotations extends StatelessWidget {
+  const _EmptyQuotations();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.description_outlined, size: 56, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(
+            "Quotations coming soon",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Keeps tab alive when switching ───────────────────────────────────────────
+class _KeepAliveTab extends StatefulWidget {
+  final Widget child;
+  const _KeepAliveTab({required this.child});
+
+  @override
+  State<_KeepAliveTab> createState() => _KeepAliveTabState();
+}
+
+class _KeepAliveTabState extends State<_KeepAliveTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+
+// ── Single tab: stream + pagination ──────────────────────────────────────────
+class _FirestoreTab extends StatefulWidget {
+  final String department;
+  final String searchText;
+  final bool isPending;
+
+  const _FirestoreTab({
+    required this.department,
+    required this.searchText,
+    required this.isPending,
+  });
+
+  @override
+  State<_FirestoreTab> createState() => _FirestoreTabState();
+}
+
+class _FirestoreTabState extends State<_FirestoreTab> {
+  static const int _pageSize = 20;
+
+  Stream<QuerySnapshot>? _stream;
+  List<QueryDocumentSnapshot> _extraDocs = [];
+  DocumentSnapshot? _lastDoc;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    _setupStream();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_FirestoreTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.department != widget.department) {
+      _reset();
     }
+  }
+
+  void _setupStream() {
+    if (widget.isPending) {
+      _stream = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("status", isEqualTo: "pending_designer_review")
+          .orderBy("updatedAt", descending: true)
+          .limit(_pageSize)
+          .snapshots();
+    } else {
+      final deptKey = _deptKey(widget.department);
+      _stream = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("$deptKey.submitted", isEqualTo: true)
+          .orderBy("updatedAt", descending: true)
+          .limit(_pageSize)
+          .snapshots();
+    }
+  }
+
+  void _reset() {
+    setState(() {
+      _extraDocs = [];
+      _lastDoc = null;
+      _hasMore = true;
+      _isLoadingMore = false;
+    });
+    _setupStream();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore({List<QueryDocumentSnapshot>? streamDocs}) async {
+    if (_isLoadingMore || !_hasMore) return;
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final lastDoc = _lastDoc ??
+          (streamDocs != null && streamDocs.isNotEmpty
+              ? streamDocs.last
+              : null);
+
+      if (lastDoc == null) {
+        setState(() {
+          _isLoadingMore = false;
+          _hasMore = false;
+        });
+        return;
+      }
+
+      Query query;
+      if (widget.isPending) {
+        query = FirebaseFirestore.instance
+            .collection("jobs")
+            .where("status", isEqualTo: "pending_designer_review")
+            .orderBy("updatedAt", descending: true)
+            .startAfterDocument(lastDoc)
+            .limit(_pageSize);
+      } else {
+        final deptKey = _deptKey(widget.department);
+        query = FirebaseFirestore.instance
+            .collection("jobs")
+            .where("$deptKey.submitted", isEqualTo: true)
+            .orderBy("updatedAt", descending: true)
+            .startAfterDocument(lastDoc)
+            .limit(_pageSize);
+      }
+
+      final snapshot = await query.get();
+
+      if (mounted) {
+        setState(() {
+          _extraDocs.addAll(snapshot.docs);
+          if (snapshot.docs.isNotEmpty) _lastDoc = snapshot.docs.last;
+          _hasMore = snapshot.docs.length == _pageSize;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error loading more: $e");
+      if (mounted) setState(() => _isLoadingMore = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_stream == null) return const SizedBox.shrink();
 
     return StreamBuilder<QuerySnapshot>(
-      stream: stream,
+      stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text("Error: ${snapshot.error}"));
         }
-        if (snapshot.connectionState == ConnectionState.waiting) {
+
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            snapshot.data == null) {
           return const Center(child: CircularProgressIndicator());
         }
 
         final streamDocs =
         List<QueryDocumentSnapshot>.from(snapshot.data?.docs ?? []);
 
-        // Merge stream docs (real-time) + extra docs (paginated older pages).
-        // De-duplicate by doc ID to avoid showing same item twice.
+        // Merge stream + paginated extra, de-duplicate by ID
         final seenIds = <String>{};
         final merged = <QueryDocumentSnapshot>[];
-        for (final doc in [...streamDocs, ...extraDocs]) {
+        for (final doc in [...streamDocs, ..._extraDocs]) {
           if (seenIds.add(doc.id)) merged.add(doc);
         }
 
@@ -357,40 +328,24 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
 
         return NotificationListener<ScrollNotification>(
           onNotification: (notification) {
-            // Trigger pagination when scrolled near bottom
             if (notification is ScrollEndNotification &&
                 notification.metrics.pixels >=
                     notification.metrics.maxScrollExtent - 200) {
-              onLoadMore(streamDocs: streamDocs);
+              _loadMore(streamDocs: streamDocs);
             }
             return false;
           },
           child: ActivityList(
             docs: filtered,
-            isPending: isPending,
-            isQuotation: isQuotation,
-            hasMore: hasMore,
-            isLoadingMore: isLoadingMore,
-            scrollController: scrollController,
+            isPending: widget.isPending,
+            isQuotation: false,
+            hasMore: _hasMore,
+            isLoadingMore: _isLoadingMore,
+            scrollController: _scrollController,
           ),
         );
       },
     );
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  bool _isValidDepartment(String dept) {
-    return const [
-      "Designer",
-      "AutoBending",
-      "ManualBending",
-      "Lasercut",
-      "Emboss",
-      "Rubber",
-      "Account",
-      "Delivery",
-    ].contains(dept);
   }
 
   String _deptKey(String dept) {
