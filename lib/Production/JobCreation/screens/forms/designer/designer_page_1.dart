@@ -79,15 +79,15 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
       // ✅ Populate form fields from decoded data (using camelCase keys)
       setState(() {
-        form.PartyName.text = decodedData["partyName"] ?? "";
-        form.DesignerCreatedBy.text = decodedData["designerCreatedBy"] ?? "";
-        form.DeliveryAt.text = decodedData["deliveryAt"] ?? "";
-        form.Orderby.text = decodedData["orderBy"] ?? "";
-        form.ParticularJobName.text = decodedData["particularJobName"] ?? "";
-        form.Priority.text = decodedData["priority"] ?? "";
-        form.Remark.text = decodedData["remark"] ?? "";
+        form.PartyName.text = decodedData["PartyName"] ?? "";
+        form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
+        form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
+        form.Orderby.text = decodedData["Orderby"] ?? "";
+        form.ParticularJobName.text = decodedData["ParticularJobName"] ?? "";
+        form.Priority.text = decodedData["Priority"] ?? "";
+        form.Remark.text = decodedData["Remark"] ?? "";
 
-        selectedJob = decodedData["particularJobName"];
+        selectedJob = decodedData["ParticularJobName"];
       });
 
       debugPrint("✅ DesignerPage1 loaded data from route parameters");

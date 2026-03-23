@@ -40,14 +40,14 @@ class _DesignerPage5State extends State<DesignerPage5> {
       final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
       setState(() {
-        form.MaleEmbossType.text = decodedData["maleEmbossType"] ?? "";
-        form.X.text = decodedData["x"] ?? "";
-        form.Y.text = decodedData["y"] ?? "";
-        form.XYSize.text = decodedData["xySize"] ?? "";
+        form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
+        form.X.text = decodedData["X"] ?? "";
+        form.Y.text = decodedData["Y"] ?? "";
+        form.XYSize.text = decodedData["XYSize"] ?? "";
         form.FemaleEmbossType.text = decodedData["femaleEmbossType"] ?? "";
-        form.X2.text = decodedData["x2"] ?? "";
-        form.Y2.text = decodedData["y2"] ?? "";
-        form.XY2Size.text = decodedData["xy2Size"] ?? "";
+        form.X2.text = decodedData["X2"] ?? "";
+        form.Y2.text = decodedData["Y2"] ?? "";
+        form.XY2Size.text = decodedData["XY2Size"] ?? "";
       });
 
       debugPrint("✅ DesignerPage5 loaded data from route");

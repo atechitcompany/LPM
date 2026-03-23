@@ -243,53 +243,45 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
               height: 48,
               child: ElevatedButton(
                 onPressed: () async {
-                  await FirebaseFirestore.instance
-                      .collection("jobs")
-                      .doc(form.LpmAutoIncrement.text)
-                      .set({
-                    "autoBending": {
-                      "submitted": true,
-                      "data": {
-                        "AutoBendingStatus": form.AutoBendingStatus.text,   // ✅ ADD THIS
-                        "AutoBendingCreatedBy": form.AutoBendingCreatedBy.text,
-                        "AutoCreasing": form.AutoCreasing,
-                        "AutoCreasingStatus": form.AutoCreasingStatus.text,
-                      },
-                    },
-                    "currentDepartment": "LaserCutting",
-                    "updatedAt": FieldValue.serverTimestamp(),
-                  }, SetOptions(merge: true));
-
-
-
-                  Navigator.pop(context);
                   try {
-                    await FirebaseFirestore.instance
-                        .collection("jobs")
-                        .doc(form.LpmAutoIncrement.text)
-                        .set({
+                    final isDone =
+                        form.AutoBendingStatus.text.trim().toLowerCase() == "done";
+
+                    final updateData = {
                       "autoBending": {
                         "submitted": true,
                         "data": {
                           "AutoBendingStatus": form.AutoBendingStatus.text,
-                          "AutoBendingCreatedBy":
-                          form.AutoBendingCreatedBy.text,
+                          "AutoBendingCreatedBy": form.AutoBendingCreatedBy.text,
                           "AutoCreasing": form.AutoCreasing,
-                          "AutoCreasingStatus":
-                          form.AutoCreasingStatus.text,
+                          "AutoCreasingStatus": form.AutoCreasingStatus.text,
                         },
                       },
-                      "currentDepartment": "ManualBending",
+                      "currentDepartment": isDone ? "ManualBending" : "AutoBending",
                       "updatedAt": FieldValue.serverTimestamp(),
-                    }, SetOptions(merge: true));
+                    };
+
+                    // ✅ Only add ManualBending if Done
+                    if (isDone) {
+                      updateData["visibleTo"] =
+                          FieldValue.arrayUnion(["ManualBending"]);
+                    }
+
+                    await FirebaseFirestore.instance
+                        .collection("jobs")
+                        .doc(form.LpmAutoIncrement.text)
+                        .set(updateData, SetOptions(merge: true));
+
+                    if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Form submitted successfully")),
                     );
-                    Navigator.pop(context);
-                  }
 
-                  catch(e){
+                    Navigator.pop(context);
+                  } catch (e) {
+                    if (!context.mounted) return;
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Error: $e")),
                     );

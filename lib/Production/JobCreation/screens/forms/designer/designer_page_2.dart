@@ -45,10 +45,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
       final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
       setState(() {
-        form.Priority.text = decodedData["priority"] ?? "";
-        form.Remark.text = decodedData["remark"] ?? "NO REMARK";
-        form.PlyType.text = decodedData["plyType"] ?? "No";
-        form.PlySelectedBy.text = decodedData["plySelectedBy"] ?? "";
+        form.Priority.text = decodedData["Priority"] ?? "";
+        form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
+        form.PlyType.text = decodedData["PlyType"] ?? "No";
+        form.PlySelectedBy.text = decodedData["PlySelectedBy"] ?? "";
       });
 
       debugPrint("✅ DesignerPage2 loaded data from route");
