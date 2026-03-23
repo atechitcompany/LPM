@@ -43,14 +43,12 @@ class _DesignerPage6State extends State<DesignerPage6> {
     try {
       final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-      setState(() {
-        form.StrippingType.text = decodedData["strippingType"] ?? "No";
-        form.LaserCuttingStatus.text = decodedData["laserCuttingStatus"] ?? "Pending";
-        form.RubberFixingDone.text = decodedData["rubberFixingDone"] ?? "No";
-        form.WhiteProfileRubber.text = decodedData["whiteProfileRubber"] ?? "No";
-        form.DesigningStatus.text = decodedData["designingStatus"] ?? "Pending";
-        form.DesignerCreatedBy.text = decodedData["designerCreatedBy"] ?? "";
-      });
+      form.StrippingType.text = decodedData["StrippingType"] ?? "No";
+      form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+      form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
+      form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
+      form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+      form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
 
       debugPrint("✅ DesignerPage6 loaded data from route");
     } catch (e) {

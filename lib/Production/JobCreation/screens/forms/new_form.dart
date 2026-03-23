@@ -674,13 +674,21 @@ class NewFormState extends State<NewForm> {
       }
 
       // ✅ VALIDATION: Check LPM format
-      final parts = fullLpm.split("-");
+      // ✅ If editing, LpmAutoIncrement might be the main doc ID (4 parts)
+// Append "-01" to make it a valid full LPM
+      String resolvedLpm = fullLpm;
+      if (fullLpm.split("-").length == 4) {
+        resolvedLpm = "$fullLpm-01";
+        debugPrint("⚠️ LPM was 4 parts, resolved to: $resolvedLpm");
+      }
+
+      final parts = resolvedLpm.split("-");
       debugPrint("🔍 LPM Parts: $parts (Total: ${parts.length} parts)");
 
       if (parts.length < 5) {
         throw Exception(
             "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
-                "Got: $fullLpm (${parts.length} parts instead of 5)"
+                "Got: $resolvedLpm (${parts.length} parts instead of 5)"
         );
       }
 
@@ -718,13 +726,16 @@ class NewFormState extends State<NewForm> {
 
       // ✅ SAVE: Main order document
       debugPrint("💾 Writing main order document...");
+      final isDesigningDone = DesigningStatus.text.trim().toLowerCase() == "done";
+
       await mainOrderRef.set({
         "orderNo": orderNo,
         "month": month,
         "year": year,
-        "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
-            ? "AutoBending"
-            : "Designer",
+        "currentDepartment": isDesigningDone ? "AutoBending" : "Designer",
+        "visibleTo": isDesigningDone
+            ? ["Designer", "AutoBending"]
+            : ["Designer"],
         "designer": {
           "submitted": true,
           "submittedAt": FieldValue.serverTimestamp(),
@@ -742,11 +753,12 @@ class NewFormState extends State<NewForm> {
       // ✅ SAVE: Sub-order item document
       debugPrint("💾 Writing sub-order item document...");
       await itemRef.set({
-        "fullLpm": fullLpm,
+        "fullLpm": resolvedLpm,
         "subOrderNo": subOrderNo,
-        "currentDepartment": DesigningStatus.text.toLowerCase() == "done"
-            ? "AutoBending"
-            : "Designer",
+        "currentDepartment": isDesigningDone ? "AutoBending" : "Designer",
+        "visibleTo": isDesigningDone
+            ? ["Designer", "AutoBending"]
+            : ["Designer"],
         "status": "InProgress",
         "designer": {
           "submitted": true,
@@ -778,8 +790,10 @@ class NewFormState extends State<NewForm> {
 
   Future<void> submitDepartmentForm(String nextDepartment) async {
     final data = buildFormData();
+    final lpm = LpmAutoIncrement.text;
 
-    final lpm = LpmAutoIncrement.text; // already loaded
+    // 🔥 Detect AutoBending status
+    final isDone = AutoBendingStatus.text.trim().toLowerCase() == "done";
 
     await FirebaseFirestore.instance
         .collection("jobs")
@@ -787,11 +801,17 @@ class NewFormState extends State<NewForm> {
         .update({
       "${_deptKey(department)}.submitted": true,
       "${_deptKey(department)}.data": data,
-      "currentDepartment": nextDepartment,
+
+      // ✅ Only move forward if Done
+      "currentDepartment": isDone ? nextDepartment : department,
+
+      // ✅ Only add ManualBending if Done
+      if (isDone)
+        "visibleTo": FieldValue.arrayUnion([nextDepartment]),
+
       "updatedAt": FieldValue.serverTimestamp(),
     });
   }
-
 
 
 // 🔧 FIXED submitForm() Method

@@ -123,7 +123,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
             // ===== EDIT FIELDS =====
 
             IgnorePointer(
-              ignoring: !form.canEdit("ManualBendingStatus"),
+              ignoring: false,
               child: Opacity(
                 opacity: form.canEdit("ManualBendingStatus") ? 1 : 0.6,
                 child: FlexibleToggle(
@@ -144,7 +144,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
 
 
             IgnorePointer(
-              ignoring: !form.canEdit("ManualBendingCreatedBy"),
+              ignoring: false,
               child: Opacity(
                 opacity: form.canEdit("ManualBendingCreatedBy") ? 1 : 0.6,
                 child: SearchableDropdownWithInitial(
@@ -166,7 +166,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
 
             // ===== SAVE =====
 
-            if (form.canEdit("ManualBendingCreatedBy"))
+            if (true)
               SizedBox(
                 width: double.infinity,
                 height: 48,

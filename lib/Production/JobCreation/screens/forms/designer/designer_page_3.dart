@@ -42,12 +42,12 @@ class _DesignerPage3State extends State<DesignerPage3> {
       final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
       setState(() {
-        form.Blade.text = decodedData["blade"] ?? "No";
-        form.BladeSelectedBy.text = decodedData["bladeSelectedBy"] ?? "";
-        form.Creasing.text = decodedData["creasing"] ?? "No";
-        form.CreasingSelectedBy.text = decodedData["creasingSelectedBy"] ?? "";
-        form.Unknown.text = decodedData["unknown"] ?? "";
-        form.CapsuleType.text = decodedData["capsuleType"] ?? "";
+        form.Blade.text = decodedData["Blade"] ?? "No";
+        form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
+        form.Creasing.text = decodedData["Creasing"] ?? "No";
+        form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
+        form.Unknown.text = decodedData["Unknown"] ?? "";
+        form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
       });
 
       debugPrint("✅ DesignerPage3 loaded data from route");

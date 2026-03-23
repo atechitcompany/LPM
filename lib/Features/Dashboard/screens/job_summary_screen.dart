@@ -115,7 +115,7 @@ class JobSummaryScreen extends StatelessWidget {
                           ),
                           Chip(
                             label: Text(
-                              "LPM $lpm",
+                              "$lpm",
                               overflow: TextOverflow.ellipsis,
                             ),
                             backgroundColor: Colors.amber.shade100,

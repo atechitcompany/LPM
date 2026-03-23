@@ -41,16 +41,16 @@ class _DesignerPage4State extends State<DesignerPage4> {
       final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
       setState(() {
-        form.Perforation.text = decodedData["perforation"] ?? "No";
-        form.PerforationSelectedBy.text = decodedData["perforationSelectedBy"] ?? "";
-        form.ZigZagBlade.text = decodedData["zigZagBlade"] ?? "No";
-        form.ZigZagBladeSelectedBy.text = decodedData["zigZagBladeSelectedBy"] ?? "";
-        form.RubberType.text = decodedData["rubberType"] ?? "No";
-        form.RubberSelectedBy.text = decodedData["rubberSelectedBy"] ?? "";
-        form.HoleType.text = decodedData["holeType"] ?? "No";
-        form.HoleSelectedBy.text = decodedData["holeSelectedBy"] ?? "";
-        form.EmbossStatus.text = decodedData["embossStatus"] ?? "No";
-        form.EmbossPcs.text = decodedData["embossPcs"] ?? "";
+        form.Perforation.text = decodedData["Perforation"] ?? "No";
+        form.PerforationSelectedBy.text = decodedData["PerforationSelectedBy"] ?? "";
+        form.ZigZagBlade.text = decodedData["ZigZagBlade"] ?? "No";
+        form.ZigZagBladeSelectedBy.text = decodedData["ZigZagBladeSelectedBy"] ?? "";
+        form.RubberType.text = decodedData["RubberType"] ?? "No";
+        form.RubberSelectedBy.text = decodedData["RubberSelectedBy"] ?? "";
+        form.HoleType.text = decodedData["HoleType"] ?? "No";
+        form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
+        form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
+        form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
       });
 
       debugPrint("✅ DesignerPage4 loaded data from route");

@@ -203,10 +203,9 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           .limit(_pageSize)
           .snapshots();
     } else {
-      final deptKey = _deptKey(widget.department);
       _stream = FirebaseFirestore.instance
           .collection("jobs")
-          .where("$deptKey.submitted", isEqualTo: true)
+          .where("visibleTo", arrayContains: widget.department)
           .orderBy("updatedAt", descending: true)
           .limit(_pageSize)
           .snapshots();
@@ -258,10 +257,9 @@ class _FirestoreTabState extends State<_FirestoreTab> {
             .startAfterDocument(lastDoc)
             .limit(_pageSize);
       } else {
-        final deptKey = _deptKey(widget.department);
         query = FirebaseFirestore.instance
             .collection("jobs")
-            .where("$deptKey.submitted", isEqualTo: true)
+            .where("visibleTo", arrayContains: widget.department)
             .orderBy("updatedAt", descending: true)
             .startAfterDocument(lastDoc)
             .limit(_pageSize);
