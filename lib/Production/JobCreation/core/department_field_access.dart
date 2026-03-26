@@ -12,6 +12,16 @@ class DepartmentFieldAccess {
       case "ManualBending":
         return _manualBending();
 
+    // ✅ ADD THESE
+      case "LaserCutting":
+        return _laser();
+
+      case "Rubber":
+        return _rubber();
+
+      case "Emboss":
+        return _emboss();
+
       default:
         return {};
     }
@@ -101,5 +111,43 @@ class DepartmentFieldAccess {
     // ✏️ Manual bending editable
     "ManualBendingStatus" : "edit",
     "ManualBendingCreatedBy": "edit",
+  };
+
+  static Map<String, String> _laser() => {
+    // 👀 View fields
+    "ParticularJobName": "view",
+    "LpmAutoIncrement": "view",
+    "PlyType": "view",
+    "PlySelectedBy": "view",
+
+    // ✏️ Editable
+    "LaserCuttingStatus": "edit",
+  };
+
+  static Map<String, String> _rubber() => {
+    // 👀 View fields
+    "PartyName": "view",
+    "ParticularJobName": "view",
+    "LpmAutoIncrement": "view",
+
+    // ✏️ Editable
+    "RubberStatus": "edit",
+    "RubberCreatedBy": "edit",
+  };
+
+  static Map<String, String> _emboss() => {
+    "PartyName": "view",
+    "ParticularJobName": "view",
+    "LpmAutoIncrement": "view",
+    "DesigningStatus": "view",
+    "DrawingAttachment": "view",
+    "HoleType": "view",
+
+    "EmbossStatus": "edit",
+    "EmbossPcs": "edit",
+    "MaleEmbossType": "edit",
+    "X": "edit",
+    "Y": "edit",
+    "FemaleEmbossType": "edit",
   };
 }

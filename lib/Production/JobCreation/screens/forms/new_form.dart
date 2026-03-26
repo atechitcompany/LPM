@@ -183,6 +183,8 @@ class NewFormState extends State<NewForm> {
   final InvoiceStatus = TextEditingController();
   final ParticularSlider = TextEditingController();
   final RubberFixingDone = TextEditingController();
+  final RubberStatus = TextEditingController();
+  final RubberCreatedBy = TextEditingController();
   final WhiteProfileRubber = TextEditingController();
   final Perforation = TextEditingController();
 
@@ -1085,6 +1087,8 @@ class NewFormState extends State<NewForm> {
     ParticularSlider.dispose();
     AddressOutput.dispose();
     RubberFixingDone.dispose();
+    RubberStatus.dispose();
+    RubberCreatedBy.dispose();
     WhiteProfileRubber.dispose();
     //new
     DesignedBy.dispose();
@@ -1201,9 +1205,9 @@ class NewFormState extends State<NewForm> {
       "Designer",
       "AutoBending",
       "ManualBending",
-      "Lasercut",
-      "Emboss",
+      "LaserCutting",
       "Rubber",
+      "Emboss",
       "Account",
       "Delivery",
     ];
@@ -1224,8 +1228,8 @@ class NewFormState extends State<NewForm> {
         return "autoBending";
       case "ManualBending":
         return "manualBending";
-      case "Lasercut":
-        return "laserCut";
+      case "LaserCutting":
+        return "laserCutting";
       case "Emboss":
         return "emboss";
       case "Rubber":
