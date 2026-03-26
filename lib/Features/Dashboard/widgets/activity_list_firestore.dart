@@ -43,8 +43,8 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                   insets: EdgeInsets.symmetric(horizontal: 12),
                 ),
                 tabs: const [
-                  Tab(text: "Pending"),   // ← was "Jobs", now "Pending"
-                  Tab(text: "Jobs"),      // ← was "Pending", now "Jobs"
+                  Tab(text: "Pending"),
+                  Tab(text: "Jobs"),
                   Tab(text: "Quotations"),
                 ],
               ),
@@ -52,7 +52,8 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
             Expanded(
               child: TabBarView(
                 children: [
-                  // ── Tab 1: Pending (was Tab 2) ────────────────────────
+                  // ── Pending tab ─────────────────────────────────────
+                  // DesigningStatus == "Pending"
                   _KeepAliveTab(
                     child: _FirestoreTab(
                       department: widget.department,
@@ -60,7 +61,8 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                       isPending: true,
                     ),
                   ),
-                  // ── Tab 2: Jobs (was Tab 1) ───────────────────────────
+                  // ── Jobs tab ────────────────────────────────────────
+                  // DesigningStatus == "Done"
                   _KeepAliveTab(
                     child: _FirestoreTab(
                       department: widget.department,
@@ -68,7 +70,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                       isPending: false,
                     ),
                   ),
-                  // ── Tab 3: Quotations (unchanged) ─────────────────────
+                  // ── Quotations tab ──────────────────────────────────
                   const _KeepAliveTab(
                     child: _EmptyQuotations(),
                   ),
@@ -80,6 +82,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       );
     }
 
+    // Other departments — jobs only
     return _FirestoreTab(
       department: widget.department,
       searchText: widget.searchText,
@@ -101,7 +104,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
   }
 }
 
-// ── Empty Quotations placeholder ──────────────────────────────────────────────
+// ── Empty Quotations placeholder ─────────────────────────────────────────────
 class _EmptyQuotations extends StatelessWidget {
   const _EmptyQuotations();
 
@@ -111,7 +114,8 @@ class _EmptyQuotations extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.description_outlined, size: 56, color: Colors.grey.shade300),
+          Icon(Icons.description_outlined,
+              size: 56, color: Colors.grey.shade300),
           const SizedBox(height: 12),
           Text(
             "Quotations coming soon",
@@ -148,7 +152,7 @@ class _KeepAliveTabState extends State<_KeepAliveTab>
   }
 }
 
-// ── Single tab: stream + pagination ──────────────────────────────────────────
+// ── Single tab: Firestore stream ─────────────────────────────────────────────
 class _FirestoreTab extends StatefulWidget {
   final String department;
   final String searchText;
@@ -165,20 +169,12 @@ class _FirestoreTab extends StatefulWidget {
 }
 
 class _FirestoreTabState extends State<_FirestoreTab> {
-  static const int _pageSize = 20;
-
   Stream<QuerySnapshot>? _stream;
-  List<QueryDocumentSnapshot> _extraDocs = [];
-  DocumentSnapshot? _lastDoc;
-  bool _hasMore = true;
-  bool _isLoadingMore = false;
-
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _setupStream();
   }
 
@@ -191,95 +187,27 @@ class _FirestoreTabState extends State<_FirestoreTab> {
   @override
   void didUpdateWidget(_FirestoreTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.department != widget.department) {
-      _reset();
+    if (oldWidget.department != widget.department ||
+        oldWidget.isPending != widget.isPending) {
+      _setupStream();
     }
   }
 
   void _setupStream() {
     if (widget.isPending) {
+      // ✅ PENDING TAB
+      // Shows jobs where DesigningStatus == "Pending"
       _stream = FirebaseFirestore.instance
           .collection("jobs")
-          .where("status", isEqualTo: "pending_designer_review")
-          .orderBy("updatedAt", descending: true)
-          .limit(_pageSize)
+          .where("designer.data.DesigningStatus", isEqualTo: "Pending")
           .snapshots();
     } else {
+      // ✅ JOBS TAB
+      // Shows jobs where DesigningStatus == "Done"
       _stream = FirebaseFirestore.instance
           .collection("jobs")
-          .where("visibleTo", arrayContains: widget.department)
-          .orderBy("updatedAt", descending: true)
-          .limit(_pageSize)
+          .where("designer.data.DesigningStatus", isEqualTo: "Done")
           .snapshots();
-    }
-  }
-
-  void _reset() {
-    setState(() {
-      _extraDocs = [];
-      _lastDoc = null;
-      _hasMore = true;
-      _isLoadingMore = false;
-    });
-    _setupStream();
-  }
-
-  void _onScroll() {
-    if (_scrollController.hasClients &&
-        _scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200) {
-      _loadMore();
-    }
-  }
-
-  Future<void> _loadMore({List<QueryDocumentSnapshot>? streamDocs}) async {
-    if (_isLoadingMore || !_hasMore) return;
-    setState(() => _isLoadingMore = true);
-
-    try {
-      final lastDoc = _lastDoc ??
-          (streamDocs != null && streamDocs.isNotEmpty
-              ? streamDocs.last
-              : null);
-
-      if (lastDoc == null) {
-        setState(() {
-          _isLoadingMore = false;
-          _hasMore = false;
-        });
-        return;
-      }
-
-      Query query;
-      if (widget.isPending) {
-        query = FirebaseFirestore.instance
-            .collection("jobs")
-            .where("status", isEqualTo: "pending_designer_review")
-            .orderBy("updatedAt", descending: true)
-            .startAfterDocument(lastDoc)
-            .limit(_pageSize);
-      } else {
-        query = FirebaseFirestore.instance
-            .collection("jobs")
-            .where("visibleTo", arrayContains: widget.department)
-            .orderBy("updatedAt", descending: true)
-            .startAfterDocument(lastDoc)
-            .limit(_pageSize);
-      }
-
-      final snapshot = await query.get();
-
-      if (mounted) {
-        setState(() {
-          _extraDocs.addAll(snapshot.docs);
-          if (snapshot.docs.isNotEmpty) _lastDoc = snapshot.docs.last;
-          _hasMore = snapshot.docs.length == _pageSize;
-          _isLoadingMore = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("❌ Error loading more: $e");
-      if (mounted) setState(() => _isLoadingMore = false);
     }
   }
 
@@ -291,6 +219,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
       stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          debugPrint("❌ Stream error: ${snapshot.error}");
           return Center(child: Text("Error: ${snapshot.error}"));
         }
 
@@ -299,23 +228,17 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final streamDocs =
-        List<QueryDocumentSnapshot>.from(snapshot.data?.docs ?? []);
-
-        // Merge stream + paginated extra, de-duplicate by ID
-        final seenIds = <String>{};
-        final merged = <QueryDocumentSnapshot>[];
-        for (final doc in [...streamDocs, ..._extraDocs]) {
-          if (seenIds.add(doc.id)) merged.add(doc);
-        }
+        final docs = List<QueryDocumentSnapshot>.from(
+            snapshot.data?.docs ?? []);
 
         // Search filter
         final query = widget.searchText.trim().toLowerCase();
-        final filtered = merged.where((doc) {
-          final d =
-              ((doc.data() as Map<String, dynamic>)["designer"]?["data"]) ??
-                  {};
-          final party = (d["partyName"] ?? d["PartyName"] ?? "")
+        final filtered = docs.where((doc) {
+          final d = ((doc.data() as Map<String, dynamic>)["designer"]
+          ?["data"]) ??
+              {};
+          final party =
+          (d["partyName"] ?? d["PartyName"] ?? "")
               .toString()
               .toLowerCase();
           final job =
@@ -326,48 +249,15 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           return party.contains(query) || job.contains(query);
         }).toList();
 
-        return NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (notification is ScrollEndNotification &&
-                notification.metrics.pixels >=
-                    notification.metrics.maxScrollExtent - 200) {
-              _loadMore(streamDocs: streamDocs);
-            }
-            return false;
-          },
-          child: ActivityList(
-            docs: filtered,
-            isPending: widget.isPending,
-            isQuotation: false,
-            hasMore: _hasMore,
-            isLoadingMore: _isLoadingMore,
-            scrollController: _scrollController,
-          ),
+        return ActivityList(
+          docs: filtered,
+          isPending: widget.isPending,
+          isQuotation: false,
+          hasMore: false,
+          isLoadingMore: false,
+          scrollController: _scrollController,
         );
       },
     );
-  }
-
-  String _deptKey(String dept) {
-    switch (dept) {
-      case "Designer":
-        return "designer";
-      case "AutoBending":
-        return "autoBending";
-      case "ManualBending":
-        return "manualBending";
-      case "LaserCutting":
-        return "laserCutting";
-      case "Emboss":
-        return "emboss";
-      case "Rubber":
-        return "rubber";
-      case "Account":
-        return "account";
-      case "Delivery":
-        return "delivery";
-      default:
-        return "";
-    }
   }
 }
