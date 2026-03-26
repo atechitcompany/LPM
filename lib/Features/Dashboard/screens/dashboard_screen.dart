@@ -5,7 +5,6 @@ import '../screens/sidebar_menu.dart';
 import '../widgets/dashboard_appbar.dart';
 import '../widgets/payment_status.dart';
 import '../widgets/search_bar.dart';
-import '../widgets/status_card.dart';
 import '../widgets/activity_list_firestore.dart';
 
 import 'package:lightatech/FormComponents/FLoatingButton.dart';
@@ -45,16 +44,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
-          // ── Top Section (white card) ──────────────────────────────────
+          // ── Top Section ───────────────────────────────────────────────
           Container(
             color: Colors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── 1. Search Bar (top, above cards) ─────────────────────
+                // ── 1. Search Bar ─────────────────────────────────────────
                 Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
                   child: Row(
                     children: [
                       Expanded(
@@ -88,7 +87,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Advanced filters coming soon!'),
+                              content:
+                              Text('Advanced filters coming soon!'),
                             ),
                           );
                         },
@@ -110,95 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-                // ── 2. Status Cards ───────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, bottom: 4),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final width = constraints.maxWidth;
-
-                      // 📱 MOBILE → horizontal scroll
-                      if (width < 600) {
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              StatusCard(
-                                status: 'Hot',
-                                count: 0,
-                                color: Colors.orange,
-                                onTap: () {},
-                              ),
-                              StatusCard(
-                                status: 'Paid',
-                                count: 0,
-                                color: Colors.blue,
-                                onTap: () {},
-                              ),
-                              StatusCard(
-                                status: 'Cold',
-                                count: 0,
-                                color: Colors.grey,
-                                onTap: () {},
-                              ),
-                              StatusCard(
-                                status: 'Done',
-                                count: 0,
-                                color: Colors.green,
-                                onTap: () {},
-                              ),
-                              const SizedBox(width: 12),
-                            ],
-                          ),
-                        );
-                      }
-
-                      // 🖥 TABLET / WEB → Grid
-                      int crossAxisCount = 2;
-                      if (width > 1024) crossAxisCount = 4;
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: crossAxisCount,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: width > 1024 ? 1.6 : 1.8,
-                          children: [
-                            StatusCard(
-                              status: 'Hot',
-                              count: 0,
-                              color: Colors.orange,
-                              onTap: () {},
-                            ),
-                            StatusCard(
-                              status: 'Paid',
-                              count: 0,
-                              color: Colors.blue,
-                              onTap: () {},
-                            ),
-                            StatusCard(
-                              status: 'Cold',
-                              count: 0,
-                              color: Colors.grey,
-                              onTap: () {},
-                            ),
-                            StatusCard(
-                              status: 'Done',
-                              count: 0,
-                              color: Colors.green,
-                              onTap: () {},
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // ── 3. Payment Chips ──────────────────────────────────────
+                // ── 2. Payment Chips ──────────────────────────────────────
                 SizedBox(
                   height: 50,
                   child: SingleChildScrollView(
@@ -237,7 +149,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           icon: Icons.check_circle_outline_rounded,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Viewing Done')),
+                              const SnackBar(
+                                  content: Text('Viewing Done')),
                             );
                           },
                         ),
