@@ -21,7 +21,7 @@ class _CustomerRequestsScreenState
   void initState() {
     super.initState();
     _customerRequestsStream = FirebaseFirestore.instance
-        .collection("customers")
+        .collection("customer_requests")
         .orderBy("createdAt", descending: true)
         .snapshots();
   }
