@@ -26,6 +26,20 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final searchController = TextEditingController();
+  String _normalizeDepartment(String dept) {
+    switch (dept.toLowerCase()) {
+      case "lasercut":
+        return "LaserCutting";
+      case "autobending":
+        return "AutoBending";
+      case "manualbending":
+        return "ManualBending";
+      case "designer":
+        return "Designer";
+      default:
+        return dept;
+    }
+  }
 
   @override
   void dispose() {
@@ -256,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: ActivityListFirestore(
               searchText: searchController.text,
-              department: widget.department,
+              department: _normalizeDepartment(widget.department),
             ),
           ),
         ],

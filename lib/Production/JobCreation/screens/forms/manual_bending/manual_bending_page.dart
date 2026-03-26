@@ -172,28 +172,51 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () async {
-                    await FirebaseFirestore.instance
-                        .collection("jobs")
-                        .doc(form.LpmAutoIncrement.text)
-                        .set({
-                      "manualBending": {
-                        "submitted": true,
-                        "data": {
-                          "ManualBendingStatus":
-                          form.ManualBendingStatus.text,
-                          "ManualBendingCreatedBy":
-                          form.ManualBendingCreatedBy.text,
-                        },
-                      },
-                    "currentDepartment": "LaserCutting",
-                    "updatedAt": FieldValue.serverTimestamp(),
-                  }, SetOptions(merge: true));
+                    try {
+                      final isDone =
+                          form.ManualBendingStatus.text.trim().toLowerCase() == "done";
 
-                  context.pop(); // ✅ CORRECT
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Form submitted successfully")),
-                  );
-                },
+                      final updateData = {
+                        "manualBending": {
+                          "submitted": true,
+                          "data": {
+                            "ManualBendingStatus": form.ManualBendingStatus.text,
+                            "ManualBendingCreatedBy": form.ManualBendingCreatedBy.text,
+                          },
+                        },
+
+                        // ✅ Only move forward if Done
+                        "currentDepartment": isDone ? "LaserCutting" : "ManualBending",
+
+                        "updatedAt": FieldValue.serverTimestamp(),
+                      };
+
+                      // ✅ THIS IS THE MOST IMPORTANT LINE
+                      if (isDone) {
+                        updateData["visibleTo"] =
+                            FieldValue.arrayUnion(["LaserCutting"]);
+                      }
+
+                      await FirebaseFirestore.instance
+                          .collection("jobs")
+                          .doc(form.LpmAutoIncrement.text)
+                          .set(updateData, SetOptions(merge: true));
+
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Form submitted successfully")),
+                      );
+
+                      context.pop();
+                    } catch (e) {
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: $e")),
+                      );
+                    }
+                  },
 
                 child: const Text("Save & Continue"),
               ),

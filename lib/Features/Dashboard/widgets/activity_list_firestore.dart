@@ -90,7 +90,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       "Designer",
       "AutoBending",
       "ManualBending",
-      "Lasercut",
+      "LaserCutting",
       "Emboss",
       "Rubber",
       "Account",
@@ -354,8 +354,8 @@ class _FirestoreTabState extends State<_FirestoreTab> {
         return "autoBending";
       case "ManualBending":
         return "manualBending";
-      case "Lasercut":
-        return "laserCut";
+      case "LaserCutting":
+        return "laserCutting";
       case "Emboss":
         return "emboss";
       case "Rubber":
