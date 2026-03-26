@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lightatech/core/session/session_manager.dart';
 
-
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
   final VoidCallback? onBack;
@@ -15,63 +14,105 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.department,
   }) : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.blueGrey.shade50,
+      backgroundColor: const Color(0xFFEEF2FF),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      leadingWidth: 56,
       leading: showBack
           ? IconButton(
-        icon: Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back),
         onPressed: onBack,
       )
-          : Builder( // 👈 this is the fix
-        builder: (context) => IconButton(
-          icon: Icon(Icons.menu),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Text(
-            department,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
+          : Builder(
+        builder: (context) => Center(
+          child: GestureDetector(
+            onTap: () => Scaffold.of(context).openDrawer(),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.menu,
+                color: Colors.black,
+                size: 20,
+              ),
             ),
           ),
-        ],
+        ),
       ),
-
+      title: const Text(
+        'Dashboard',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+          color: Colors.black,
+        ),
+      ),
       actions: [
-        // ✅ NOTIFICATION ICON - Only for Designer
+        // ── Notification icon with white circle bg ──────────────────────
         if (department == 'Designer')
-          IconButton(
-            icon: Icon(Icons.notifications_none),
-            onPressed: () {
-              // Navigate to customer requests screen
-              context.push('/customer-requests');
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => context.push('/customer-requests'),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.notifications_none,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+
+        // ── Profile icon with white circle bg ───────────────────────────
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: GestureDetector(
+            onTap: () async {
+              await SessionManager.clearSession();
+              context.go('/');
             },
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Image.asset(
+                  'assets/user.png',
+                  width: 20,
+                  height: 20,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.person,
+                    color: Colors.black,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
           ),
-
-        // ✅ USER PROFILE ICON
-        IconButton(
-          icon: Image.asset(
-            'assets/user.png',
-            width: 20,
-            height: 20,
-          ),
-
-          onPressed: () async {
-            await SessionManager.clearSession();
-            context.go('/');
-          },
-
         ),
       ],
     );
