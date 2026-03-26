@@ -43,8 +43,8 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                   insets: EdgeInsets.symmetric(horizontal: 12),
                 ),
                 tabs: const [
-                  Tab(text: "Jobs"),
-                  Tab(text: "Pending"),
+                  Tab(text: "Pending"),   // ← was "Jobs", now "Pending"
+                  Tab(text: "Jobs"),      // ← was "Pending", now "Jobs"
                   Tab(text: "Quotations"),
                 ],
               ),
@@ -52,13 +52,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _KeepAliveTab(
-                    child: _FirestoreTab(
-                      department: widget.department,
-                      searchText: widget.searchText,
-                      isPending: false,
-                    ),
-                  ),
+                  // ── Tab 1: Pending (was Tab 2) ────────────────────────
                   _KeepAliveTab(
                     child: _FirestoreTab(
                       department: widget.department,
@@ -66,7 +60,15 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                       isPending: true,
                     ),
                   ),
-                  // ── Quotations: empty for now ─────────────────────────
+                  // ── Tab 2: Jobs (was Tab 1) ───────────────────────────
+                  _KeepAliveTab(
+                    child: _FirestoreTab(
+                      department: widget.department,
+                      searchText: widget.searchText,
+                      isPending: false,
+                    ),
+                  ),
+                  // ── Tab 3: Quotations (unchanged) ─────────────────────
                   const _KeepAliveTab(
                     child: _EmptyQuotations(),
                   ),
