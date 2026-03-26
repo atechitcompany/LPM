@@ -42,8 +42,15 @@ class NewFormState extends State<NewForm> {
   bool get isLastDesignerPage {
     if (department != "Designer") return false;
 
-    final location = GoRouterState.of(context).uri.toString();
+    final location = GoRouterState.of(context).uri.path;
     return location == '/jobform/designer-6';
+  }
+
+  bool get _isFirstDesignerPage {
+    if (department != "Designer") return false;
+
+    final location = GoRouterState.of(context).uri.path;
+    return location == '/jobform/designer-1';
   }
 
   bool get isJobFormRoute {
@@ -1119,15 +1126,29 @@ class NewFormState extends State<NewForm> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    ElevatedButton(
-                      onPressed: _goPrev,
-                      child: const Text("Previous"),
-                    ),
+                    // ✅ Previous → goes back one page
+                    // ✅ Hidden on page 1 (no previous page to go to)
+                    if (!_isFirstDesignerPage)
+                      TextButton(
+                        onPressed: () {
+                          if (context.canPop()) context.pop();
+                        },
+                        child: const Text(
+                          "Previous",
+                          style: TextStyle(color: Colors.amber),
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(),
 
+                    // ✅ Next → hidden on last page (Submit button in page 6 handles it)
                     if (!(department == "Designer" && isLastDesignerPage))
-                      ElevatedButton(
+                      TextButton(
                         onPressed: _goNext,
-                        child: const Text("Next"),
+                        child: const Text(
+                          "Next",
+                          style: TextStyle(color: Colors.amber),
+                        ),
                       ),
                   ],
                 ),

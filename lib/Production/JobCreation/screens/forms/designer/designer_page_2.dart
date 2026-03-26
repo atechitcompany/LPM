@@ -66,6 +66,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         title: const Text("Designer 2"),
         backgroundColor: Colors.yellow,
       ),

@@ -131,6 +131,10 @@ class _DesignerPage1State extends State<DesignerPage1> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         title: const Text("Designer 1"),
         backgroundColor: Colors.yellow,
       ),
