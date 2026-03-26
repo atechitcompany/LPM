@@ -24,51 +24,126 @@ class _CustomerRequestDetailScreenState
   void initState() {
     super.initState();
     _docFuture = FirebaseFirestore.instance
-        .collection('customers')
+        .collection('customer_requests')
         .doc(widget.docId)
         .get();
   }
 
-  // ✅ Accept customer request - creates job with LPM
+  // ✅ SHARED LPM GENERATION - Same as customer_requests_screen.dart and new_form.dart
+  Future<String> _generateLpm() async {
+    try {
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final counterDocId = "${now.year}_$month";
+
+      debugPrint("⏳ Generating LPM... counterDoc=$counterDocId");
+
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc(counterDocId);
+
+      // ✅ Set a timeout so it doesn't hang forever if offline
+      final snap = await counterRef.get().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
+      );
+
+      int lastOrderNo = 0;
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      } else {
+        await counterRef.set({"lastOrderNo": 0});
+      }
+
+      final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
+      final fullLpm = "LPM-$newOrderNo-$month-$year-01";
+
+      debugPrint("✅ LPM Generated: $fullLpm");
+      return fullLpm;
+
+    } catch (e) {
+      debugPrint("❌ LPM Generation Error: $e");
+      // ✅ Fallback: generate a temporary LPM from timestamp
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final tempNo = now.millisecondsSinceEpoch.toString().substring(7);
+      final fallbackLpm = "LPM-TEMP$tempNo-$month-$year-01";
+      debugPrint("⚠️ Using fallback LPM: $fallbackLpm");
+      return fallbackLpm;
+    }
+  }
+
+  // ✅ INCREMENT MONTHLY COUNTER - Same as customer_requests_screen.dart and new_form.dart
+  Future<void> _incrementMonthlyCounter() async {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final counterDocId = "${now.year}_$month";
+
+    final counterRef =
+    FirebaseFirestore.instance.collection("counters").doc(counterDocId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+
+      int lastOrderNo = 0;
+
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      }
+
+      transaction.set(
+        counterRef,
+        {"lastOrderNo": lastOrderNo + 1},
+        SetOptions(merge: true),
+      );
+    });
+  }
+
+  // ✅ ACCEPT LOGIC — UNIFIED WITH customer_requests_screen.dart and new_form.dart
   Future<void> _acceptRequest(Map<String, dynamic> customerData) async {
     if (_isProcessing) return;
 
     setState(() => _isProcessing = true);
 
     try {
-      // Step 1: Get next LPM
-      final counterRef =
-      FirebaseFirestore.instance.collection("counters").doc("jobCounter");
+      debugPrint("🚀 Starting Accept Request...");
 
-      int nextLpm = 1001;
-      final snap = await counterRef.get();
+      // Step 1: Generate LPM (UNIFIED FORMAT)
+      final fullLpm = await _generateLpm();
 
-      if (snap.exists) {
-        final val = snap.data()?["lastLpm"];
-        if (val is int) {
-          nextLpm = val + 1;
-        } else if (val is String) {
-          nextLpm = (int.tryParse(val) ?? 1000) + 1;
-        }
-      } else {
-        await counterRef.set({"lastLpm": 1001});
-        nextLpm = 1002;
-      }
+      // Parse LPM to extract components
+      final parts = fullLpm.split("-");
+      final orderNo = parts[1];
+      final month = parts[2];
+      final year = parts[3];
+      final subOrderNo = parts[4];
+      final mainOrderId = "LPM-$orderNo-$month-$year";
+
+      debugPrint("📋 Main Order ID: $mainOrderId");
+      debugPrint("📦 Full LPM: $fullLpm");
 
       // Step 2: Create job document in jobs collection
-      final jobRef =
-      FirebaseFirestore.instance.collection("jobs").doc(nextLpm.toString());
+      final jobRef = FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(mainOrderId);
 
+      final itemRef = jobRef.collection("items").doc(subOrderNo);
+
+      // ✅ Create main order document
       await jobRef.set({
-        "lpm": nextLpm.toString(),
+        "lpm": mainOrderId,
+        "orderNo": orderNo,
+        "month": month,
+        "year": year,
         "currentDepartment": "Designer",
+        "visibleTo": ["Designer"],
         "status": "pending_designer_review",
         "acceptedAt": FieldValue.serverTimestamp(),
-
         "designer": {
           "submitted": false,
           "data": {
-            // Customer provided data
             "name": customerData["name"] ?? "",
             "partyName": customerData["partyName"] ?? "",
             "particularJobName": customerData["particularJobName"] ?? "",
@@ -76,8 +151,6 @@ class _CustomerRequestDetailScreenState
             "deliveryAt": customerData["deliveryAt"] ?? "",
             "priority": customerData["priority"] ?? "Normal",
             "remark": customerData["remark"] ?? "",
-
-            // Fields for Designer to fill
             "designedBy": "",
             "plyType": "No",
             "plySelectedBy": "",
@@ -109,7 +182,6 @@ class _CustomerRequestDetailScreenState
             "whiteProfileRubber": "No",
           },
         },
-
         "autoBending": {"submitted": false},
         "manualBending": {"submitted": false},
         "laserCut": {"submitted": false},
@@ -117,25 +189,83 @@ class _CustomerRequestDetailScreenState
         "rubber": {"submitted": false},
         "account": {"submitted": false},
         "delivery": {"submitted": false},
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
+      debugPrint("✅ Main order document created in jobs collection");
+
+      // ✅ Create sub-order item document
+      await itemRef.set({
+        "fullLpm": fullLpm,
+        "subOrderNo": subOrderNo,
+        "currentDepartment": "Designer",
+        "visibleTo": ["Designer"],
+        "status": "InProgress",
+        "designer": {
+          "submitted": false,
+          "data": {
+            "name": customerData["name"] ?? "",
+            "partyName": customerData["partyName"] ?? "",
+            "particularJobName": customerData["particularJobName"] ?? "",
+            "orderBy": customerData["orderBy"] ?? "",
+            "deliveryAt": customerData["deliveryAt"] ?? "",
+            "priority": customerData["priority"] ?? "Normal",
+            "remark": customerData["remark"] ?? "",
+            "designedBy": "",
+            "plyType": "No",
+            "plySelectedBy": "",
+            "blade": "No",
+            "bladeSelectedBy": "",
+            "creasing": "No",
+            "creasingSelectedBy": "",
+            "capsuleType": "",
+            "unknown": "",
+            "perforation": "No",
+            "perforationSelectedBy": "",
+            "zigZagBlade": "No",
+            "zigZagBladeSelectedBy": "",
+            "rubberType": "No",
+            "rubberSelectedBy": "",
+            "holeType": "No",
+            "holeSelectedBy": "",
+            "embossStatus": "No",
+            "embossPcs": "",
+            "maleEmbossType": "No",
+            "femaleEmbossType": "No",
+            "x": "",
+            "y": "",
+            "x2": "",
+            "y2": "",
+            "strippingType": "No",
+            "laserCuttingStatus": "Pending",
+            "rubberFixingDone": "No",
+            "whiteProfileRubber": "No",
+          },
+        },
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      // Step 3: Increment LPM counter
-      await counterRef.update({"lastLpm": nextLpm});
+      debugPrint("✅ Sub-order item document created in jobs/{mainOrderId}/items collection");
 
-      // Step 4: Delete from customers collection (optional - or mark as processed)
+      // Step 3: Increment monthly counter
+      await _incrementMonthlyCounter();
+      debugPrint("✅ Monthly counter incremented");
+
+      // Step 4: Delete from customer_requests collection (FIXED - was deleting from wrong collection)
       await FirebaseFirestore.instance
-          .collection("customers")
+          .collection("customer_requests")
           .doc(widget.docId)
           .delete();
+
+      debugPrint("✅ Request deleted from customer_requests collection");
 
       if (mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Request accepted! LPM: $nextLpm'),
+            content: Text('✅ Request accepted! LPM: $mainOrderId'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -148,6 +278,7 @@ class _CustomerRequestDetailScreenState
         }
       }
     } catch (e) {
+      debugPrint("❌ Error in _acceptRequest: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -159,6 +290,58 @@ class _CustomerRequestDetailScreenState
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  // ✅ REJECT LOGIC — Saves to "rejected_requests" collection and deletes from customer_requests
+  Future<void> _rejectRequest(Map<String, dynamic> customerData) async {
+    try {
+      debugPrint("🚫 Starting Reject Request...");
+
+      // Step 1: Save full customer data to rejected_requests collection
+      await FirebaseFirestore.instance
+          .collection("rejected_requests")
+          .add({
+        ...customerData,                          // all original customer fields
+        "originalDocId": widget.docId,                  // reference to original doc
+        "rejectedAt": FieldValue.serverTimestamp(), // when it was rejected
+        "status": "rejected",
+      });
+
+      debugPrint("✅ Request saved to rejected_requests collection");
+
+      // Step 2: Delete from customer_requests collection (FIXED - was deleting from wrong collection)
+      await FirebaseFirestore.instance
+          .collection("customer_requests")
+          .doc(widget.docId)
+          .delete();
+
+      debugPrint("✅ Request deleted from customer_requests collection");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Request rejected and saved'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          context.pop();
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error in _rejectRequest: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -182,6 +365,15 @@ class _CustomerRequestDetailScreenState
             Text(
               "Job: ${customerData['particularJobName'] ?? 'N/A'}",
               style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "A unique LPM number will be generated automatically.",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),
@@ -234,7 +426,7 @@ class _CustomerRequestDetailScreenState
             ),
             const SizedBox(height: 12),
             const Text(
-              "This action cannot be undone. The request will be deleted.",
+              "This action cannot be undone. The request will be saved in rejected records.",
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey,
@@ -251,7 +443,7 @@ class _CustomerRequestDetailScreenState
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _rejectRequest();
+              _rejectRequest({});
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -262,40 +454,6 @@ class _CustomerRequestDetailScreenState
         ],
       ),
     );
-  }
-
-  // ✅ Reject request - deletes from customers collection
-  Future<void> _rejectRequest() async {
-    try {
-      await FirebaseFirestore.instance
-          .collection("customers")
-          .doc(widget.docId)
-          .delete();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Request rejected and deleted'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
-          ),
-        );
-
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          context.pop();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   @override
