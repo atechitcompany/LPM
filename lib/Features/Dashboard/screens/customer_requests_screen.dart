@@ -21,7 +21,7 @@ class _CustomerRequestsScreenState
   void initState() {
     super.initState();
     _customerRequestsStream = FirebaseFirestore.instance
-        .collection("customers")
+        .collection("customer_requests")
         .orderBy("createdAt", descending: true)
         .snapshots();
   }
@@ -33,36 +33,113 @@ class _CustomerRequestsScreenState
   }
 
   // ✅ ACCEPT LOGIC — UNCHANGED
+  // ✅ SHARED LPM GENERATION - Same as new_form.dart
+  Future<String> _generateLpm() async {
+    try {
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final counterDocId = "${now.year}_$month";
+
+      debugPrint("⏳ Generating LPM... counterDoc=$counterDocId");
+
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc(counterDocId);
+
+      // ✅ Set a timeout so it doesn't hang forever if offline
+      final snap = await counterRef.get().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
+      );
+
+      int lastOrderNo = 0;
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      } else {
+        await counterRef.set({"lastOrderNo": 0});
+      }
+
+      final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
+      final fullLpm = "LPM-$newOrderNo-$month-$year-01";
+
+      debugPrint("✅ LPM Generated: $fullLpm");
+      return fullLpm;
+
+    } catch (e) {
+      debugPrint("❌ LPM Generation Error: $e");
+      // ✅ Fallback: generate a temporary LPM from timestamp
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final tempNo = now.millisecondsSinceEpoch.toString().substring(7);
+      final fallbackLpm = "LPM-TEMP$tempNo-$month-$year-01";
+      debugPrint("⚠️ Using fallback LPM: $fallbackLpm");
+      return fallbackLpm;
+    }
+  }
+
+// ✅ INCREMENT MONTHLY COUNTER - Same as new_form.dart
+  Future<void> _incrementMonthlyCounter() async {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final counterDocId = "${now.year}_$month";
+
+    final counterRef =
+    FirebaseFirestore.instance.collection("counters").doc(counterDocId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+
+      int lastOrderNo = 0;
+
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      }
+
+      transaction.set(
+        counterRef,
+        {"lastOrderNo": lastOrderNo + 1},
+        SetOptions(merge: true),
+      );
+    });
+  }
+
+// ✅ ACCEPT LOGIC — UNIFIED WITH new_form.dart
   Future<void> _acceptRequest(
       BuildContext context,
       String docId,
       Map<String, dynamic> customerData) async {
     try {
-      final counterRef = FirebaseFirestore.instance
-          .collection("counters")
-          .doc("jobCounter");
+      // Step 1: Generate LPM (UNIFIED FORMAT)
+      final fullLpm = await _generateLpm();
 
-      int nextLpm = 1001;
-      final snap = await counterRef.get();
-      if (snap.exists) {
-        final val = snap.data()?["lastLpm"];
-        if (val is int) {
-          nextLpm = val + 1;
-        } else if (val is String) {
-          nextLpm = (int.tryParse(val) ?? 1000) + 1;
-        }
-      } else {
-        await counterRef.set({"lastLpm": 1001});
-        nextLpm = 1002;
-      }
+      // Parse LPM to extract components
+      final parts = fullLpm.split("-");
+      final orderNo = parts[1];
+      final month = parts[2];
+      final year = parts[3];
+      final subOrderNo = parts[4];
+      final mainOrderId = "LPM-$orderNo-$month-$year";
 
+      debugPrint("📋 Main Order ID: $mainOrderId");
+      debugPrint("📦 Full LPM: $fullLpm");
+
+      // Step 2: Create job document in jobs collection with same structure as new_form.dart
       final jobRef = FirebaseFirestore.instance
           .collection("jobs")
-          .doc(nextLpm.toString());
+          .doc(mainOrderId);
 
+      final itemRef = jobRef.collection("items").doc(subOrderNo);
+
+      // ✅ Create main order document
       await jobRef.set({
-        "lpm": nextLpm.toString(),
+        "lpm": mainOrderId,
+        "orderNo": orderNo,
+        "month": month,
+        "year": year,
         "currentDepartment": "Designer",
+        "visibleTo": ["Designer"],
         "status": "pending_designer_review",
         "acceptedAt": FieldValue.serverTimestamp(),
         "designer": {
@@ -115,25 +192,87 @@ class _CustomerRequestsScreenState
         "delivery": {"submitted": false},
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint("✅ Main order document created");
+
+      // ✅ Create sub-order item document
+      await itemRef.set({
+        "fullLpm": fullLpm,
+        "subOrderNo": subOrderNo,
+        "currentDepartment": "Designer",
+        "visibleTo": ["Designer"],
+        "status": "InProgress",
+        "designer": {
+          "submitted": false,
+          "data": {
+            "name": customerData["name"] ?? "",
+            "partyName": customerData["partyName"] ?? "",
+            "particularJobName": customerData["particularJobName"] ?? "",
+            "orderBy": customerData["orderBy"] ?? "",
+            "deliveryAt": customerData["deliveryAt"] ?? "",
+            "priority": customerData["priority"] ?? "Normal",
+            "remark": customerData["remark"] ?? "",
+            "designedBy": "",
+            "plyType": "No",
+            "plySelectedBy": "",
+            "blade": "No",
+            "bladeSelectedBy": "",
+            "creasing": "No",
+            "creasingSelectedBy": "",
+            "capsuleType": "",
+            "unknown": "",
+            "perforation": "No",
+            "perforationSelectedBy": "",
+            "zigZagBlade": "No",
+            "zigZagBladeSelectedBy": "",
+            "rubberType": "No",
+            "rubberSelectedBy": "",
+            "holeType": "No",
+            "holeSelectedBy": "",
+            "embossStatus": "No",
+            "embossPcs": "",
+            "maleEmbossType": "No",
+            "femaleEmbossType": "No",
+            "x": "",
+            "y": "",
+            "x2": "",
+            "y2": "",
+            "strippingType": "No",
+            "laserCuttingStatus": "Pending",
+            "rubberFixingDone": "No",
+            "whiteProfileRubber": "No",
+          },
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      await counterRef.update({"lastLpm": nextLpm});
+      debugPrint("✅ Sub-order item document created");
 
+      // Step 3: Increment monthly counter
+      await _incrementMonthlyCounter();
+      debugPrint("✅ Monthly counter incremented");
+
+      // Step 4: Delete from customers collection
       await FirebaseFirestore.instance
           .collection("customers")
           .doc(docId)
           .delete();
 
+      debugPrint("✅ Customer request deleted");
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Request accepted! LPM: $nextLpm'),
+            content: Text('✅ Request accepted! LPM: $mainOrderId'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
+      debugPrint("❌ Error in _acceptRequest: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -144,7 +283,7 @@ class _CustomerRequestsScreenState
     }
   }
 
-  // ✅ REJECT LOGIC — now saves to "rejectedRequests" before deleting
+// ✅ REJECT LOGIC — UNCHANGED (saves to "rejectedRequests" before deleting)
   Future<void> _rejectRequest(BuildContext context, String docId,
       Map<String, dynamic> customerData) async {
     try {
@@ -181,7 +320,6 @@ class _CustomerRequestsScreenState
       }
     }
   }
-
   void _showAcceptDialog(BuildContext context, String docId,
       Map<String, dynamic> data) {
     showDialog(

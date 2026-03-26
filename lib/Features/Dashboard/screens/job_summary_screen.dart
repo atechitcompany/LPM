@@ -7,6 +7,20 @@ import 'dart:convert';
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
   const JobSummaryScreen({super.key, required this.lpm});
+  String _normalizeDepartment(String dept) {
+    switch (dept.toLowerCase()) {
+      case "lasercut":
+        return "LaserCutting";
+      case "autobending":
+        return "AutoBending";
+      case "manualbending":
+        return "ManualBending";
+      case "designer":
+        return "Designer";
+      default:
+        return dept;
+    }
+  }
 
   String _prettyValue(dynamic value) {
     if (value == null) return "-";
@@ -51,7 +65,7 @@ class JobSummaryScreen extends StatelessWidget {
     "Designer": "designer",
     "AutoBending": "autoBending",
     "ManualBending": "manualBending",
-    "LaserCutting": "laserCut",
+    "LaserCutting": "laserCutting",
     "Emboss": "emboss",
     "Rubber": "rubber",
     "Account": "account",
@@ -79,7 +93,8 @@ class JobSummaryScreen extends StatelessWidget {
             }
 
             final data = snap.data!.data() as Map<String, dynamic>;
-            final dept = SessionManager.getDepartment();
+            final rawDept = SessionManager.getDepartment() ?? "";
+            final dept = _normalizeDepartment(rawDept);
 
             final deptKey = departmentFirestoreKey[dept];
             final Map<String, dynamic> summaryData =

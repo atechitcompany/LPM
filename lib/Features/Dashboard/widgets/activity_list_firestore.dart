@@ -95,7 +95,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       "Designer",
       "AutoBending",
       "ManualBending",
-      "Lasercut",
+      "LaserCutting",
       "Emboss",
       "Rubber",
       "Account",
