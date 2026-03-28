@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
@@ -33,26 +34,54 @@ class _DesignerPage3State extends State<DesignerPage3> {
     final form = NewFormScope.of(context);
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
-    if (dataJson == null || dataJson.isEmpty) {
-      return;
-    }
+    if (dataJson != null && dataJson.isNotEmpty) {
+      try {
+        final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    try {
-      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+        setState(() {
+          form.Blade.text = decodedData["Blade"] ?? "No";
+          form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
+          form.Creasing.text = decodedData["Creasing"] ?? "No";
+          form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
+          form.Unknown.text = decodedData["Unknown"] ?? "";
+          form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
+        });
 
-      setState(() {
-        form.Blade.text = decodedData["Blade"] ?? "No";
-        form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
-        form.Creasing.text = decodedData["Creasing"] ?? "No";
-        form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
-        form.Unknown.text = decodedData["Unknown"] ?? "";
-        form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
-      });
+        debugPrint("✅ DesignerPage3 loaded data from route");
+      } catch (e) {
+        debugPrint("❌ Error decoding data: $e");
+      }
+    } else if (lpmParam != null && lpmParam.isNotEmpty) {
+      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection("jobs")
+            .doc(lpmParam)
+            .get();
 
-      debugPrint("✅ DesignerPage3 loaded data from route");
-    } catch (e) {
-      debugPrint("❌ Error decoding data: $e");
+        if (!snap.exists) {
+          debugPrint("❌ Firestore: document $lpmParam not found");
+          return;
+        }
+
+        final decodedData =
+            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        setState(() {
+          form.Blade.text = decodedData["Blade"] ?? "No";
+          form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
+          form.Creasing.text = decodedData["Creasing"] ?? "No";
+          form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
+          form.Unknown.text = decodedData["Unknown"] ?? "";
+          form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
+        });
+
+        debugPrint("✅ DesignerPage3 loaded data from Firestore");
+      } catch (e) {
+        debugPrint("❌ Error fetching from Firestore: $e");
+      }
     }
   }
 

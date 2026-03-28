@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
@@ -31,28 +32,58 @@ class _DesignerPage5State extends State<DesignerPage5> {
     final form = NewFormScope.of(context);
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
-    if (dataJson == null || dataJson.isEmpty) {
-      return;
-    }
+    if (dataJson != null && dataJson.isNotEmpty) {
+      try {
+        final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    try {
-      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+        setState(() {
+          form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
+          form.X.text = decodedData["X"] ?? "";
+          form.Y.text = decodedData["Y"] ?? "";
+          form.XYSize.text = decodedData["XYSize"] ?? "";
+          form.FemaleEmbossType.text = decodedData["femaleEmbossType"] ?? "";
+          form.X2.text = decodedData["X2"] ?? "";
+          form.Y2.text = decodedData["Y2"] ?? "";
+          form.XY2Size.text = decodedData["XY2Size"] ?? "";
+        });
 
-      setState(() {
-        form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
-        form.X.text = decodedData["X"] ?? "";
-        form.Y.text = decodedData["Y"] ?? "";
-        form.XYSize.text = decodedData["XYSize"] ?? "";
-        form.FemaleEmbossType.text = decodedData["femaleEmbossType"] ?? "";
-        form.X2.text = decodedData["X2"] ?? "";
-        form.Y2.text = decodedData["Y2"] ?? "";
-        form.XY2Size.text = decodedData["XY2Size"] ?? "";
-      });
+        debugPrint("✅ DesignerPage5 loaded data from route");
+      } catch (e) {
+        debugPrint("❌ Error decoding data: $e");
+      }
+    } else if (lpmParam != null && lpmParam.isNotEmpty) {
+      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection("jobs")
+            .doc(lpmParam)
+            .get();
 
-      debugPrint("✅ DesignerPage5 loaded data from route");
-    } catch (e) {
-      debugPrint("❌ Error decoding data: $e");
+        if (!snap.exists) {
+          debugPrint("❌ Firestore: document $lpmParam not found");
+          return;
+        }
+
+        final decodedData =
+            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        setState(() {
+          form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
+          form.X.text = decodedData["X"] ?? "";
+          form.Y.text = decodedData["Y"] ?? "";
+          form.XYSize.text = decodedData["XYSize"] ?? "";
+          form.FemaleEmbossType.text = decodedData["femaleEmbossType"] ?? "";
+          form.X2.text = decodedData["X2"] ?? "";
+          form.Y2.text = decodedData["Y2"] ?? "";
+          form.XY2Size.text = decodedData["XY2Size"] ?? "";
+        });
+
+        debugPrint("✅ DesignerPage5 loaded data from Firestore");
+      } catch (e) {
+        debugPrint("❌ Error fetching from Firestore: $e");
+      }
     }
   }
 
