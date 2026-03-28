@@ -143,7 +143,7 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
             TextInput(
               label: "Order By",
               hint: "",
-              controller: form.Orderby,
+              controller: form.OrderBy,
               readOnly: true,
             ),
             const SizedBox(height: 20),
