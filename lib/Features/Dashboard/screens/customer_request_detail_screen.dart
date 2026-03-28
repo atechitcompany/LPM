@@ -101,6 +101,107 @@ class _CustomerRequestDetailScreenState
     });
   }
 
+  // ✅ BUILD DESIGNER DATA - Maps customer request data to designer format
+  Map<String, dynamic> _buildDesignerData(Map<String, dynamic> customerData) {
+    return {
+      "LpmAutoIncrement": "", // Will be set during submission
+      "BuyerOrderNo": customerData["buyerOrderNo"] ?? "",
+      "DeliveryAt": customerData["deliveryAt"] ?? "",
+      "Orderby": customerData["orderBy"] ?? "",
+      "Remark": customerData["remark"] ?? "NO REMARK",
+      "Ups": "NO",
+      "PartyworkName": "NO",
+      "Size": "NO",
+      "Size2": "NO",
+      "Size3": "NO",
+      "Size4": "NO",
+      "Size5": "NO",
+      "Ups_32": "",
+      "PlyLength": "",
+      "PlyBreadth": "",
+      "Blade": "No",
+      "BladeSize": "",
+      "Extra": "",
+      "Creasing": "No",
+      "CreasingSize": "",
+      "CapsuleType": customerData["capsuleType"] ?? "",
+      "CapsuleRate": "",
+      "CapsulePcs": "",
+      "CapsuleAmt": "",
+      "ZigZagBlade": "No",
+      "PerforationSize": "",
+      "ZigZagBladeType": "",
+      "ZigZagBladeSize": "",
+      "RubberType": "No",
+      "RubberSize": "",
+      "RubberDoneBy": "",
+      "HoleType": "No",
+      "EmbossPcs": "No",
+      "TotalSize": "No",
+      "MinimumChargeApply": "",
+      "MaleEmbossType": "No",
+      "MaleRate": "",
+      "X": "",
+      "Y": "",
+      "XYSize": "",
+      "FemaleEmbossType": "No",
+      "FemaleRate": "",
+      "X2": "",
+      "Y2": "",
+      "XY2Size": "",
+      "StrippingType": "No",
+      "StrippingSize": "",
+      "CourierCharges": "",
+      "LaserPunchNew": "No",
+      "LaserRate": "",
+      "LaserDoneBy": "",
+      "LaserCuttingStatus": "Pending",
+      "AutoBendingDoneBy": "",
+      "FullAddress": "",
+      "DeliveryURL": "URL",
+      "Unknown": "",
+      "DesignSendBy": "",
+      "ReceiverName": "",
+      "TransportName": "",
+      "DesigningStatus": "Pending",
+      "ManualBendingStatus": "Pending",
+      "AutobendingStatus": "Pending",
+      "DeliveryStatus": "Pending",
+      "EmbossStatus": "No",
+      "AutoCreasingStatus": "",
+      "InvoiceStatus": "Pending",
+      "InvoicePrintedBy": "",
+      "CreatedBy": "",
+      "DesignerCreatedBy": "",
+      "AutoBendingCreatedBy": "",
+      "LaserCuttingCreatedBy": "",
+      "AccountsCreatedBy": "",
+      "EmbossCreatedBy": "",
+      "ManualBendingCreatedBy": "",
+      "ManualBendingFittingDoneBy": "",
+      "DeliveryCreatedBy": "",
+      "GSTType": "",
+      "PartyName": customerData["partyName"] ?? "",
+      "particularJobName": customerData["particularJobName"] ?? "",
+      "Priority": customerData["priority"] ?? "Normal",
+      "PlyType": "No",
+      "Amounts3": "",
+      "ParticularSlider": "",
+      "RubberFixingDone": "No",
+      "WhiteProfileRubber": "No",
+      "Perforation": "No",
+      "DesignedBy": "",
+      "PlySelectedBy": "",
+      "BladeSelectedBy": "",
+      "CreasingSelectedBy": "",
+      "PerforationSelectedBy": "",
+      "ZigZagBladeSelectedBy": "",
+      "RubberSelectedBy": "",
+      "HoleSelectedBy": "",
+      "Timestamp": DateTime.now().toIso8601String(),
+    };
+  }
+
   // ✅ ACCEPT LOGIC — UNIFIED WITH customer_requests_screen.dart and new_form.dart
   Future<void> _acceptRequest(Map<String, dynamic> customerData) async {
     if (_isProcessing) return;
@@ -124,16 +225,18 @@ class _CustomerRequestDetailScreenState
       debugPrint("📋 Main Order ID: $mainOrderId");
       debugPrint("📦 Full LPM: $fullLpm");
 
-      // Step 2: Create job document in jobs collection
+      // Step 2: Build designer data from customer request
+      final designerData = _buildDesignerData(customerData);
+
+      // Step 3: Create job document in jobs collection
       final jobRef = FirebaseFirestore.instance
           .collection("jobs")
           .doc(mainOrderId);
 
       final itemRef = jobRef.collection("items").doc(subOrderNo);
 
-      // ✅ Create main order document
+      // ✅ Create main order document with proper nested structure
       await jobRef.set({
-        "lpm": mainOrderId,
         "orderNo": orderNo,
         "month": month,
         "year": year,
@@ -141,54 +244,43 @@ class _CustomerRequestDetailScreenState
         "visibleTo": ["Designer"],
         "status": "pending_designer_review",
         "acceptedAt": FieldValue.serverTimestamp(),
+
+        // ✅ All departments initialized
         "designer": {
           "submitted": false,
-          "data": {
-            "name": customerData["name"] ?? "",
-            "partyName": customerData["partyName"] ?? "",
-            "particularJobName": customerData["particularJobName"] ?? "",
-            "orderBy": customerData["orderBy"] ?? "",
-            "deliveryAt": customerData["deliveryAt"] ?? "",
-            "priority": customerData["priority"] ?? "Normal",
-            "remark": customerData["remark"] ?? "",
-            "designedBy": "",
-            "plyType": "No",
-            "plySelectedBy": "",
-            "blade": "No",
-            "bladeSelectedBy": "",
-            "creasing": "No",
-            "creasingSelectedBy": "",
-            "capsuleType": "",
-            "unknown": "",
-            "perforation": "No",
-            "perforationSelectedBy": "",
-            "zigZagBlade": "No",
-            "zigZagBladeSelectedBy": "",
-            "rubberType": "No",
-            "rubberSelectedBy": "",
-            "holeType": "No",
-            "holeSelectedBy": "",
-            "embossStatus": "No",
-            "embossPcs": "",
-            "maleEmbossType": "No",
-            "femaleEmbossType": "No",
-            "x": "",
-            "y": "",
-            "x2": "",
-            "y2": "",
-            "strippingType": "No",
-            "laserCuttingStatus": "Pending",
-            "rubberFixingDone": "No",
-            "whiteProfileRubber": "No",
-          },
+          "submittedAt": null,
+          "submittedBy": "",
+          "data": designerData,
         },
-        "autoBending": {"submitted": false},
-        "manualBending": {"submitted": false},
-        "laserCut": {"submitted": false},
-        "emboss": {"submitted": false},
-        "rubber": {"submitted": false},
-        "account": {"submitted": false},
-        "delivery": {"submitted": false},
+        "autoBending": {
+          "submitted": false,
+          "data": {},
+        },
+        "manualBending": {
+          "submitted": false,
+          "data": {},
+        },
+        "laserCutting": {
+          "submitted": false,
+          "data": {},
+        },
+        "emboss": {
+          "submitted": false,
+          "data": {},
+        },
+        "rubber": {
+          "submitted": false,
+          "data": {},
+        },
+        "account": {
+          "submitted": false,
+          "data": {},
+        },
+        "delivery": {
+          "submitted": false,
+          "data": {},
+        },
+
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -204,44 +296,9 @@ class _CustomerRequestDetailScreenState
         "status": "InProgress",
         "designer": {
           "submitted": false,
-          "data": {
-            "name": customerData["name"] ?? "",
-            "partyName": customerData["partyName"] ?? "",
-            "particularJobName": customerData["particularJobName"] ?? "",
-            "orderBy": customerData["orderBy"] ?? "",
-            "deliveryAt": customerData["deliveryAt"] ?? "",
-            "priority": customerData["priority"] ?? "Normal",
-            "remark": customerData["remark"] ?? "",
-            "designedBy": "",
-            "plyType": "No",
-            "plySelectedBy": "",
-            "blade": "No",
-            "bladeSelectedBy": "",
-            "creasing": "No",
-            "creasingSelectedBy": "",
-            "capsuleType": "",
-            "unknown": "",
-            "perforation": "No",
-            "perforationSelectedBy": "",
-            "zigZagBlade": "No",
-            "zigZagBladeSelectedBy": "",
-            "rubberType": "No",
-            "rubberSelectedBy": "",
-            "holeType": "No",
-            "holeSelectedBy": "",
-            "embossStatus": "No",
-            "embossPcs": "",
-            "maleEmbossType": "No",
-            "femaleEmbossType": "No",
-            "x": "",
-            "y": "",
-            "x2": "",
-            "y2": "",
-            "strippingType": "No",
-            "laserCuttingStatus": "Pending",
-            "rubberFixingDone": "No",
-            "whiteProfileRubber": "No",
-          },
+          "submittedAt": null,
+          "submittedBy": "",
+          "data": designerData,
         },
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
@@ -249,11 +306,11 @@ class _CustomerRequestDetailScreenState
 
       debugPrint("✅ Sub-order item document created in jobs/{mainOrderId}/items collection");
 
-      // Step 3: Increment monthly counter
+      // Step 4: Increment monthly counter
       await _incrementMonthlyCounter();
       debugPrint("✅ Monthly counter incremented");
 
-      // Step 4: Delete from customer_requests collection (FIXED - was deleting from wrong collection)
+      // Step 5: Delete from customer_requests collection
       await FirebaseFirestore.instance
           .collection("customer_requests")
           .doc(widget.docId)
@@ -303,15 +360,15 @@ class _CustomerRequestDetailScreenState
       await FirebaseFirestore.instance
           .collection("rejected_requests")
           .add({
-        ...customerData,                          // all original customer fields
-        "originalDocId": widget.docId,                  // reference to original doc
-        "rejectedAt": FieldValue.serverTimestamp(), // when it was rejected
+        ...customerData,
+        "originalDocId": widget.docId,
+        "rejectedAt": FieldValue.serverTimestamp(),
         "status": "rejected",
       });
 
       debugPrint("✅ Request saved to rejected_requests collection");
 
-      // Step 2: Delete from customer_requests collection (FIXED - was deleting from wrong collection)
+      // Step 2: Delete from customer_requests collection
       await FirebaseFirestore.instance
           .collection("customer_requests")
           .doc(widget.docId)
