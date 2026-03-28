@@ -40,6 +40,7 @@ class _CustomerRequestsScreenState
       final year = (now.year % 100).toString().padLeft(2, '0');
       final counterDocId = "${now.year}_$month";
 
+
       debugPrint("⏳ Generating LPM... counterDoc=$counterDocId");
 
       final counterRef = FirebaseFirestore.instance
@@ -230,6 +231,9 @@ class _CustomerRequestsScreenState
       // Step 2: Build designer data from customer request
       final designerData = _buildDesignerData(customerData);
 
+      // ✅ NOW SET THE LPM FIELD!
+      designerData['LpmAutoIncrement'] = fullLpm;
+
       // Step 3: Create job document in jobs collection with proper structure
       final jobRef = FirebaseFirestore.instance
           .collection("jobs")
@@ -252,7 +256,7 @@ class _CustomerRequestsScreenState
           "submitted": false,
           "submittedAt": null,
           "submittedBy": "",
-          "data": designerData,
+          "data": designerData,  // ✅ Now contains LpmAutoIncrement!
         },
         "autoBending": {
           "submitted": false,
@@ -300,7 +304,7 @@ class _CustomerRequestsScreenState
           "submitted": false,
           "submittedAt": null,
           "submittedBy": "",
-          "data": designerData,
+          "data": designerData,  // ✅ Now contains LpmAutoIncrement!
         },
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
