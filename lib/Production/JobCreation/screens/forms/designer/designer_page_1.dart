@@ -66,34 +66,64 @@ class _DesignerPage1State extends State<DesignerPage1> {
       debugPrint("⚠️ No LPM found in route parameter");
     }
 
-    if (dataJson == null || dataJson.isEmpty) {
-      debugPrint("❌ No data in route parameters, skipping load");
-      return;
-    }
+    if (dataJson != null && dataJson.isNotEmpty) {
+      try {
+        // Decode JSON data
+        final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    try {
-      // Decode JSON data
-      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+        debugPrint("✅ Decoded data: ${decodedData.keys.toList()}");
 
-      debugPrint("✅ Decoded data: ${decodedData.keys.toList()}");
+        // ✅ Populate form fields from decoded data (using camelCase keys)
+        setState(() {
+          form.PartyName.text = decodedData["PartyName"] ?? "";
+          form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
+          form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
+          form.Orderby.text = decodedData["Orderby"] ?? "";
+          form.ParticularJobName.text = decodedData["ParticularJobName"] ?? "";
+          form.Priority.text = decodedData["Priority"] ?? "";
+          form.Remark.text = decodedData["Remark"] ?? "";
 
-      // ✅ Populate form fields from decoded data (using camelCase keys)
-      setState(() {
-        form.PartyName.text = decodedData["PartyName"] ?? "";
-        form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
-        form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
-        form.Orderby.text = decodedData["Orderby"] ?? "";
-        form.ParticularJobName.text = decodedData["ParticularJobName"] ?? "";
-        form.Priority.text = decodedData["Priority"] ?? "";
-        form.Remark.text = decodedData["Remark"] ?? "";
+          selectedJob = decodedData["ParticularJobName"];
+        });
 
-        selectedJob = decodedData["ParticularJobName"];
-      });
+        debugPrint("✅ DesignerPage1 loaded data from route parameters");
+      } catch (e) {
+        debugPrint("❌ Error decoding data: $e");
+      }
+    } else if (lpmParam != null && lpmParam.isNotEmpty) {
+      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection("jobs")
+            .doc(lpmParam)
+            .get();
 
-      debugPrint("✅ DesignerPage1 loaded data from route parameters");
+        if (!snap.exists) {
+          debugPrint("❌ Firestore: document $lpmParam not found");
+          return;
+        }
 
-    } catch (e) {
-      debugPrint("❌ Error decoding data: $e");
+        final decodedData =
+            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        setState(() {
+          form.PartyName.text = decodedData["PartyName"] ?? "";
+          form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
+          form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
+          form.Orderby.text = decodedData["Orderby"] ?? "";
+          form.ParticularJobName.text = decodedData["ParticularJobName"] ?? "";
+          form.Priority.text = decodedData["Priority"] ?? "";
+          form.Remark.text = decodedData["Remark"] ?? "";
+
+          selectedJob = decodedData["ParticularJobName"];
+        });
+
+        debugPrint("✅ DesignerPage1 loaded data from Firestore");
+      } catch (e) {
+        debugPrint("❌ Error fetching from Firestore: $e");
+      }
+    } else {
+      debugPrint("❌ No data in route parameters and no LPM, skipping load");
     }
   }
 

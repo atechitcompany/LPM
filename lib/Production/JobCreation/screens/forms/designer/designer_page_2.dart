@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/PrioritySelector.dart';
@@ -36,24 +37,50 @@ class _DesignerPage2State extends State<DesignerPage2> {
     final form = NewFormScope.of(context);
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
-    if (dataJson == null || dataJson.isEmpty) {
-      return;
-    }
+    if (dataJson != null && dataJson.isNotEmpty) {
+      try {
+        final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    try {
-      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+        setState(() {
+          form.Priority.text = decodedData["Priority"] ?? "";
+          form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
+          form.PlyType.text = decodedData["PlyType"] ?? "No";
+          form.PlySelectedBy.text = decodedData["PlySelectedBy"] ?? "";
+        });
 
-      setState(() {
-        form.Priority.text = decodedData["Priority"] ?? "";
-        form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
-        form.PlyType.text = decodedData["PlyType"] ?? "No";
-        form.PlySelectedBy.text = decodedData["PlySelectedBy"] ?? "";
-      });
+        debugPrint("✅ DesignerPage2 loaded data from route");
+      } catch (e) {
+        debugPrint("❌ Error decoding data: $e");
+      }
+    } else if (lpmParam != null && lpmParam.isNotEmpty) {
+      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection("jobs")
+            .doc(lpmParam)
+            .get();
 
-      debugPrint("✅ DesignerPage2 loaded data from route");
-    } catch (e) {
-      debugPrint("❌ Error decoding data: $e");
+        if (!snap.exists) {
+          debugPrint("❌ Firestore: document $lpmParam not found");
+          return;
+        }
+
+        final decodedData =
+            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        setState(() {
+          form.Priority.text = decodedData["Priority"] ?? "";
+          form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
+          form.PlyType.text = decodedData["PlyType"] ?? "No";
+          form.PlySelectedBy.text = decodedData["PlySelectedBy"] ?? "";
+        });
+
+        debugPrint("✅ DesignerPage2 loaded data from Firestore");
+      } catch (e) {
+        debugPrint("❌ Error fetching from Firestore: $e");
+      }
     }
   }
 
