@@ -88,10 +88,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: GestureDetector(
-            onTap: () async {
-              await SessionManager.clearSession();
-              context.go('/');
-            },
+            onTap: () => context.push('/profile'),
             child: Container(
               width: 38,
               height: 38,

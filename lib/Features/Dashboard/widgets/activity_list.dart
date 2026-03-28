@@ -27,15 +27,32 @@ class ActivityList extends StatelessWidget {
   Widget build(BuildContext context) {
     // Empty state
     if (docs.isEmpty && !hasMore && !isLoadingMore) {
-      return const Center(
-        child: Text(
-          "No items found",
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isPending
+                  ? Icons.pending_actions_outlined
+                  : Icons.assignment_outlined,
+              size: 52,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isPending ? "No pending forms" : "No jobs yet",
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade400,
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    // Still on first load
+    // First load
     if (docs.isEmpty && isLoadingMore) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -45,12 +62,13 @@ class ActivityList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── "Recent Activities" header ────────────────────────────────
-          const Padding(
-            padding: EdgeInsets.only(left: 16, top: 12, bottom: 6),
+          // ── Section header ────────────────────────────────────────────
+          Padding(
+            padding:
+            const EdgeInsets.only(left: 16, top: 12, bottom: 6),
             child: Text(
-              "Recent Activities",
-              style: TextStyle(
+              isPending ? "Pending Forms" : "Recent Activities",
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1A1A1A),
@@ -58,12 +76,13 @@ class ActivityList extends StatelessWidget {
             ),
           ),
 
-          // ── List ─────────────────────────────────────────────────────
+          // ── List ──────────────────────────────────────────────────────
           Expanded(
             child: ListView.builder(
               controller: scrollController,
               padding: const EdgeInsets.only(bottom: 6),
-              itemCount: docs.length + (hasMore || isLoadingMore ? 1 : 0),
+              itemCount:
+              docs.length + (hasMore || isLoadingMore ? 1 : 0),
               itemBuilder: (context, index) {
                 // Bottom loader
                 if (index == docs.length) {
@@ -84,29 +103,42 @@ class ActivityList extends StatelessWidget {
                   );
                 }
 
-                final data = docs[index].data() as Map<String, dynamic>;
-                final designerData = data["designer"]?["data"] ?? {};
+                final data =
+                docs[index].data() as Map<String, dynamic>;
+                final designerData =
+                    data["designer"]?["data"] ?? {};
                 final lpm = docs[index].id;
 
-                // ── Data fields ──────────────────────────────────────────
-                final name = designerData["name"] ??
+                // ── Display fields ─────────────────────────────────────
+                // partyName  → main title (who the job is for)
+                // particularJobName → subtitle (what the job is)
+                // orderBy    → third line (who ordered)
+                final String partyName =
+                (designerData["partyName"] ??
                     designerData["PartyName"] ??
-                    "No Name";
-                final party = designerData["partyName"] ??
-                    designerData["PartyName"] ??
-                    "No Party";
+                    "No Party")
+                    .toString();
+                final String jobName =
+                (designerData["particularJobName"] ??
+                    designerData["ParticularJobName"] ??
+                    "")
+                    .toString();
+                final String orderBy =
+                (designerData["orderBy"] ?? "").toString();
 
-                // ── Badge ─────────────────────────────────────────────────
+                // ── Badge ──────────────────────────────────────────────
                 final String rawStatus =
                 (data["status"] ?? "").toString();
                 final _BadgeStyle badge =
                 _resolveBadge(rawStatus, isPending);
 
                 return InkWell(
-                  onTap: () => context.push('/job-summary/$lpm'),
+                  // Both pending and jobs go to job-summary
+                  onTap: () =>
+                      context.push('/job-summary/$lpm'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                        horizontal: 16, vertical: 11),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border(
@@ -117,10 +149,10 @@ class ActivityList extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // ── Avatar ───────────────────────────────────────
+                        // ── Avatar ──────────────────────────────────
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             shape: BoxShape.circle,
@@ -128,41 +160,60 @@ class ActivityList extends StatelessWidget {
                           child: Icon(
                             Icons.person_outline,
                             color: Colors.grey.shade400,
-                            size: 18,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
 
-                        // ── Name + Party ──────────────────────────────────
+                        // ── Party + Job + OrderBy ────────────────────
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
                             children: [
+                              // Line 1: Party Name
                               Text(
-                                name.toString(),
+                                partyName,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   color: Color(0xFF1A1A1A),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                party.toString(),
-                                style: TextStyle(
-                                  color: Colors.grey.shade500,
-                                  fontSize: 11,
+                              if (jobName.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                // Line 2: Job Name
+                                Text(
+                                  jobName,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              ],
+                              if (orderBy.isNotEmpty) ...[
+                                const SizedBox(height: 1),
+                                // Line 3: Order By
+                                Text(
+                                  'By: $orderBy',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 11,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ],
                           ),
                         ),
 
-                        // ── Status badge ──────────────────────────────────
+                        // ── Status badge ─────────────────────────────
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 9, vertical: 4),
@@ -183,24 +234,27 @@ class ActivityList extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
 
-                        // ── Call button (blue) ────────────────────────────
+                        // ── Call button (blue) ───────────────────────
                         _CircleButton(
                           color: const Color(0xFF2196F3),
-                          child: const Icon(
-                            Icons.phone,
-                            color: Colors.white,
-                            size: 16,
-                          ),
+                          child: const Icon(Icons.phone,
+                              color: Colors.white, size: 16),
                         ),
                         const SizedBox(width: 6),
 
-                        // ── Edit button (yellow) ──────────────────────────
+                        // ── WhatsApp button (green) ──────────────────
                         _CircleButton(
-                          color: const Color(0xFFF8D94B),
-                          child: const Icon(
-                            Icons.edit,
+                          color: const Color(0xFF25D366),
+                          child: Image.asset(
+                            'assets/whatsapp-logo.png',
+                            width: 16,
+                            height: 16,
                             color: Colors.white,
-                            size: 16,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.message,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],
@@ -227,12 +281,6 @@ class ActivityList extends StatelessWidget {
     }
     switch (rawStatus.toLowerCase()) {
       case 'urgent':
-        return _BadgeStyle(
-          label: 'Urgent',
-          textColor: const Color(0xFFE53935),
-          bgColor: const Color(0xFFFFEBEE),
-          borderColor: const Color(0xFFEF9A9A),
-        );
       case 'hot':
         return _BadgeStyle(
           label: 'Urgent',
@@ -249,12 +297,6 @@ class ActivityList extends StatelessWidget {
           borderColor: const Color(0xFFFFCC80),
         );
       case 'today':
-        return _BadgeStyle(
-          label: 'Today',
-          textColor: const Color(0xFF2E7D32),
-          bgColor: const Color(0xFFE8F5E9),
-          borderColor: const Color(0xFFA5D6A7),
-        );
       case 'paid':
         return _BadgeStyle(
           label: 'Today',
@@ -263,12 +305,6 @@ class ActivityList extends StatelessWidget {
           borderColor: const Color(0xFFA5D6A7),
         );
       case 'hold':
-        return _BadgeStyle(
-          label: 'Hold',
-          textColor: const Color(0xFF1565C0),
-          bgColor: const Color(0xFFE3F2FD),
-          borderColor: const Color(0xFF90CAF9),
-        );
       case 'cold':
         return _BadgeStyle(
           label: 'Hold',
@@ -292,15 +328,9 @@ class ActivityList extends StatelessWidget {
           borderColor: const Color(0xFFFFCC80),
         );
       case 'completed':
-        return _BadgeStyle(
-          label: 'IMP',
-          textColor: const Color(0xFFE65100),
-          bgColor: const Color(0xFFFFF3E0),
-          borderColor: const Color(0xFFFFCC80),
-        );
       default:
         return _BadgeStyle(
-          label: 'IMP',
+          label: 'Active',
           textColor: const Color(0xFFE65100),
           bgColor: const Color(0xFFFFF3E0),
           borderColor: const Color(0xFFFFCC80),
@@ -334,7 +364,8 @@ class _CircleButton extends StatelessWidget {
     return Container(
       width: 34,
       height: 34,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      decoration:
+      BoxDecoration(color: color, shape: BoxShape.circle),
       child: Center(child: child),
     );
   }
