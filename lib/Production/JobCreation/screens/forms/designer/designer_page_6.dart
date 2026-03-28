@@ -238,7 +238,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
                     });
 
                     try {
-                      await form.submitForm();
+                      await form.submitDesignerForm();
 
                       // ✅ Navigate to dashboard
                       if (mounted) {
