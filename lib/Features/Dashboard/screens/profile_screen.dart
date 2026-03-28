@@ -273,7 +273,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // ✅ mounted check after every async gap
                   if (!mounted) return;
                   if (confirm == true) {
-                    if (mounted) context.go('/');
+                    await SessionManager.clearSession(); // 🔥 THIS WAS MISSING
+
+                    if (!mounted) return;
+
+                    context.go('/login'); // go directly to login
                   }
                 },
                 icon: const Icon(Icons.logout_rounded, size: 18),

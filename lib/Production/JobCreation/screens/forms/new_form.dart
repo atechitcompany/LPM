@@ -796,94 +796,58 @@ class NewFormState extends State<NewForm> {
       rethrow; // Re-throw to be caught by submitForm()
     }
   }
+// 🔧 FIXED submitForm() Method
+// Replace the existing submitForm() in new_form.dart with this version
 
   Future<void> submitDepartmentForm(String nextDepartment) async {
     final data = buildFormData();
     final lpm = LpmAutoIncrement.text;
 
-    // 🔥 Detect AutoBending status
-    final isDone = AutoBendingStatus.text.trim().toLowerCase() == "done";
+    bool isDone = false;
+
+    // ✅ CORRECT STATUS CHECK PER DEPARTMENT
+    switch (department) {
+      case "AutoBending":
+        isDone = AutoBendingStatus.text.trim().toLowerCase() == "done";
+        break;
+
+      case "ManualBending":
+        isDone = ManualBendingStatus.text.trim().toLowerCase() == "done";
+        break;
+
+      case "LaserCutting":
+        isDone = LaserCuttingStatus.text.trim().toLowerCase() == "done";
+        break;
+
+      case "Rubber":
+        isDone = RubberStatus.text.trim().toLowerCase() == "done";
+        break;
+
+      case "Emboss":
+        isDone = EmbossStatus.text.trim().toLowerCase() == "done";
+        break;
+
+      default:
+        isDone = false;
+    }
+
+    // Build the update map
+    final updateMap = <String, dynamic>{
+      "${_deptKey(department)}.submitted": true,
+      "${_deptKey(department)}.data": data,
+      "currentDepartment": isDone ? nextDepartment : department,
+      "updatedAt": FieldValue.serverTimestamp(),
+    };
+
+// Only add visibleTo if toggled done
+    if (isDone) {
+      updateMap["visibleTo"] = FieldValue.arrayUnion([nextDepartment]);
+    }
 
     await FirebaseFirestore.instance
         .collection("jobs")
         .doc(lpm)
-        .update({
-      "${_deptKey(department)}.submitted": true,
-      "${_deptKey(department)}.data": data,
-
-      // ✅ Only move forward if Done
-      "currentDepartment": isDone ? nextDepartment : department,
-
-      // ✅ Only add ManualBending if Done
-      if (isDone)
-        "visibleTo": FieldValue.arrayUnion([nextDepartment]),
-
-      "updatedAt": FieldValue.serverTimestamp(),
-    });
-  }
-
-
-// 🔧 FIXED submitForm() Method
-// Replace the existing submitForm() in new_form.dart with this version
-
-  Future<void> submitForm() async {
-    try {
-      debugPrint("🚀 Starting form submission...");
-
-      if (department == "Designer") {
-        // ✅ Designer: use submitDesignerForm() which writes to the "jobs"
-        //    collection with the correct nested structure expected by the
-        //    dashboard (designer.submitted, designer.data, etc.)
-        await submitDesignerForm();
-      } else {
-        // ✅ Other departments: use submitDepartmentForm()
-        final nextDept = _nextDepartment(department);
-        await submitDepartmentForm(nextDept);
-      }
-
-      debugPrint("✅ Form submitted successfully!");
-
-      // ✅ Show success message and navigate
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✅ Form submitted successfully"),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-
-        // Navigate back to dashboard
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) {
-          context.go('/dashboard');
-        }
-      }
-
-    } on FirebaseException catch (e) {
-      debugPrint("❌ Firebase Error: ${e.code} - ${e.message}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Firebase Error: ${e.message}"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e, stackTrace) {
-      debugPrint("❌ Unexpected Error: $e");
-      debugPrint("📍 Stack Trace: $stackTrace");
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
+        .update(updateMap);
   }
 
   /// ✅ Validates all required fields
