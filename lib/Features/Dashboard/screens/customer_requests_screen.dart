@@ -14,7 +14,7 @@ class _CustomerRequestsScreenState
     extends State<CustomerRequestsScreen> {
   final searchController = TextEditingController();
 
-  // ✅ STREAM — UNCHANGED
+  // ✅ STREAM — Reading from customer_requests collection
   Stream<QuerySnapshot>? _customerRequestsStream;
 
   @override
@@ -32,7 +32,6 @@ class _CustomerRequestsScreenState
     super.dispose();
   }
 
-  // ✅ ACCEPT LOGIC — UNCHANGED
   // ✅ SHARED LPM GENERATION - Same as new_form.dart
   Future<String> _generateLpm() async {
     try {
@@ -79,7 +78,7 @@ class _CustomerRequestsScreenState
     }
   }
 
-// ✅ INCREMENT MONTHLY COUNTER - Same as new_form.dart
+  // ✅ INCREMENT MONTHLY COUNTER - Same as new_form.dart
   Future<void> _incrementMonthlyCounter() async {
     final now = DateTime.now();
     final month = now.month.toString().padLeft(2, '0');
@@ -105,12 +104,14 @@ class _CustomerRequestsScreenState
     });
   }
 
-// ✅ ACCEPT LOGIC — UNIFIED WITH new_form.dart
+  // ✅ ACCEPT LOGIC — Creates job in "jobs" collection and deletes from customer_requests
   Future<void> _acceptRequest(
       BuildContext context,
       String docId,
       Map<String, dynamic> customerData) async {
     try {
+      debugPrint("🚀 Starting Accept Request...");
+
       // Step 1: Generate LPM (UNIFIED FORMAT)
       final fullLpm = await _generateLpm();
 
@@ -125,7 +126,7 @@ class _CustomerRequestsScreenState
       debugPrint("📋 Main Order ID: $mainOrderId");
       debugPrint("📦 Full LPM: $fullLpm");
 
-      // Step 2: Create job document in jobs collection with same structure as new_form.dart
+      // Step 2: Create job document in jobs collection
       final jobRef = FirebaseFirestore.instance
           .collection("jobs")
           .doc(mainOrderId);
@@ -194,7 +195,7 @@ class _CustomerRequestsScreenState
         "updatedAt": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      debugPrint("✅ Main order document created");
+      debugPrint("✅ Main order document created in jobs collection");
 
       // ✅ Create sub-order item document
       await itemRef.set({
@@ -248,19 +249,19 @@ class _CustomerRequestsScreenState
         "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      debugPrint("✅ Sub-order item document created");
+      debugPrint("✅ Sub-order item document created in jobs/{mainOrderId}/items collection");
 
       // Step 3: Increment monthly counter
       await _incrementMonthlyCounter();
       debugPrint("✅ Monthly counter incremented");
 
-      // Step 4: Delete from customers collection
+      // Step 4: Delete from customer_requests collection (FIXED - was deleting from wrong collection)
       await FirebaseFirestore.instance
-          .collection("customers")
+          .collection("customer_requests")
           .doc(docId)
           .delete();
 
-      debugPrint("✅ Customer request deleted");
+      debugPrint("✅ Request deleted from customer_requests collection");
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -283,13 +284,15 @@ class _CustomerRequestsScreenState
     }
   }
 
-// ✅ REJECT LOGIC — UNCHANGED (saves to "rejectedRequests" before deleting)
+  // ✅ REJECT LOGIC — Saves to "rejected_requests" collection and deletes from customer_requests
   Future<void> _rejectRequest(BuildContext context, String docId,
       Map<String, dynamic> customerData) async {
     try {
-      // Step 1: Save full customer data to rejectedRequests collection
+      debugPrint("🚫 Starting Reject Request...");
+
+      // Step 1: Save full customer data to rejected_requests collection
       await FirebaseFirestore.instance
-          .collection("rejectedRequests")
+          .collection("rejected_requests")
           .add({
         ...customerData,                          // all original customer fields
         "originalDocId": docId,                  // reference to original doc
@@ -297,11 +300,15 @@ class _CustomerRequestsScreenState
         "status": "rejected",
       });
 
-      // Step 2: Delete from customers collection
+      debugPrint("✅ Request saved to rejected_requests collection");
+
+      // Step 2: Delete from customer_requests collection (FIXED - was deleting from wrong collection)
       await FirebaseFirestore.instance
-          .collection("customers")
+          .collection("customer_requests")
           .doc(docId)
           .delete();
+
+      debugPrint("✅ Request deleted from customer_requests collection");
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -313,6 +320,7 @@ class _CustomerRequestsScreenState
         );
       }
     } catch (e) {
+      debugPrint("❌ Error in _rejectRequest: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -320,6 +328,7 @@ class _CustomerRequestsScreenState
       }
     }
   }
+
   void _showAcceptDialog(BuildContext context, String docId,
       Map<String, dynamic> data) {
     showDialog(
@@ -336,6 +345,15 @@ class _CustomerRequestsScreenState
                 style: const TextStyle(fontWeight: FontWeight.w500)),
             Text("Job: ${data['particularJobName'] ?? 'N/A'}",
                 style: const TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+            const Text(
+              "A unique LPM number will be generated automatically.",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ],
         ),
         actions: [
@@ -716,25 +734,39 @@ class _CustomerRequestsScreenState
 
   Color _getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
-      case "urgent":    return const Color(0xFFE74C3C);
-      case "high":      return const Color(0xFFE74C3C);
-      case "important": return const Color(0xFF27AE60);
-      case "medium":    return const Color(0xFFF39C12);
-      case "emergency": return const Color(0xFFF39C12);
-      case "low":       return const Color(0xFF27AE60);
-      default:          return const Color(0xFF3498DB);
+      case "urgent":
+        return const Color(0xFFE74C3C);
+      case "high":
+        return const Color(0xFFE74C3C);
+      case "important":
+        return const Color(0xFF27AE60);
+      case "medium":
+        return const Color(0xFFF39C12);
+      case "emergency":
+        return const Color(0xFFF39C12);
+      case "low":
+        return const Color(0xFF27AE60);
+      default:
+        return const Color(0xFF3498DB);
     }
   }
 
   String _getPriorityLabel(String priority) {
     switch (priority.toLowerCase()) {
-      case "high":      return "URGENT";
-      case "urgent":    return "URGENT";
-      case "important": return "IMPORTANT";
-      case "medium":    return "EMERGENCY";
-      case "emergency": return "EMERGENCY";
-      case "low":       return "IMPORTANT";
-      default:          return priority.toUpperCase();
+      case "high":
+        return "URGENT";
+      case "urgent":
+        return "URGENT";
+      case "important":
+        return "IMPORTANT";
+      case "medium":
+        return "EMERGENCY";
+      case "emergency":
+        return "EMERGENCY";
+      case "low":
+        return "IMPORTANT";
+      default:
+        return priority.toUpperCase();
     }
   }
 }
