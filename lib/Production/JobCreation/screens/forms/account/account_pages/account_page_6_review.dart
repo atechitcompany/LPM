@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import '../../new_form_scope.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/NumberStepper.dart';
 import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
@@ -24,123 +24,188 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // Total Size
-          TextInput(
-            label: "Total Size",
-            hint: "",
-            controller: form.TotalSize,
-            initialValue: "NO",
-          ),
+          // ===== TOTAL SIZE =====
+
+          if (form.canView("TotalSize"))
+            IgnorePointer(
+              ignoring: !form.canEdit("TotalSize"),
+              child: Opacity(
+                opacity: form.canEdit("TotalSize") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Total Size",
+                  hint: "",
+                  controller: form.TotalSize,
+                ),
+              ),
+            ),
 
           const SizedBox(height: 30),
 
-          // Minimum Charges Apply
-          const Text(
-            "Minimum Charges Apply",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== MINIMUM CHARGES =====
 
-          NumberStepper(
-            step: 1,
-            initialValue: 0,
-            controller: form.MinimumChargeApply,
-            onChanged: (val) {
-              form.MinimumChargeApply.text = val.toString();
-              setState(() {});
-            },
-          ),
+          if (form.canView("MinimumChargeApply")) ...[
+            const Text(
+              "Minimum Charges Apply",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("MinimumChargeApply"),
+              child: Opacity(
+                opacity: form.canEdit("MinimumChargeApply") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 1,
+                  initialValue:
+                  double.tryParse(form.MinimumChargeApply.text) ?? 0,
+                  controller: form.MinimumChargeApply,
+                  onChanged: (val) {
+                    form.MinimumChargeApply.text = val.toString();
+                    setState(() {});
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Male Rate
-          const Text(
-            "Male Rate",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== MALE RATE =====
 
-          NumberStepper(
-            step: 0.01,
-            initialValue: 0,
-            controller: form.MaleRate,
-            onChanged: (val) {
-              form.MaleRate.text = val.toString();
-              setState(() {});
-            },
-          ),
+          if (form.canView("MaleRate")) ...[
+            const Text(
+              "Male Rate",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("MaleRate"),
+              child: Opacity(
+                opacity: form.canEdit("MaleRate") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 0.01,
+                  initialValue:
+                  double.tryParse(form.MaleRate.text) ?? 0,
+                  controller: form.MaleRate,
+                  onChanged: (val) {
+                    form.MaleRate.text = val.toString();
+                    setState(() {});
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
           AutoCalcTextBox(label: "XY Size", value: "0"),
           const SizedBox(height: 30),
-
           AutoCalcTextBox(label: "Male Amount", value: "0"),
+
           const SizedBox(height: 30),
 
-          // Female Rate
-          const Text(
-            "Female Rate",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== FEMALE RATE =====
 
-          NumberStepper(
-            step: 0.01,
-            initialValue: 0,
-            controller: form.FemaleRate,
-            onChanged: (val) {
-              form.FemaleRate.text = val.toString();
-              setState(() {});
-            },
-          ),
+          if (form.canView("FemaleRate")) ...[
+            const Text(
+              "Female Rate",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("FemaleRate"),
+              child: Opacity(
+                opacity: form.canEdit("FemaleRate") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 0.01,
+                  initialValue:
+                  double.tryParse(form.FemaleRate.text) ?? 0,
+                  controller: form.FemaleRate,
+                  onChanged: (val) {
+                    form.FemaleRate.text = val.toString();
+                    setState(() {});
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
           AutoCalcTextBox(label: "XY Size2", value: "0"),
           const SizedBox(height: 30),
-
           AutoCalcTextBox(label: "Female Amount", value: "0"),
+
           const SizedBox(height: 30),
 
-          // Stripping Amount
+          // ===== STRIPPING =====
+
           AutoCalcTextBox(label: "Stripping Amount", value: "0"),
-          const SizedBox(height: 30),
-
-          // Invoice Toggle
-          FlexibleToggle(
-            label: "Invoice",
-            inactiveText: "No",
-            activeText: "Yes",
-            initialValue: false,
-            onChanged: (val) {
-              form.InvoiceStatus.text = val ? "Yes" : "No";
-            },
-          ),
 
           const SizedBox(height: 30),
 
-          // Invoice Printed By
-          TextInput(
-            label: "Invoice Printed By",
-            hint: "Name",
-            controller: form.InvoicePrintedBy,
-            initialValue: "",
+          // ===== INVOICE STATUS =====
+
+          IgnorePointer(
+            ignoring: !form.canEdit("InvoiceStatus"),
+            child: Opacity(
+              opacity: form.canEdit("InvoiceStatus") ? 1 : 0.6,
+              child: FlexibleToggle(
+                label: "Invoice",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue:
+                form.InvoiceStatus.text.toLowerCase() == "done",
+                onChanged: (val) {
+                  form.InvoiceStatus.text = val ? "Done" : "Pending";
+                },
+              ),
+            ),
           ),
 
           const SizedBox(height: 30),
 
-          // Particular Slider
-          const Text(
-            "Particular",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== INVOICE PRINTED BY =====
 
-          FlexibleSlider(
-            max: 10,
-            onChanged: (v) {},
-          ),
+          if (form.canView("InvoicePrintedBy"))
+            IgnorePointer(
+              ignoring: !form.canEdit("InvoicePrintedBy"),
+              child: Opacity(
+                opacity: form.canEdit("InvoicePrintedBy") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Invoice Printed By",
+                  hint: "Name",
+                  controller: form.InvoicePrintedBy,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 30),
+
+          // ===== PARTICULAR SLIDER =====
+
+          if (form.canView("ParticularSlider")) ...[
+            const Text(
+              "Particular",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("ParticularSlider"),
+              child: Opacity(
+                opacity: form.canEdit("ParticularSlider") ? 1 : 0.6,
+                child: FlexibleSlider(
+                  max: 10,
+                  onChanged: (v) {
+                    form.ParticularSlider.text = v.toString();
+                  },
+                ),
+              ),
+            ),
+          ],
 
         ],
       ),

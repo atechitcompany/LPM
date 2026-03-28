@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import '../../new_form_scope.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/NumberStepper.dart';
 import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
@@ -21,64 +21,91 @@ class AccountPage3Ply extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // Laser Cutting Punch New
-          FlexibleToggle(
-            label: "Laser Cutting Punch New",
-            inactiveText: "No",
-            activeText: "Yes",
-            initialValue: false,
-            onChanged: (val) {
-              form.LaserPunchNew.text = val ? "Yes" : "No";
-            },
+          // ===== TOGGLE =====
+
+          IgnorePointer(
+            ignoring: !form.canEdit("LaserPunchNew"),
+            child: Opacity(
+              opacity: form.canEdit("LaserPunchNew") ? 1 : 0.6,
+              child: FlexibleToggle(
+                label: "Laser Cutting Punch New",
+                inactiveText: "No",
+                activeText: "Yes",
+                initialValue:
+                form.LaserPunchNew.text.toLowerCase() == "yes",
+                onChanged: (val) {
+                  form.LaserPunchNew.text = val ? "Yes" : "No";
+                },
+              ),
+            ),
           ),
 
           const SizedBox(height: 30),
 
-          // Ply Length
-          const Text(
-            "Ply Length",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== PLY LENGTH =====
 
-          NumberStepper(
-            step: 0.1,
-            initialValue: 0.0,
-            controller: form.PlyLength,
-            onChanged: (val) {
-              form.PlyLength.text = val.toString();
-            },
-          ),
+          if (form.canView("PlyLength")) ...[
+            const Text(
+              "Ply Length",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
 
-          const SizedBox(height: 30),
-
-          // Ply Breadth
-          const Text(
-            "Ply Breadth",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
-
-          NumberStepper(
-            step: 0.1,
-            initialValue: 0.0,
-            controller: form.PlyBreadth,
-            onChanged: (val) {
-              form.PlyBreadth.text = val.toString();
-            },
-          ),
+            IgnorePointer(
+              ignoring: !form.canEdit("PlyLength"),
+              child: Opacity(
+                opacity: form.canEdit("PlyLength") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 0.1,
+                  initialValue: length,
+                  controller: form.PlyLength,
+                  onChanged: (val) {
+                    form.PlyLength.text = val.toString();
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Ply Size (Auto Calculated)
-          AutoCalcTextBox(
-            label: "Ply Size",
-            value: totalArea.toStringAsFixed(1),
-          ),
+          // ===== PLY BREADTH =====
+
+          if (form.canView("PlyBreadth")) ...[
+            const Text(
+              "Ply Breadth",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("PlyBreadth"),
+              child: Opacity(
+                opacity: form.canEdit("PlyBreadth") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 0.1,
+                  initialValue: breadth,
+                  controller: form.PlyBreadth,
+                  onChanged: (val) {
+                    form.PlyBreadth.text = val.toString();
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Ply Amount
+          // ===== AUTO CALC =====
+
+          if (form.canView("PlySize"))
+            AutoCalcTextBox(
+              label: "Ply Size",
+              value: totalArea.toStringAsFixed(1),
+            ),
+
+          const SizedBox(height: 30),
+
           AutoCalcTextBox(
             label: "Ply Amount",
             value: "0",
@@ -86,25 +113,34 @@ class AccountPage3Ply extends StatelessWidget {
 
           const SizedBox(height: 30),
 
-          // Blade Size
-          const Text(
-            "Blade Size",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== BLADE SIZE =====
 
-          NumberStepper(
-            step: 1,
-            initialValue: 0,
-            controller: form.BladeSize,
-            onChanged: (val) {
-              form.BladeSize.text = val.toString();
-            },
-          ),
+          if (form.canView("BladeSize")) ...[
+            const Text(
+              "Blade Size",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("BladeSize"),
+              child: Opacity(
+                opacity: form.canEdit("BladeSize") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 1,
+                  initialValue:
+                  double.tryParse(form.BladeSize.text) ?? 0,
+                  controller: form.BladeSize,
+                  onChanged: (val) {
+                    form.BladeSize.text = val.toString();
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Blade Amount
           AutoCalcTextBox(
             label: "Blade Amount",
             value: "0",
@@ -112,25 +148,34 @@ class AccountPage3Ply extends StatelessWidget {
 
           const SizedBox(height: 30),
 
-          // Creasing Size
-          const Text(
-            "Creasing Size",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== CREASING SIZE =====
 
-          NumberStepper(
-            step: 1,
-            initialValue: 0,
-            controller: form.CapsuleRate, // same as original code
-            onChanged: (val) {
-              form.CapsuleRate.text = val.toString();
-            },
-          ),
+          if (form.canView("CreasingSize")) ...[
+            const Text(
+              "Creasing Size",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("CreasingSize"),
+              child: Opacity(
+                opacity: form.canEdit("CreasingSize") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 1,
+                  initialValue:
+                  double.tryParse(form.CreasingSize.text) ?? 0,
+                  controller: form.CreasingSize,
+                  onChanged: (val) {
+                    form.CreasingSize.text = val.toString();
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Creasing Amount
           AutoCalcTextBox(
             label: "Creasing Amount",
             value: "0",
@@ -138,21 +183,31 @@ class AccountPage3Ply extends StatelessWidget {
 
           const SizedBox(height: 30),
 
-          // Minimum Charges Apply
-          const Text(
-            "Minimum Charges Applys",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== MINIMUM CHARGES =====
 
-          NumberStepper(
-            step: 1,
-            initialValue: 0,
-            controller: form.MinimumChargeApply,
-            onChanged: (val) {
-              form.MinimumChargeApply.text = val.toString();
-            },
-          ),
+          if (form.canView("MinimumChargeApply")) ...[
+            const Text(
+              "Minimum Charges Apply",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("MinimumChargeApply"),
+              child: Opacity(
+                opacity: form.canEdit("MinimumChargeApply") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 1,
+                  initialValue:
+                  double.tryParse(form.MinimumChargeApply.text) ?? 0,
+                  controller: form.MinimumChargeApply,
+                  onChanged: (val) {
+                    form.MinimumChargeApply.text = val.toString();
+                  },
+                ),
+              ),
+            ),
+          ],
 
         ],
       ),

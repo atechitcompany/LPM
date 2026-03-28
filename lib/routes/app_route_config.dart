@@ -43,7 +43,7 @@ import 'package:lightatech/Production/JobCreation/screens/forms/laser_cut/laser_
 import 'package:lightatech/Production/JobCreation/screens/forms/emboss/emboss_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/rubber/rubber_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/delivery/delivery_page.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/account/account_page1.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
 
 // Map
 import 'package:lightatech/Features/MapScreen/screens/map_screen.dart';
@@ -276,7 +276,7 @@ class AppRoutes {
           GoRoute(path: '/jobform/laser', builder: (_, __) => const LaserPage()),
           GoRoute(path: '/jobform/emboss', builder: (_, __) => const EmbossPage()),
           GoRoute(path: '/jobform/rubber', builder: (_, __) => const RubberPage()),
-          GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountPage()),
+          GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountFormFlow()),
           GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
         ],
       ),

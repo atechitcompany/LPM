@@ -1,21 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
-import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
+import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
-import 'package:lightatech/FormComponents/GSTSelector.dart';
-import 'package:lightatech/FormComponents/AutoIncrementField.dart';
-import 'package:lightatech/FormComponents/PrioritySelector.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:lightatech/FormComponents/FileUploadBox.dart';
-import 'package:lightatech/FormComponents/FlexibleSlider.dart';
-import 'package:lightatech/FormComponents/NumberStepper.dart';
-import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
-import 'package:go_router/go_router.dart';
-
 import '../new_form_scope.dart';
-
+import 'package:go_router/go_router.dart';
 
 class EmbossPage extends StatefulWidget {
   const EmbossPage({super.key});
@@ -34,10 +24,7 @@ class _EmbossPageState extends State<EmbossPage> {
     super.didChangeDependencies();
     if (_loaded) return;
     _loaded = true;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
   Future<void> _loadData() async {
@@ -61,30 +48,30 @@ class _EmbossPageState extends State<EmbossPage> {
 
     final data = snap.data()!;
 
-    final designer =
-    Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+    // ── Designer data (read-only) ──
+    final designer = Map<String, dynamic>.from(
+      data["designer"]?["data"] ?? {},
+    );
 
-    final emboss =
-    Map<String, dynamic>.from(data["emboss"]?["data"] ?? {});
+    // ── Emboss data (editable) ──
+    final emboss = Map<String, dynamic>.from(
+      data["emboss"]?["data"] ?? {},
+    );
 
-    // 👀 DESIGNER VIEW DATA
+    // Read-only fields from designer
     form.PartyName.text = designer["PartyName"] ?? "";
     form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
     form.DesigningStatus.text = designer["DesigningStatus"] ?? "";
+    form.DesignerCreatedBy.text = designer["DesignerCreatedBy"] ?? "";
 
-    form.HoleType.text = designer["HoleType"] ?? "";
-
-    // ✏️ EMBOSS DATA
+    // Editable emboss fields
     form.EmbossStatus.text = emboss["EmbossStatus"] ?? "Pending";
-    form.EmbossPcs.text = emboss["EmbossPcs"] ?? "";
     form.MaleEmbossType.text = emboss["MaleEmbossType"] ?? "";
-    form.X.text = emboss["X"] ?? "";
-    form.Y.text = emboss["Y"] ?? "";
     form.FemaleEmbossType.text = emboss["FemaleEmbossType"] ?? "";
+    form.EmbossCreatedBy.text = emboss["EmbossCreatedBy"] ?? "";
 
-    embossDone =
-        form.EmbossStatus.text.toLowerCase() == "done";
+    embossDone = form.EmbossStatus.text.trim().toLowerCase() == "done";
 
     setState(() => loading = false);
   }
@@ -100,6 +87,7 @@ class _EmbossPageState extends State<EmbossPage> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Emboss"),
         backgroundColor: Colors.yellow,
@@ -107,9 +95,10 @@ class _EmbossPageState extends State<EmbossPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // ===== VIEW FIELDS =====
+            // ───────────── READ-ONLY FIELDS ─────────────
 
             if (form.canView("PartyName"))
               TextInput(
@@ -119,107 +108,119 @@ class _EmbossPageState extends State<EmbossPage> {
                 hint: "",
               ),
 
-            const SizedBox(height: 16),
-
-            if (form.canView("ParticularJobName"))
+            if (form.canView("ParticularJobName")) ...[
+              const SizedBox(height: 16),
               TextInput(
                 label: "Particular Job Name",
                 controller: form.ParticularJobName,
                 readOnly: true,
                 hint: "",
               ),
+            ],
 
-            const SizedBox(height: 16),
-
-            if (form.canView("LpmAutoIncrement"))
+            if (form.canView("LpmAutoIncrement")) ...[
+              const SizedBox(height: 16),
               TextInput(
                 label: "LPM Number",
                 controller: form.LpmAutoIncrement,
                 readOnly: true,
                 hint: "",
               ),
+            ],
 
-            const SizedBox(height: 16),
-
-            if (form.canView("DesigningStatus"))
+            if (form.canView("DesigningStatus")) ...[
+              const SizedBox(height: 16),
               TextInput(
-                label: "Designing Status",
+                label: "Designing",
                 controller: form.DesigningStatus,
                 readOnly: true,
                 hint: "",
               ),
-
-            const SizedBox(height: 16),
-
-            if (form.canView("HoleType"))
-              TextInput(
-                label: "Hole Type",
-                controller: form.HoleType,
-                readOnly: true,
-                hint: "",
-              ),
+            ],
 
             const SizedBox(height: 30),
 
-            // ===== EDIT FIELDS =====
+            // ───────────── EDIT FIELDS ─────────────
 
             FlexibleToggle(
-              label: "Emboss Status",
+              label: "Emboss",
               inactiveText: "Pending",
               activeText: "Done",
               initialValue: embossDone,
               onChanged: (v) {
                 setState(() {
                   embossDone = v;
-                  form.EmbossStatus.text =
-                  v ? "Done" : "Pending";
+                  form.EmbossStatus.text = v ? "Done" : "Pending";
                 });
               },
             ),
 
             const SizedBox(height: 20),
 
-            TextInput(
-              label: "Emboss PCS",
-              controller: form.EmbossPcs,
-              hint: "",
+            AddableSearchDropdown(
+              label: "Male Emboss",
+              items: form.embossTypes,
+              initialValue: form.MaleEmbossType.text.isEmpty
+                  ? null
+                  : form.MaleEmbossType.text,
+              onChanged: (v) {
+                setState(() {
+                  form.MaleEmbossType.text = (v ?? "").trim();
+                });
+              },
+              onAdd: (newVal) {
+                setState(() {
+                  form.embossTypes.add(newVal);
+                });
+              },
             ),
 
             const SizedBox(height: 20),
 
-            TextInput(
-              label: "Male Emboss Type",
-              controller: form.MaleEmbossType,
-              hint: "",
+            AddableSearchDropdown(
+              label: "Female Emboss",
+              items: form.embossTypes,
+              initialValue: form.FemaleEmbossType.text.isEmpty
+                  ? null
+                  : form.FemaleEmbossType.text,
+              onChanged: (v) {
+                setState(() {
+                  form.FemaleEmbossType.text = (v ?? "").trim();
+                });
+              },
+              onAdd: (newVal) {
+                setState(() {
+                  form.embossTypes.add(newVal);
+                });
+              },
             ),
 
             const SizedBox(height: 20),
 
-            TextInput(
-              label: "X",
-              controller: form.X,
-              hint: "",
-            ),
+            if (form.canView("DesignerCreatedBy"))
+              TextInput(
+                label: "Designer Created By",
+                controller: form.DesignerCreatedBy,
+                readOnly: true,
+                hint: "",
+              ),
 
             const SizedBox(height: 20),
 
-            TextInput(
-              label: "Y",
-              controller: form.Y,
-              hint: "",
-            ),
-
-            const SizedBox(height: 20),
-
-            TextInput(
-              label: "Female Emboss Type",
-              controller: form.FemaleEmbossType,
-              hint: "",
+            SearchableDropdownWithInitial(
+              label: "Emboss Created By",
+              items: form.parties,
+              initialValue: form.EmbossCreatedBy.text.isEmpty
+                  ? "Select"
+                  : form.EmbossCreatedBy.text,
+              onChanged: (v) {
+                form.EmbossCreatedBy.text = (v ?? "").trim();
+              },
             ),
 
             const SizedBox(height: 40),
 
-            // ===== SAVE =====
+            // ───────────── SAVE ─────────────
 
             SizedBox(
               width: double.infinity,
@@ -228,24 +229,19 @@ class _EmbossPageState extends State<EmbossPage> {
                 onPressed: () async {
                   try {
                     final isDone =
-                        form.EmbossStatus.text.toLowerCase() == "done";
+                        form.EmbossStatus.text.trim().toLowerCase() == "done";
 
                     final updateData = {
                       "emboss": {
                         "submitted": true,
                         "data": {
                           "EmbossStatus": form.EmbossStatus.text,
-                          "EmbossPcs": form.EmbossPcs.text,
                           "MaleEmbossType": form.MaleEmbossType.text,
-                          "X": form.X.text,
-                          "Y": form.Y.text,
                           "FemaleEmbossType": form.FemaleEmbossType.text,
+                          "EmbossCreatedBy": form.EmbossCreatedBy.text,
                         },
                       },
-
-                      "currentDepartment":
-                      isDone ? "Account" : "Emboss",
-
+                      "currentDepartment": isDone ? "Account" : "Emboss",
                       "updatedAt": FieldValue.serverTimestamp(),
                     };
 
@@ -263,19 +259,32 @@ class _EmbossPageState extends State<EmbossPage> {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text("Form submitted successfully")),
+                        content: Text("Form submitted successfully"),
+                      ),
                     );
 
                     context.pop();
                   } catch (e) {
                     if (!context.mounted) return;
-
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Error: $e")),
                     );
                   }
                 },
-                child: const Text("Save & Continue"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF8D94B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 4,
+                ),
+                child: const Text(
+                  "Save & Continue",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ],

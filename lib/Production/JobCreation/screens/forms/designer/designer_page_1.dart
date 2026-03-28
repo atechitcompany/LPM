@@ -177,7 +177,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             /// ✅ Order By
             TextInput(
-              controller: form.Orderby,
+              controller: form.OrderBy,
               label: "Order By",
               hint: "Name",
             ),

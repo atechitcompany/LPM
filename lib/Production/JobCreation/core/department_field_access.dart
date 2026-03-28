@@ -22,6 +22,9 @@ class DepartmentFieldAccess {
       case "Emboss":
         return _emboss();
 
+      case "Account":
+        return _account();
+
       default:
         return {};
     }
@@ -149,5 +152,62 @@ class DepartmentFieldAccess {
     "X": "edit",
     "Y": "edit",
     "FemaleEmbossType": "edit",
+  };
+
+  static Map<String, String> _account() => {
+
+    // ===== VIEW =====
+    "PartyName": "view",
+    "ParticularJobName": "view",
+    "LpmAutoIncrement": "view",
+    "Priority": "view",
+    "DesigningStatus": "view",
+    "DesignerCreatedBy": "view",
+
+    // ===== PAGE 1 =====
+    "AccountsCreatedBy": "edit",
+    "BuyerOrderNo": "edit",
+    "OrderBy": "edit",
+    "DeliveryAt": "edit",
+    "Remark": "edit",
+
+    // ===== PAGE 2 =====
+    "Size2": "edit",
+    "Size3": "edit",
+    "Size4": "edit",
+    "Size5": "edit",
+    "Ups_32": "edit",
+
+    // ===== PAGE 3 =====
+    "LaserPunchNew": "edit",
+    "PlyLength": "edit",
+    "PlyBreadth": "edit",
+    "BladeSize": "edit",
+    "CreasingSize": "edit",
+    "MinimumChargeApply": "edit",
+
+    // ===== PAGE 4 =====
+    "DeliveryCreatedBy": "edit",
+    "DeliveryStatus": "edit",
+    "DeliveryURL": "edit",
+    "TransportName": "edit",
+
+    // ===== PAGE 5 =====
+    "CapsuleRate": "edit",
+    "CapsulePcs": "edit",
+    "PerforationSize": "edit",
+    "ZigZagBladeSize": "edit",
+    "RubberSize": "edit",
+    "HoleType": "edit",
+    "CourierCharges": "edit",
+
+    // ===== PAGE 6 =====
+    "TotalSize": "edit",
+    "MinimumChargeApply": "edit",
+    "MaleRate": "edit",
+    "FemaleRate": "edit",
+    "InvoiceStatus": "edit",
+    "InvoicePrintedBy": "edit",
+    "ParticularSlider": "edit",
   };
 }

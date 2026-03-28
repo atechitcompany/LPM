@@ -1,94 +1,240 @@
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
-import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
-import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
+import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import '../../new_form_scope.dart';
+import 'package:go_router/go_router.dart';
 
-class AccountPage1Basic extends StatelessWidget {
+class AccountPage1Basic extends StatefulWidget {
   const AccountPage1Basic({super.key});
+
+  @override
+  State<AccountPage1Basic> createState() => _AccountPage1BasicState();
+}
+
+class _AccountPage1BasicState extends State<AccountPage1Basic> {
+  bool loading = true;
+  bool _loaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
+    _loaded = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+  }
+
+  Future<void> _loadData() async {
+    final form = NewFormScope.of(context);
+    final lpm = form.LpmAutoIncrement.text;
+
+    if (lpm.isEmpty) {
+      setState(() => loading = false);
+      return;
+    }
+
+    final snap = await FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(lpm)
+        .get();
+
+    if (!snap.exists) {
+      setState(() => loading = false);
+      return;
+    }
+
+    final data = snap.data()!;
+
+    final designer =
+    Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+    final account =
+    Map<String, dynamic>.from(data["account"]?["data"] ?? {});
+
+    // 👀 VIEW DATA (from designer)
+    form.PartyName.text = designer["PartyName"] ?? "";
+    form.ParticularJobName.text =
+        designer["ParticularJobName"] ?? "";
+    form.LpmAutoIncrement.text = lpm;
+    form.Priority.text = designer["Priority"] ?? "";
+    form.DesigningStatus.text =
+        designer["DesigningStatus"] ?? "";
+    form.DesignerCreatedBy.text =
+        designer["DesignerCreatedBy"] ?? "";
+
+    // ✏ EDIT DATA (account)
+    form.AccountsCreatedBy.text =
+        account["AccountsCreatedBy"] ?? "";
+    form.BuyerOrderNo.text =
+        account["BuyerOrderNo"] ?? "";
+    form.OrderBy.text =
+        account["OrderBy"] ?? "";
+    form.DeliveryAt.text =
+        account["DeliveryAt"] ?? "";
+    form.Remark.text =
+        account["Remark"] ?? "";
+
+    setState(() => loading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-          // Accounts Created By
-          SearchableDropdownWithInitial(
-            label: "Accounts Created By",
-            items: form.parties,
-            onChanged: (v) {},
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Account - Basic"),
+        backgroundColor: Colors.yellow,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
 
-          const SizedBox(height: 30),
+            // ===== VIEW FIELDS =====
 
-          // Buyer's Order No
-          TextInput(
-            label: "Buyer's Order No",
-            hint: "Order Number",
-            controller: form.BuyerOrderNo,
-          ),
+            if (form.canView("PartyName"))
+              TextInput(
+                label: "Party Name",
+                controller: form.PartyName,
+                readOnly: true,
+                hint: "",
+              ),
 
-          const SizedBox(height: 30),
+            if (form.canView("ParticularJobName")) ...[
+              const SizedBox(height: 16),
+              TextInput(
+                label: "Particular Job Name",
+                controller: form.ParticularJobName,
+                readOnly: true,
+                hint: "",
+              ),
+            ],
 
-          // Ups
-          TextInput(
-            label: "Ups",
-            hint: "ups",
-            controller: form.Ups,
-            initialValue: "NO",
-          ),
+            if (form.canView("LpmAutoIncrement")) ...[
+              const SizedBox(height: 16),
+              TextInput(
+                label: "LPM",
+                controller: form.LpmAutoIncrement,
+                readOnly: true,
+                hint: "",
+              ),
+            ],
 
-          const SizedBox(height: 30),
+            if (form.canView("Priority")) ...[
+              const SizedBox(height: 16),
+              TextInput(
+                label: "Priority",
+                controller: form.Priority,
+                readOnly: true,
+                hint: "",
+              ),
+            ],
 
-          // Size
-          TextInput(
-            label: "Size",
-            hint: "name",
-            controller: form.Size,
-            initialValue: "NO",
-          ),
+            if (form.canView("DesigningStatus")) ...[
+              const SizedBox(height: 16),
+              TextInput(
+                label: "Designing",
+                controller: form.DesigningStatus,
+                readOnly: true,
+                hint: "",
+              ),
+            ],
 
-          const SizedBox(height: 30),
+            if (form.canView("DesignerCreatedBy")) ...[
+              const SizedBox(height: 16),
+              TextInput(
+                label: "Designer Created By",
+                controller: form.DesignerCreatedBy,
+                readOnly: true,
+                hint: "",
+              ),
+            ],
 
-          // Unknown
-          TextInput(
-            label: "Unknown",
-            hint: "",
-            controller: form.Unknown,
-            initialValue: "NO",
-          ),
+            const SizedBox(height: 30),
 
-          const SizedBox(height: 30),
+            // ===== EDIT FIELDS =====
 
-          // Total Size
-          TextInput(
-            label: "Total Size",
-            hint: "",
-            controller: form.TotalSize,
-            initialValue: "NO",
-          ),
+            IgnorePointer(
+              ignoring: !form.canEdit("AccountsCreatedBy"),
+              child: Opacity(
+                opacity: form.canEdit("AccountsCreatedBy") ? 1 : 0.6,
+                child: SearchableDropdownWithInitial(
+                  label: "Accounts Created By",
+                  items: form.parties,
+                  initialValue: form.AccountsCreatedBy.text.isEmpty
+                      ? "Select"
+                      : form.AccountsCreatedBy.text,
+                  onChanged: (v) {
+                    form.AccountsCreatedBy.text =
+                        (v ?? "").trim();
+                  },
+                ),
+              ),
+            ),
 
-          const SizedBox(height: 30),
+            const SizedBox(height: 16),
 
-          // Delivery Address (Addable)
-          AddableSearchDropdown(
-            label: "Delivery Address",
-            items: form.jobs,
-            initialValue: form.ParticularJobName.text.isEmpty
-                ? "No"
-                : form.ParticularJobName.text,
-            onChanged: (v) {
-              form.ParticularJobName.text = (v ?? "").trim();
-            },
-            onAdd: (newJob) => form.jobs.add(newJob),
-          ),
+            IgnorePointer(
+              ignoring: !form.canEdit("BuyerOrderNo"),
+              child: Opacity(
+                opacity: form.canEdit("BuyerOrderNo") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Buyer's Order No",
+                  controller: form.BuyerOrderNo,
+                  hint: "",
+                ),
+              ),
+            ),
 
-        ],
+            const SizedBox(height: 16),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("OrderBy"),
+              child: Opacity(
+                opacity: form.canEdit("OrderBy") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Order By",
+                  controller: form.OrderBy,
+                  hint: "",
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryAt"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryAt") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Delivery At",
+                  controller: form.DeliveryAt,
+                  hint: "",
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("Remark"),
+              child: Opacity(
+                opacity: form.canEdit("Remark") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Remark",
+                  controller: form.Remark,
+                  hint: "",
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
