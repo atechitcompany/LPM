@@ -4,6 +4,7 @@ import 'package:lightatech/routes/app_route_constants.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
+import 'package:lightatech/Features/Dashboard/screens/profile_screen.dart' as dashboard_profile;
 
 // Intro
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
@@ -55,7 +56,7 @@ import 'package:lightatech/Features/Graph/widgets/graph_form.dart';
 import 'package:lightatech/Features/Graph/screens/graph_tasks_page.dart';
 
 // Target
-import 'package:lightatech/Features/Target/screens/profile_screen.dart';
+import 'package:lightatech/Features/Target/screens/profile_screen.dart' as target_profile;
 
 // Payment
 import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
@@ -220,6 +221,11 @@ class AppRoutes {
           ),
 
           GoRoute(
+            path: '/profile',
+            builder: (context, state) => const dashboard_profile.ProfileScreen(),
+          ),
+
+          GoRoute(
             path: '/payment',
             name: AppRoutesName.PaymentScreen,
             builder: (context, state) => const PaidScreen(),
@@ -232,7 +238,7 @@ class AppRoutes {
 
           GoRoute(
             path: '/target',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) => const target_profile.ProfileScreen(),
           ),
         ],
       ),
