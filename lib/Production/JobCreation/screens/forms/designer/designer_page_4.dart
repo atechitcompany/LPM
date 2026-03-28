@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
@@ -32,30 +33,62 @@ class _DesignerPage4State extends State<DesignerPage4> {
     final form = NewFormScope.of(context);
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
-    if (dataJson == null || dataJson.isEmpty) {
-      return;
-    }
+    if (dataJson != null && dataJson.isNotEmpty) {
+      try {
+        final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    try {
-      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+        setState(() {
+          form.Perforation.text = decodedData["Perforation"] ?? "No";
+          form.PerforationSelectedBy.text = decodedData["PerforationSelectedBy"] ?? "";
+          form.ZigZagBlade.text = decodedData["ZigZagBlade"] ?? "No";
+          form.ZigZagBladeSelectedBy.text = decodedData["ZigZagBladeSelectedBy"] ?? "";
+          form.RubberType.text = decodedData["RubberType"] ?? "No";
+          form.RubberSelectedBy.text = decodedData["RubberSelectedBy"] ?? "";
+          form.HoleType.text = decodedData["HoleType"] ?? "No";
+          form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
+          form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
+          form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
+        });
 
-      setState(() {
-        form.Perforation.text = decodedData["Perforation"] ?? "No";
-        form.PerforationSelectedBy.text = decodedData["PerforationSelectedBy"] ?? "";
-        form.ZigZagBlade.text = decodedData["ZigZagBlade"] ?? "No";
-        form.ZigZagBladeSelectedBy.text = decodedData["ZigZagBladeSelectedBy"] ?? "";
-        form.RubberType.text = decodedData["RubberType"] ?? "No";
-        form.RubberSelectedBy.text = decodedData["RubberSelectedBy"] ?? "";
-        form.HoleType.text = decodedData["HoleType"] ?? "No";
-        form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
-        form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
-        form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
-      });
+        debugPrint("✅ DesignerPage4 loaded data from route");
+      } catch (e) {
+        debugPrint("❌ Error decoding data: $e");
+      }
+    } else if (lpmParam != null && lpmParam.isNotEmpty) {
+      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection("jobs")
+            .doc(lpmParam)
+            .get();
 
-      debugPrint("✅ DesignerPage4 loaded data from route");
-    } catch (e) {
-      debugPrint("❌ Error decoding data: $e");
+        if (!snap.exists) {
+          debugPrint("❌ Firestore: document $lpmParam not found");
+          return;
+        }
+
+        final decodedData =
+            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        setState(() {
+          form.Perforation.text = decodedData["Perforation"] ?? "No";
+          form.PerforationSelectedBy.text = decodedData["PerforationSelectedBy"] ?? "";
+          form.ZigZagBlade.text = decodedData["ZigZagBlade"] ?? "No";
+          form.ZigZagBladeSelectedBy.text = decodedData["ZigZagBladeSelectedBy"] ?? "";
+          form.RubberType.text = decodedData["RubberType"] ?? "No";
+          form.RubberSelectedBy.text = decodedData["RubberSelectedBy"] ?? "";
+          form.HoleType.text = decodedData["HoleType"] ?? "No";
+          form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
+          form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
+          form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
+        });
+
+        debugPrint("✅ DesignerPage4 loaded data from Firestore");
+      } catch (e) {
+        debugPrint("❌ Error fetching from Firestore: $e");
+      }
     }
   }
 

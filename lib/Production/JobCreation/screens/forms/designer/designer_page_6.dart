@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../FormComponents/SearchableDropdownWithInitial.dart';
 import '../new_form_scope.dart';
@@ -35,24 +36,52 @@ class _DesignerPage6State extends State<DesignerPage6> {
     final form = NewFormScope.of(context);
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
+    final lpmParam = uri.queryParameters['lpm'];
 
-    if (dataJson == null || dataJson.isEmpty) {
-      return;
-    }
+    if (dataJson != null && dataJson.isNotEmpty) {
+      try {
+        final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
-    try {
-      final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
+        form.StrippingType.text = decodedData["StrippingType"] ?? "No";
+        form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+        form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
+        form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
+        form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+        form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
 
-      form.StrippingType.text = decodedData["StrippingType"] ?? "No";
-      form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
-      form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
-      form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
-      form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
-      form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
+        debugPrint("✅ DesignerPage6 loaded data from route");
+      } catch (e) {
+        debugPrint("❌ Error decoding data: $e");
+      }
+    } else if (lpmParam != null && lpmParam.isNotEmpty) {
+      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection("jobs")
+            .doc(lpmParam)
+            .get();
 
-      debugPrint("✅ DesignerPage6 loaded data from route");
-    } catch (e) {
-      debugPrint("❌ Error decoding data: $e");
+        if (!snap.exists) {
+          debugPrint("❌ Firestore: document $lpmParam not found");
+          return;
+        }
+
+        final decodedData =
+            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        setState(() {
+          form.StrippingType.text = decodedData["StrippingType"] ?? "No";
+          form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+          form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
+          form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
+          form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+          form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
+        });
+
+        debugPrint("✅ DesignerPage6 loaded data from Firestore");
+      } catch (e) {
+        debugPrint("❌ Error fetching from Firestore: $e");
+      }
     }
   }
 
