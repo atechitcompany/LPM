@@ -76,9 +76,9 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       // 🟢 THE FULLY SYNCHRONIZED ACCOUNT LOAD LIST 🟢
       form.AccountsCreatedBy.text = account["AccountsCreatedBy"] ?? "";
       form.BuyerOrderNo.text = account["BuyerOrderNo"] ?? "";
-      form.OrderBy.text = account["OrderBy"] ?? ""; // ⬅️ Fixed typo here too!
-      form.DeliveryAt.text = account["DeliveryAt"] ?? ""; // ⬅️ Added
-      form.Remark.text = account["Remark"] ?? ""; // ⬅️ Added
+      form.OrderBy.text = account["OrderBy"] ?? "";
+      form.DeliveryAt.text = account["DeliveryAt"] ?? "";
+      form.Remark.text = account["Remark"] ?? "";
 
       form.Ups.text = account["Ups"] ?? "NO";
       form.Size.text = account["Size"] ?? "NO";
@@ -95,7 +95,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       form.CreasingSize.text = account["CreasingSize"] ?? "";
       form.MinimumChargeApply.text = account["MinimumChargeApply"] ?? "";
 
-      form.DeliveryCreatedBy.text = account["DeliveryCreatedBy"] ?? ""; // ⬅️ Added
+      form.DeliveryCreatedBy.text = account["DeliveryCreatedBy"] ?? "";
       form.DeliveryStatus.text = account["DeliveryStatus"] ?? "Pending";
       form.DeliveryURL.text = account["DeliveryURL"] ?? "";
       form.TransportName.text = account["TransportName"] ?? "";
@@ -110,11 +110,11 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       form.TotalSize.text = account["TotalSize"] ?? "";
       form.MaleRate.text = account["MaleRate"] ?? "";
       form.FemaleRate.text = account["FemaleRate"] ?? "";
-      form.InvoiceStatus.text = account["InvoiceStatus"] ?? "Pending"; // Changed default to Pending to match toggle
+      form.InvoiceStatus.text = account["InvoiceStatus"] ?? "Pending";
       form.InvoicePrintedBy.text = account["InvoicePrintedBy"] ?? "";
-      form.ParticularSlider.text = account["ParticularSlider"] ?? ""; // ⬅️ Added
+      form.ParticularSlider.text = account["ParticularSlider"] ?? "";
 
-      form.AccountStatus.text = account["AccountStatus"] ?? "Pending"; // ⬅️ Added your new toggle!
+      form.AccountStatus.text = account["AccountStatus"] ?? "Pending";
 
       // (We can leave Unknown and Extra if they might exist from old data)
       form.Unknown.text = account["Unknown"] ?? "";
@@ -178,7 +178,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
         "InvoiceStatus": form.InvoiceStatus.text,
         "InvoicePrintedBy": form.InvoicePrintedBy.text,
         "ParticularSlider": form.ParticularSlider.text,
-        "AccountStatus": form.AccountStatus.text, // 🟢 New field added to payload
+        "AccountStatus": form.AccountStatus.text,
       };
 
       final updateData = {
