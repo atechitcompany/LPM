@@ -194,16 +194,24 @@ class _FirestoreTabState extends State<_FirestoreTab> {
   }
 
   void _setupStream() {
-    if (widget.isPending && widget.department == "Designer") {
-      // Designer pending tab — show jobs where designing not yet done
+    if (widget.department == "Designer" && widget.isPending) {
+      // Pending tab → Designing not yet done
       _stream = FirebaseFirestore.instance
           .collection("jobs")
           .where("visibleTo", arrayContains: "Designer")
-          .where("currentDepartment", isEqualTo: "Designer")
+          .where("designer.data.DesigningStatus", isEqualTo: "Pending")
+          .orderBy("updatedAt", descending: true)
+          .snapshots();
+    } else if (widget.department == "Designer" && !widget.isPending) {
+      // Jobs tab → Designing is done
+      _stream = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("visibleTo", arrayContains: "Designer")
+          .where("designer.data.DesigningStatus", isEqualTo: "Done")
           .orderBy("updatedAt", descending: true)
           .snapshots();
     } else {
-      // All other departments + Designer Jobs tab
+      // All other departments
       _stream = FirebaseFirestore.instance
           .collection("jobs")
           .where("visibleTo", arrayContains: widget.department)
