@@ -25,6 +25,9 @@ class DepartmentFieldAccess {
       case "Account":
         return _account();
 
+      case "Delivery":
+        return _delivery();
+
       default:
         return {};
     }
@@ -208,5 +211,23 @@ class DepartmentFieldAccess {
     "AccountStatus": "edit",
     "InvoicePrintedBy": "edit",
     "ParticularSlider": "edit",
+  };
+
+  static Map<String, String> _delivery() => {
+    // ===== VIEW FIELDS (From previous departments) =====
+    "PartyName": "view",
+    "ParticularJobName": "view",
+    "LpmAutoIncrement": "view",
+    "DeliveryAt": "view",
+    "Remark": "view",
+    "AutoBendingCreatedBy": "view",
+    "LaserCuttingCreatedBy": "view",
+    "AccountsCreatedBy": "view",
+
+    // ===== EDIT FIELDS (For the Delivery team) =====
+    "DeliveryStatus": "edit",
+    "AddressOutput": "edit",
+    "DrawingAttachment": "edit",// We will use AddressOutput for Delivery Address
+    "JobDone": "edit",
   };
 }

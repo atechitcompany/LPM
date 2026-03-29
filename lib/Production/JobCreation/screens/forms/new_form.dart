@@ -201,6 +201,7 @@ class NewFormState extends State<NewForm> {
   final TextEditingController HoleSelectedBy = TextEditingController();
   final LpmAutoIncrement = TextEditingController();
   final JobDone = TextEditingController();
+  final DrawingAttachment = TextEditingController();
 
 
 
@@ -396,6 +397,7 @@ class NewFormState extends State<NewForm> {
 
       "RubberFixingDone": RubberFixingDone.text,
       "WhiteProfileRubber": WhiteProfileRubber.text,
+      "DrawingAttachment": DrawingAttachment.text,
 
       "Timestamp": DateTime.now().toIso8601String(),
     };
@@ -541,6 +543,7 @@ class NewFormState extends State<NewForm> {
     HoleSelectedBy.clear();
     Perforation.clear();
     PartyName.clear();
+    DrawingAttachment.clear();
 
 
 
@@ -1069,6 +1072,7 @@ class NewFormState extends State<NewForm> {
     HoleSelectedBy.dispose();
     Perforation.dispose();
     PartyName.dispose();
+    DrawingAttachment.dispose();
 
     super.dispose();
   }
