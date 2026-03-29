@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import '../../new_form_scope.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/FileUploadBox.dart';
@@ -18,89 +18,133 @@ class AccountPage4Delivery extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // Delivery Created By (1)
-          SearchableDropdownWithInitial(
-            label: "Delivery Created By",
-            items: form.parties,
-            onChanged: (v) {},
+          // ===== DELIVERY CREATED BY =====
+
+          if (form.canView("DeliveryCreatedBy"))
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryCreatedBy"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryCreatedBy") ? 1 : 0.6,
+                child: SearchableDropdownWithInitial(
+                  label: "Delivery Created By",
+                  items: form.parties,
+                  initialValue: form.DeliveryCreatedBy.text.isEmpty
+                      ? "Select"
+                      : form.DeliveryCreatedBy.text,
+                  onChanged: (v) {
+                    form.DeliveryCreatedBy.text = (v ?? "").trim();
+                  },
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 30),
+
+          // ===== DELIVERY STATUS =====
+
+          IgnorePointer(
+            ignoring: !form.canEdit("DeliveryStatus"),
+            child: Opacity(
+              opacity: form.canEdit("DeliveryStatus") ? 1 : 0.6,
+              child: FlexibleToggle(
+                label: "Delivery",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue:
+                form.DeliveryStatus.text.toLowerCase() == "done",
+                onChanged: (val) {
+                  form.DeliveryStatus.text = val ? "Done" : "Pending";
+                },
+              ),
+            ),
           ),
 
           const SizedBox(height: 30),
 
-          // Delivery Created By (2) — duplicated in original
-          SearchableDropdownWithInitial(
-            label: "Delivery Created By",
-            items: form.parties,
-            onChanged: (v) {},
-          ),
+          // ===== DIE / PUNCH IMAGE =====
+
+          if (form.canView("DiePunchImage")) ...[
+            const Text(
+              "Die/Punch Image",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("DiePunchImage"),
+              child: Opacity(
+                opacity: form.canEdit("DiePunchImage") ? 1 : 0.6,
+                child: FileUploadBox(
+                  onFileSelected: (file) {
+                    print("Selected File: ${file.name}");
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Delivery Status
-          FlexibleToggle(
-            label: "Delivery",
-            inactiveText: "Pending",
-            activeText: "Done",
-            initialValue: false,
-            onChanged: (val) {
-              form.DeliveryStatus.text = val ? "Yes" : "No";
-            },
-          ),
+          // ===== INVOICE IMAGE =====
+
+          if (form.canView("InvoiceImage")) ...[
+            const Text(
+              "Invoice Image",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("InvoiceImage"),
+              child: Opacity(
+                opacity: form.canEdit("InvoiceImage") ? 1 : 0.6,
+                child: FileUploadBox(
+                  onFileSelected: (file) {
+                    print("Selected File: ${file.name}");
+                  },
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 30),
 
-          // Die / Punch Image
-          const Text(
-            "Die/Punch Image",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
+          // ===== DELIVERY URL =====
 
-          FileUploadBox(
-            onFileSelected: (file) {
-              // same logging as original
-              print("Selected File: ${file.name}");
-              print("Size: ${file.size}");
-              print("Path: ${file.path}");
-            },
-          ),
-
-          const SizedBox(height: 30),
-
-          // Invoice Image
-          const Text(
-            "Invoice Image",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-
-          FileUploadBox(
-            onFileSelected: (file) {
-              // same logging as original
-              print("Selected File: ${file.name}");
-              print("Size: ${file.size}");
-              print("Path: ${file.path}");
-            },
-          ),
+          if (form.canView("DeliveryURL"))
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryURL"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryURL") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Delivery URL",
+                  hint: "",
+                  controller: form.DeliveryURL,
+                ),
+              ),
+            ),
 
           const SizedBox(height: 30),
 
-          // Delivery URL
-          TextInput(
-            label: "Delivery URL",
-            hint: "",
-            controller: form.DeliveryURL,
-            initialValue: "Delivered",
-          ),
+          // ===== TRANSPORT NAME =====
 
-          const SizedBox(height: 30),
-
-          // Transport Name
-          SearchableDropdownWithInitial(
-            label: "Transport Name",
-            items: form.parties,
-            onChanged: (v) {},
-          ),
+          if (form.canView("TransportName"))
+            IgnorePointer(
+              ignoring: !form.canEdit("TransportName"),
+              child: Opacity(
+                opacity: form.canEdit("TransportName") ? 1 : 0.6,
+                child: SearchableDropdownWithInitial(
+                  label: "Transport Name",
+                  items: form.parties,
+                  initialValue: form.TransportName.text.isEmpty
+                      ? "Select"
+                      : form.TransportName.text,
+                  onChanged: (v) {
+                    form.TransportName.text = (v ?? "").trim();
+                  },
+                ),
+              ),
+            ),
 
         ],
       ),

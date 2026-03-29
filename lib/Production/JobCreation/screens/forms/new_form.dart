@@ -103,10 +103,10 @@ class NewFormState extends State<NewForm> {
 
   final BuyerOrderNo = TextEditingController();
   final DeliveryAt = TextEditingController();
-  final Orderby = TextEditingController();
+  final OrderBy = TextEditingController();
   final Remark = TextEditingController();
   final Ups = TextEditingController();
-  final PartyworkName = TextEditingController();
+  final PartyWorkName = TextEditingController();
   final Size = TextEditingController();
   final Size2 = TextEditingController();
   final Size3 = TextEditingController();
@@ -218,7 +218,7 @@ class NewFormState extends State<NewForm> {
     PartyName.clear();
     DesignerCreatedBy.clear();
     DeliveryAt.clear();
-    Orderby.clear();
+    OrderBy.clear();
     ParticularJobName.clear();
     Priority.clear();
     Remark.clear();
@@ -271,10 +271,10 @@ class NewFormState extends State<NewForm> {
 
       "BuyerOrderNo": BuyerOrderNo.text,
       "DeliveryAt": DeliveryAt.text,
-      "Orderby": Orderby.text,
+      "Orderby": OrderBy.text,
       "Remark": Remark.text,
       "Ups": Ups.text,
-      "PartyworkName": PartyworkName.text,
+      "PartyworkName": PartyWorkName.text,
       "Size": Size.text,
       "Size2": Size2.text,
       "Size3": Size3.text,
@@ -445,10 +445,10 @@ class NewFormState extends State<NewForm> {
     // Clear all text controllers
     BuyerOrderNo.clear();
     DeliveryAt.clear();
-    Orderby.clear();
+    OrderBy.clear();
     Remark.clear();
     Ups.clear();
-    PartyworkName.clear();
+    PartyWorkName.clear();
     Size.clear();
     Size2.clear();
     Size3.clear();
@@ -543,7 +543,7 @@ class NewFormState extends State<NewForm> {
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
-    PartyworkName.text = "NO";
+    PartyWorkName.text = "NO";
     Size.text = "NO";
     Size2.text = "NO";
     Size3.text = "NO";
@@ -910,7 +910,7 @@ class NewFormState extends State<NewForm> {
   PartyName: ${PartyName.text}
   DesignerCreatedBy: ${DesignerCreatedBy.text}
   DeliveryAt: ${DeliveryAt.text}
-  Orderby: ${Orderby.text}
+  Orderby: ${OrderBy.text}
   ParticularJobName: ${ParticularJobName.text}
   Priority: ${Priority.text}
   Remark: ${Remark.text}
@@ -945,7 +945,7 @@ class NewFormState extends State<NewForm> {
     // defaults
     Remark.text = "NO REMARK";
     Ups.text = "NO";
-    PartyworkName.text = "NO";
+    PartyWorkName.text = "NO";
     Size.text = "NO";
     Size2.text = "NO";
     Size3.text = "NO";
@@ -971,10 +971,10 @@ class NewFormState extends State<NewForm> {
   void dispose() {
     BuyerOrderNo.dispose();
     DeliveryAt.dispose();
-    Orderby.dispose();
+    OrderBy.dispose();
     Remark.dispose();
     Ups.dispose();
-    PartyworkName.dispose();
+    PartyWorkName.dispose();
     Size.dispose();
     Size2.dispose();
     Size3.dispose();
@@ -1153,8 +1153,35 @@ class NewFormState extends State<NewForm> {
 
 
   void _goNext() {
+    final uri = GoRouterState.of(context).uri;
+    final path = uri.path;
+
+    // DESIGNER FLOW
     if (department == "Designer") {
       _goDesignerNext();
+      return;
+    }
+
+    // ACCOUNT FLOW
+    if (department == "Account") {
+      const accountPages = [
+        '/jobform/account-1',
+        '/jobform/account-2',
+        '/jobform/account-3',
+        '/jobform/account-4',
+        '/jobform/account-5',
+        '/jobform/account-6',
+      ];
+
+      final index = accountPages.indexOf(path);
+
+      if (index != -1 && index < accountPages.length - 1) {
+        context.push(
+          accountPages[index + 1] + '?${uri.query}',
+        );
+      }
+
+      return;
     }
   }
 
