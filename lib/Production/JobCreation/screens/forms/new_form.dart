@@ -151,6 +151,7 @@ class NewFormState extends State<NewForm> {
   final AutoBendingCreatedBy = TextEditingController();
   final LaserCuttingCreatedBy = TextEditingController();
   final AccountsCreatedBy = TextEditingController();
+  final AccountStatus = TextEditingController();
   final EmbossCreatedBy = TextEditingController();
   final ManualBendingStatus = TextEditingController();
   final ManualBendingCreatedBy = TextEditingController();
@@ -379,6 +380,7 @@ class NewFormState extends State<NewForm> {
       "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
       "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
       "AccountsCreatedBy": AccountsCreatedBy.text,
+      "AccountStatus": AccountStatus.text,
       "EmbossCreatedBy": EmbossCreatedBy.text,
       "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
       "ManualBendingFittingDoneBy": ManualBendingFittingDoneBy.text,
@@ -514,6 +516,7 @@ class NewFormState extends State<NewForm> {
     AutoBendingCreatedBy.clear();
     LaserCuttingCreatedBy.clear();
     AccountsCreatedBy.clear();
+    AccountStatus.clear();
     EmbossCreatedBy.clear();
     ManualBendingCreatedBy.clear();
     ManualBendingFittingDoneBy.clear();
@@ -1219,6 +1222,7 @@ class NewFormState extends State<NewForm> {
     AutoBendingCreatedBy.dispose();
     LaserCuttingCreatedBy.dispose();
     AccountsCreatedBy.dispose();
+    AccountStatus.dispose();
     EmbossCreatedBy.dispose();
     ManualBendingCreatedBy.dispose();
     ManualBendingFittingDoneBy.dispose();
@@ -1268,7 +1272,8 @@ class NewFormState extends State<NewForm> {
             Expanded(child: widget.child),
 
             // 🔹 PREV / NEXT BUTTONS
-            if (isJobFormRoute)
+            // ✅ FIX: Hide global previous/next buttons for the Account flow
+            if (isJobFormRoute && department != "Account")
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(

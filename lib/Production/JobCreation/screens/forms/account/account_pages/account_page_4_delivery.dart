@@ -23,46 +23,50 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // ===== EDIT FIELDS =====
+          // ===== CONTROLLED EDIT FIELDS =====
 
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: SearchableDropdownWithInitial(
-                label: "Delivery Created By",
-                items: form.parties,
-                initialValue: form.DeliveryCreatedBy.text.isEmpty
-                    ? "Select"
-                    : form.DeliveryCreatedBy.text,
-                onChanged: (v) {
-                  form.DeliveryCreatedBy.text = (v ?? "").trim();
-                },
+          if (form.canView("DeliveryCreatedBy")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryCreatedBy"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryCreatedBy") ? 1 : 0.6,
+                child: SearchableDropdownWithInitial(
+                  label: "Delivery Created By",
+                  items: form.parties,
+                  initialValue: form.DeliveryCreatedBy.text.isEmpty
+                      ? "Select"
+                      : form.DeliveryCreatedBy.text,
+                  onChanged: (v) {
+                    form.DeliveryCreatedBy.text = (v ?? "").trim();
+                  },
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: FlexibleToggle(
-                label: "Delivery",
-                inactiveText: "Pending",
-                activeText: "Done",
-                initialValue: form.DeliveryStatus.text.toLowerCase() == "done",
-                onChanged: (val) {
-                  setState(() {
-                    form.DeliveryStatus.text = val ? "Done" : "Pending";
-                  });
-                },
+          if (form.canView("DeliveryStatus")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryStatus"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryStatus") ? 1 : 0.6,
+                child: FlexibleToggle(
+                  label: "Delivery",
+                  inactiveText: "Pending",
+                  activeText: "Done",
+                  initialValue: form.DeliveryStatus.text.toLowerCase() == "done",
+                  onChanged: (val) {
+                    setState(() {
+                      form.DeliveryStatus.text = val ? "Done" : "Pending";
+                    });
+                  },
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
+          // ===== FREE UI (FILE UPLOADS) =====
 
           const Text(
             "Die/Punch Image",
@@ -96,38 +100,42 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
 
           const SizedBox(height: 30),
 
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Delivery URL",
-                hint: "",
-                controller: form.DeliveryURL,
+          // ===== CONTROLLED EDIT FIELDS =====
+
+          if (form.canView("DeliveryURL")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryURL"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryURL") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Delivery URL",
+                  hint: "",
+                  controller: form.DeliveryURL,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: SearchableDropdownWithInitial(
-                label: "Transport Name",
-                items: form.parties,
-                initialValue: form.TransportName.text.isEmpty
-                    ? "Select"
-                    : form.TransportName.text,
-                onChanged: (v) {
-                  form.TransportName.text = (v ?? "").trim();
-                },
+          if (form.canView("TransportName")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("TransportName"),
+              child: Opacity(
+                opacity: form.canEdit("TransportName") ? 1 : 0.6,
+                child: SearchableDropdownWithInitial(
+                  label: "Transport Name",
+                  items: form.parties,
+                  initialValue: form.TransportName.text.isEmpty
+                      ? "Select"
+                      : form.TransportName.text,
+                  onChanged: (v) {
+                    form.TransportName.text = (v ?? "").trim();
+                  },
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 40),
+            const SizedBox(height: 40),
+          ],
         ],
       ),
     );

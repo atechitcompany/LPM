@@ -155,8 +155,7 @@ class DepartmentFieldAccess {
   };
 
   static Map<String, String> _account() => {
-
-    // ===== VIEW =====
+    // ===== VIEW ONLY (from Designer) =====
     "PartyName": "view",
     "ParticularJobName": "view",
     "LpmAutoIncrement": "view",
@@ -167,7 +166,7 @@ class DepartmentFieldAccess {
     // ===== PAGE 1 =====
     "AccountsCreatedBy": "edit",
     "BuyerOrderNo": "edit",
-    "OrderBy": "edit",
+    "OrderBy": "edit", // Fixed case
     "DeliveryAt": "edit",
     "Remark": "edit",
 
@@ -203,10 +202,10 @@ class DepartmentFieldAccess {
 
     // ===== PAGE 6 =====
     "TotalSize": "edit",
-    "MinimumChargeApply": "edit",
     "MaleRate": "edit",
     "FemaleRate": "edit",
     "InvoiceStatus": "edit",
+    "AccountStatus": "edit",
     "InvoicePrintedBy": "edit",
     "ParticularSlider": "edit",
   };

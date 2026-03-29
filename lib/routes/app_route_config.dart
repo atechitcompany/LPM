@@ -244,9 +244,26 @@ class AppRoutes {
       ),
 
       // JOB FORM SHELL
+      // JOB FORM SHELL
       ShellRoute(
         builder: (context, state, child) {
-          final dept = state.uri.queryParameters['department'] ?? 'designer';
+          // 1. Try to get it from the query parameter
+          String? dept = state.uri.queryParameters['department'];
+
+          // 2. If it's null, auto-detect based on the URL path!
+          if (dept == null) {
+            final path = state.uri.path;
+            if (path.contains('designer')) dept = 'designer';
+            else if (path.contains('autobending')) dept = 'auto-bending';
+            else if (path.contains('manualbending')) dept = 'manual-bending';
+            else if (path.contains('laser')) dept = 'laser';
+            else if (path.contains('emboss')) dept = 'emboss';
+            else if (path.contains('rubber')) dept = 'rubber';
+            else if (path.contains('account1')) dept = 'account1'; // 🟢 Catches the Account route!
+            else if (path.contains('delivery')) dept = 'delivery';
+            else dept = 'designer'; // Ultimate fallback
+          }
+
           final lpm = state.uri.queryParameters['lpm'];
           final mode = state.uri.queryParameters['mode'];
 

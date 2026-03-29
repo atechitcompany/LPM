@@ -73,9 +73,13 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       form.DesigningStatus.text = designer["DesigningStatus"] ?? "";
       form.DesignerCreatedBy.text = designer["DesignerCreatedBy"] ?? "";
 
-      // Editable account fields
+      // 🟢 THE FULLY SYNCHRONIZED ACCOUNT LOAD LIST 🟢
       form.AccountsCreatedBy.text = account["AccountsCreatedBy"] ?? "";
       form.BuyerOrderNo.text = account["BuyerOrderNo"] ?? "";
+      form.OrderBy.text = account["OrderBy"] ?? ""; // ⬅️ Fixed typo here too!
+      form.DeliveryAt.text = account["DeliveryAt"] ?? ""; // ⬅️ Added
+      form.Remark.text = account["Remark"] ?? ""; // ⬅️ Added
+
       form.Ups.text = account["Ups"] ?? "NO";
       form.Size.text = account["Size"] ?? "NO";
       form.Size2.text = account["Size2"] ?? "NO";
@@ -83,26 +87,36 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       form.Size4.text = account["Size4"] ?? "NO";
       form.Size5.text = account["Size5"] ?? "NO";
       form.Ups_32.text = account["Ups_32"] ?? "";
+
       form.LaserPunchNew.text = account["LaserPunchNew"] ?? "No";
       form.PlyLength.text = account["PlyLength"] ?? "";
       form.PlyBreadth.text = account["PlyBreadth"] ?? "";
       form.BladeSize.text = account["BladeSize"] ?? "";
       form.CreasingSize.text = account["CreasingSize"] ?? "";
       form.MinimumChargeApply.text = account["MinimumChargeApply"] ?? "";
+
+      form.DeliveryCreatedBy.text = account["DeliveryCreatedBy"] ?? ""; // ⬅️ Added
       form.DeliveryStatus.text = account["DeliveryStatus"] ?? "Pending";
       form.DeliveryURL.text = account["DeliveryURL"] ?? "";
       form.TransportName.text = account["TransportName"] ?? "";
+
       form.CapsuleRate.text = account["CapsuleRate"] ?? "";
       form.CapsulePcs.text = account["CapsulePcs"] ?? "";
       form.PerforationSize.text = account["PerforationSize"] ?? "";
       form.ZigZagBladeSize.text = account["ZigZagBladeSize"] ?? "";
       form.RubberSize.text = account["RubberSize"] ?? "";
       form.CourierCharges.text = account["CourierCharges"] ?? "";
+
       form.TotalSize.text = account["TotalSize"] ?? "";
       form.MaleRate.text = account["MaleRate"] ?? "";
       form.FemaleRate.text = account["FemaleRate"] ?? "";
-      form.InvoiceStatus.text = account["InvoiceStatus"] ?? "No";
+      form.InvoiceStatus.text = account["InvoiceStatus"] ?? "Pending"; // Changed default to Pending to match toggle
       form.InvoicePrintedBy.text = account["InvoicePrintedBy"] ?? "";
+      form.ParticularSlider.text = account["ParticularSlider"] ?? ""; // ⬅️ Added
+
+      form.AccountStatus.text = account["AccountStatus"] ?? "Pending"; // ⬅️ Added your new toggle!
+
+      // (We can leave Unknown and Extra if they might exist from old data)
       form.Unknown.text = account["Unknown"] ?? "";
       form.Extra.text = account["Extra"] ?? "";
 
@@ -126,15 +140,17 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
     }
 
     try {
-      final isDone =
-          form.InvoiceStatus.text.trim().toLowerCase() == "yes" ||
-              form.InvoiceStatus.text.trim().toLowerCase() == "done";
+      // 🟢 The job moves to Delivery ONLY if Account is Done
+      final isDone = form.AccountStatus.text.trim().toLowerCase() == "done" ||
+          form.AccountStatus.text.trim().toLowerCase() == "yes";
 
+      // 🟢 Map EVERY single field from Pages 1-6
       final accountData = {
         "AccountsCreatedBy": form.AccountsCreatedBy.text,
         "BuyerOrderNo": form.BuyerOrderNo.text,
-        "Ups": form.Ups.text,
-        "Size": form.Size.text,
+        "OrderBy": form.OrderBy.text,
+        "DeliveryAt": form.DeliveryAt.text,
+        "Remark": form.Remark.text,
         "Size2": form.Size2.text,
         "Size3": form.Size3.text,
         "Size4": form.Size4.text,
@@ -146,6 +162,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
         "BladeSize": form.BladeSize.text,
         "CreasingSize": form.CreasingSize.text,
         "MinimumChargeApply": form.MinimumChargeApply.text,
+        "DeliveryCreatedBy": form.DeliveryCreatedBy.text,
         "DeliveryStatus": form.DeliveryStatus.text,
         "DeliveryURL": form.DeliveryURL.text,
         "TransportName": form.TransportName.text,
@@ -160,8 +177,8 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
         "FemaleRate": form.FemaleRate.text,
         "InvoiceStatus": form.InvoiceStatus.text,
         "InvoicePrintedBy": form.InvoicePrintedBy.text,
-        "Unknown": form.Unknown.text,
-        "Extra": form.Extra.text,
+        "ParticularSlider": form.ParticularSlider.text,
+        "AccountStatus": form.AccountStatus.text, // 🟢 New field added to payload
       };
 
       final updateData = {
@@ -173,10 +190,12 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
         "updatedAt": FieldValue.serverTimestamp(),
       };
 
+      // 🟢 Add visibility permission for the next department
       if (isDone) {
         updateData["visibleTo"] = FieldValue.arrayUnion(["Delivery"]);
       }
 
+      // 🟢 Fire it off to Firestore
       await FirebaseFirestore.instance
           .collection("jobs")
           .doc(lpm)
@@ -185,10 +204,12 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Form submitted successfully")),
+        const SnackBar(content: Text("Account Form Submitted Successfully!")),
       );
 
+      // Return to dashboard
       context.go('/dashboard');
+
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

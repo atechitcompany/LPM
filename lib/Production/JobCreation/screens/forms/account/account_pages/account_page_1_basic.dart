@@ -143,80 +143,86 @@ class _AccountPage1BasicState extends State<AccountPage1Basic> {
 
           // ===== EDIT FIELDS =====
 
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: SearchableDropdownWithInitial(
-                label: "Accounts Created By",
-                items: form.parties,
-                initialValue: form.AccountsCreatedBy.text.isEmpty
-                    ? "Select"
-                    : form.AccountsCreatedBy.text,
-                onChanged: (v) {
-                  form.AccountsCreatedBy.text = (v ?? "").trim();
-                },
+          if (form.canView("AccountsCreatedBy")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("AccountsCreatedBy"),
+              child: Opacity(
+                opacity: form.canEdit("AccountsCreatedBy") ? 1 : 0.6,
+                child: SearchableDropdownWithInitial(
+                  label: "Accounts Created By",
+                  items: form.parties,
+                  initialValue: form.AccountsCreatedBy.text.isEmpty
+                      ? "Select"
+                      : form.AccountsCreatedBy.text,
+                  onChanged: (v) {
+                    form.AccountsCreatedBy.text = (v ?? "").trim();
+                  },
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+          ],
 
-          const SizedBox(height: 16),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Buyer's Order No",
-                controller: form.BuyerOrderNo,
-                hint: "Order Number",
+          if (form.canView("BuyerOrderNo")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("BuyerOrderNo"),
+              child: Opacity(
+                opacity: form.canEdit("BuyerOrderNo") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Buyer's Order No",
+                  controller: form.BuyerOrderNo,
+                  hint: "Order Number",
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+          ],
 
-          const SizedBox(height: 16),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Order By",
-                controller: form.OrderBy,
-                hint: "",
+          if (form.canView("OrderBy")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("OrderBy"),
+              child: Opacity(
+                opacity: form.canEdit("OrderBy") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Order By",
+                  controller: form.OrderBy,
+                  hint: "",
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+          ],
 
-          const SizedBox(height: 16),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Delivery At",
-                controller: form.DeliveryAt,
-                hint: "",
+          if (form.canView("DeliveryAt")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("DeliveryAt"),
+              child: Opacity(
+                opacity: form.canEdit("DeliveryAt") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Delivery At",
+                  controller: form.DeliveryAt,
+                  hint: "",
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+          ],
 
-          const SizedBox(height: 16),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Remark",
-                controller: form.Remark,
-                hint: "",
+          if (form.canView("Remark")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("Remark"),
+              child: Opacity(
+                opacity: form.canEdit("Remark") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Remark",
+                  controller: form.Remark,
+                  hint: "",
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 40),
+          ],
 
-          const SizedBox(height: 40),
         ],
       ),
     );
