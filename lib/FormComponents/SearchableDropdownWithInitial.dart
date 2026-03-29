@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class SearchableDropdownWithInitial extends StatefulWidget {
   final String label;
   final List<String> items;
-  final String? initialValue;     // 👈 NEW
+  final String? initialValue;
   final Function(String) onChanged;
 
   const SearchableDropdownWithInitial({
@@ -28,13 +28,23 @@ class _SearchableDropdownWithInitialState
   @override
   void initState() {
     super.initState();
-
     filtered = widget.items;
 
-    // 👈 If initial value exists, set it
-    if (widget.initialValue != null &&
-        widget.initialValue!.isNotEmpty &&
-        widget.items.contains(widget.initialValue)) {
+    // ✅ Set initial value on first build
+    if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
+      controller.text = widget.initialValue!;
+      filterItems(widget.initialValue!);
+    }
+  }
+
+  // ✅ THIS IS THE KEY FIX — responds when parent rebuilds with new value
+  @override
+  void didUpdateWidget(SearchableDropdownWithInitial oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.initialValue != oldWidget.initialValue &&
+        widget.initialValue != null &&
+        widget.initialValue!.isNotEmpty) {
       controller.text = widget.initialValue!;
       filterItems(widget.initialValue!);
     }
@@ -109,3 +119,21 @@ class _SearchableDropdownWithInitialState
     );
   }
 }
+//```
+//
+//---
+//
+//### Why this works
+//```
+//Edit pressed → _populateControllers() → PlyType.text = "18mm CHW Ply"
+//│
+//▼
+//setState() → parent rebuilds
+//│
+//▼
+//SearchableDropdownWithInitial rebuilds
+//with new initialValue="18mm CHW Ply"
+//│
+//▼
+//didUpdateWidget() fires ✅
+//controller.text = "18mm CHW Ply" ✅
