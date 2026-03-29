@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../widgets/sidebar_logo.dart';
 import 'package:go_router/go_router.dart';
 
-
 // Screens
 import '../../adminAccess/screens/user_rights_screen.dart';
 import 'package:lightatech/customer/intro/viewmodel/order_detail_view.dart';
@@ -38,24 +37,32 @@ class SidebarMenu extends StatelessWidget {
               Icons.dashboard,
                   () {},
             ),
+
             buildMenuItem(
               context,
               'Projects',
               Icons.work_outline,
                   () {},
             ),
+
+            /// 🔥 ONLY CHANGE IS HERE
             buildMenuItem(
               context,
               'Reach Dashboard',
               Icons.people_outline,
-                  () {},
+                  () {
+                Navigator.pop(context); // close drawer
+                context.push('/admin-panel'); // 👈 NEW SCREEN
+              },
             ),
+
             buildMenuItem(
               context,
               'Turnover',
               Icons.bar_chart,
                   () {},
             ),
+
             buildMenuItem(
               context,
               'Packages',
@@ -68,11 +75,10 @@ class SidebarMenu extends StatelessWidget {
               'Productivity',
               Icons.show_chart,
                   () {
-                Navigator.pop(context); // close drawer
+                Navigator.pop(context);
                 context.go('/productivity');
               },
             ),
-
 
             const Divider(),
 
@@ -82,20 +88,22 @@ class SidebarMenu extends StatelessWidget {
               Icons.info_outline,
                   () {},
             ),
+
             buildMenuItem(
               context,
               'Feedback',
               Icons.feedback_outlined,
                   () {},
             ),
+
             buildMenuItem(
               context,
               'Share',
               Icons.share_outlined,
                   () {
-                    Navigator.pop(context);
-                    context.go('/intro/splash');
-                  },
+                Navigator.pop(context);
+                context.go('/intro/splash');
+              },
             ),
 
             const Divider(),
@@ -109,7 +117,7 @@ class SidebarMenu extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>  OrderDetailScreen(),
+                    builder: (_) => OrderDetailScreen(),
                   ),
                 );
               },
