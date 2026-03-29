@@ -16,6 +16,7 @@ import 'package:lightatech/Features/Intro/auth/screens/lets_you_in_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/admin_panel_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/add_staff_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/add_customer_screen.dart';
+import 'package:lightatech/Features/adminAccess/screens/admin_user_list_screen.dart';
 
 
 // Login
@@ -209,6 +210,14 @@ class AppRoutes {
           GoRoute(
             path: '/customer-requests',
             builder: (context, state) => const CustomerRequestsScreen(),
+          ),
+
+          GoRoute(
+            path: '/admin-users',
+            builder: (context, state) {
+              final type = state.uri.queryParameters['type'] ?? "Staff";
+              return AdminUserListScreen(type: type);
+            },
           ),
 
           GoRoute(
