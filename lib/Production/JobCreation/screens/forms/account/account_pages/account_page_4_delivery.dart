@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../new_form_scope.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/FileUploadBox.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
+import '../../new_form_scope.dart';
 
-class AccountPage4Delivery extends StatelessWidget {
+class AccountPage4Delivery extends StatefulWidget {
   const AccountPage4Delivery({super.key});
 
+  @override
+  State<AccountPage4Delivery> createState() => _AccountPage4DeliveryState();
+}
+
+class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
@@ -18,42 +23,20 @@ class AccountPage4Delivery extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // ===== DELIVERY CREATED BY =====
-
-          if (form.canView("DeliveryCreatedBy"))
-            IgnorePointer(
-              ignoring: !form.canEdit("DeliveryCreatedBy"),
-              child: Opacity(
-                opacity: form.canEdit("DeliveryCreatedBy") ? 1 : 0.6,
-                child: SearchableDropdownWithInitial(
-                  label: "Delivery Created By",
-                  items: form.parties,
-                  initialValue: form.DeliveryCreatedBy.text.isEmpty
-                      ? "Select"
-                      : form.DeliveryCreatedBy.text,
-                  onChanged: (v) {
-                    form.DeliveryCreatedBy.text = (v ?? "").trim();
-                  },
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 30),
-
-          // ===== DELIVERY STATUS =====
+          // ===== EDIT FIELDS =====
 
           IgnorePointer(
-            ignoring: !form.canEdit("DeliveryStatus"),
+            ignoring: false,
             child: Opacity(
-              opacity: form.canEdit("DeliveryStatus") ? 1 : 0.6,
-              child: FlexibleToggle(
-                label: "Delivery",
-                inactiveText: "Pending",
-                activeText: "Done",
-                initialValue:
-                form.DeliveryStatus.text.toLowerCase() == "done",
-                onChanged: (val) {
-                  form.DeliveryStatus.text = val ? "Done" : "Pending";
+              opacity: 1,
+              child: SearchableDropdownWithInitial(
+                label: "Delivery Created By",
+                items: form.parties,
+                initialValue: form.DeliveryCreatedBy.text.isEmpty
+                    ? "Select"
+                    : form.DeliveryCreatedBy.text,
+                onChanged: (v) {
+                  form.DeliveryCreatedBy.text = (v ?? "").trim();
                 },
               ),
             ),
@@ -61,91 +44,90 @@ class AccountPage4Delivery extends StatelessWidget {
 
           const SizedBox(height: 30),
 
-          // ===== DIE / PUNCH IMAGE =====
-
-          if (form.canView("DiePunchImage")) ...[
-            const Text(
-              "Die/Punch Image",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-
-            IgnorePointer(
-              ignoring: !form.canEdit("DiePunchImage"),
-              child: Opacity(
-                opacity: form.canEdit("DiePunchImage") ? 1 : 0.6,
-                child: FileUploadBox(
-                  onFileSelected: (file) {
-                    print("Selected File: ${file.name}");
-                  },
-                ),
+          IgnorePointer(
+            ignoring: false,
+            child: Opacity(
+              opacity: 1,
+              child: FlexibleToggle(
+                label: "Delivery",
+                inactiveText: "Pending",
+                activeText: "Done",
+                initialValue: form.DeliveryStatus.text.toLowerCase() == "done",
+                onChanged: (val) {
+                  setState(() {
+                    form.DeliveryStatus.text = val ? "Done" : "Pending";
+                  });
+                },
               ),
             ),
-          ],
+          ),
 
           const SizedBox(height: 30),
 
-          // ===== INVOICE IMAGE =====
+          const Text(
+            "Die/Punch Image",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
 
-          if (form.canView("InvoiceImage")) ...[
-            const Text(
-              "Invoice Image",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-
-            IgnorePointer(
-              ignoring: !form.canEdit("InvoiceImage"),
-              child: Opacity(
-                opacity: form.canEdit("InvoiceImage") ? 1 : 0.6,
-                child: FileUploadBox(
-                  onFileSelected: (file) {
-                    print("Selected File: ${file.name}");
-                  },
-                ),
-              ),
-            ),
-          ],
+          FileUploadBox(
+            onFileSelected: (file) {
+              debugPrint("Selected File: ${file.name}");
+              debugPrint("Size: ${file.size}");
+              debugPrint("Path: ${file.path}");
+            },
+          ),
 
           const SizedBox(height: 30),
 
-          // ===== DELIVERY URL =====
+          const Text(
+            "Invoice Image",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
 
-          if (form.canView("DeliveryURL"))
-            IgnorePointer(
-              ignoring: !form.canEdit("DeliveryURL"),
-              child: Opacity(
-                opacity: form.canEdit("DeliveryURL") ? 1 : 0.6,
-                child: TextInput(
-                  label: "Delivery URL",
-                  hint: "",
-                  controller: form.DeliveryURL,
-                ),
-              ),
-            ),
+          FileUploadBox(
+            onFileSelected: (file) {
+              debugPrint("Selected File: ${file.name}");
+              debugPrint("Size: ${file.size}");
+              debugPrint("Path: ${file.path}");
+            },
+          ),
 
           const SizedBox(height: 30),
 
-          // ===== TRANSPORT NAME =====
-
-          if (form.canView("TransportName"))
-            IgnorePointer(
-              ignoring: !form.canEdit("TransportName"),
-              child: Opacity(
-                opacity: form.canEdit("TransportName") ? 1 : 0.6,
-                child: SearchableDropdownWithInitial(
-                  label: "Transport Name",
-                  items: form.parties,
-                  initialValue: form.TransportName.text.isEmpty
-                      ? "Select"
-                      : form.TransportName.text,
-                  onChanged: (v) {
-                    form.TransportName.text = (v ?? "").trim();
-                  },
-                ),
+          IgnorePointer(
+            ignoring: false,
+            child: Opacity(
+              opacity: 1,
+              child: TextInput(
+                label: "Delivery URL",
+                hint: "",
+                controller: form.DeliveryURL,
               ),
             ),
+          ),
 
+          const SizedBox(height: 30),
+
+          IgnorePointer(
+            ignoring: false,
+            child: Opacity(
+              opacity: 1,
+              child: SearchableDropdownWithInitial(
+                label: "Transport Name",
+                items: form.parties,
+                initialValue: form.TransportName.text.isEmpty
+                    ? "Select"
+                    : form.TransportName.text,
+                onChanged: (v) {
+                  form.TransportName.text = (v ?? "").trim();
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 40),
         ],
       ),
     );
