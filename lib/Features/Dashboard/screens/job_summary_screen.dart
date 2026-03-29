@@ -178,9 +178,7 @@ class JobSummaryScreen extends StatelessWidget {
                         // Encode summaryData as JSON and pass it
                         final dataJson = jsonEncode(summaryData);
 
-                        context.push(
-                            "$route?lpm=$lpm&mode=edit&data=$dataJson"
-                        );
+                        context.push("$route?lpm=$lpm&mode=edit&data=$dataJson");
                       },
                       child: const Text("Edit"),
                     ),

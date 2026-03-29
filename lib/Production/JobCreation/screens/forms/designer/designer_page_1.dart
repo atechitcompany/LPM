@@ -78,12 +78,13 @@ class _DesignerPage1State extends State<DesignerPage1> {
           form.PartyName.text = decodedData["PartyName"] ?? "";
           form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
           form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
-          form.Orderby.text = decodedData["Orderby"] ?? "";
-          form.ParticularJobName.text = decodedData["ParticularJobName"] ?? "";
+          form.OrderBy.text = decodedData["Orderby"] ?? "";
+          form.ParticularJobName.text = decodedData["particularJobName"] ?? decodedData["ParticularJobName"] ?? "";
+          selectedJob = decodedData["particularJobName"] ?? decodedData["ParticularJobName"];
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "";
 
-          selectedJob = decodedData["ParticularJobName"];
+
         });
 
         debugPrint("✅ DesignerPage1 loaded data from route parameters");
@@ -110,12 +111,14 @@ class _DesignerPage1State extends State<DesignerPage1> {
           form.PartyName.text = decodedData["PartyName"] ?? "";
           form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
           form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
-          form.Orderby.text = decodedData["Orderby"] ?? "";
-          form.ParticularJobName.text = decodedData["ParticularJobName"] ?? "";
+          // CORRECT
+          form.OrderBy.text = decodedData["Orderby"] ?? "";
+          form.ParticularJobName.text = decodedData["particularJobName"] ?? decodedData["ParticularJobName"] ?? "";
+          selectedJob = decodedData["particularJobName"] ?? decodedData["ParticularJobName"];
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "";
 
-          selectedJob = decodedData["ParticularJobName"];
+
         });
 
         debugPrint("✅ DesignerPage1 loaded data from Firestore");

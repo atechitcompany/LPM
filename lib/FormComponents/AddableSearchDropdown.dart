@@ -17,38 +17,37 @@ class AddableSearchDropdown extends StatefulWidget {
   });
 
   @override
-  State<AddableSearchDropdown> createState() =>
-      _AddableSearchDropdownState();
+  State<AddableSearchDropdown> createState() => _AddableSearchDropdownState();
 }
 
 class _AddableSearchDropdownState extends State<AddableSearchDropdown> {
-  late TextEditingController controller;
+  final TextEditingController controller = TextEditingController();
   bool expanded = false;
   List<String> filtered = [];
 
   @override
   void initState() {
     super.initState();
-    controller = TextEditingController(
-      text: widget.initialValue ?? "",
-    );
-  }
 
-  // 🔥 THIS IS THE KEY FIX
-  @override
-  void didUpdateWidget(covariant AddableSearchDropdown oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.initialValue != oldWidget.initialValue &&
-        widget.initialValue != controller.text) {
-      controller.text = widget.initialValue ?? "";
+    if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
+      controller.text = widget.initialValue!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onChanged(widget.initialValue!);
+      });
     }
   }
 
+  // ✅ THIS IS THE FIX — responds when parent sets a new initialValue
   @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
+  void didUpdateWidget(AddableSearchDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.initialValue != oldWidget.initialValue &&
+        widget.initialValue != null &&
+        widget.initialValue!.isNotEmpty) {
+      controller.text = widget.initialValue!;
+      // No setState needed — controller listener handles rebuild
+    }
   }
 
   @override
@@ -91,7 +90,6 @@ class _AddableSearchDropdownState extends State<AddableSearchDropdown> {
               border: Border.all(color: const Color(0xFFD2D5DA)),
             ),
             child: ListView(
-              shrinkWrap: true,
               children: [
                 ...filtered.map(
                       (item) => ListTile(

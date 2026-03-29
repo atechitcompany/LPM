@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/department_field_access.dart';
+import 'dart:convert';
 
 import 'new_form_scope.dart';
 
@@ -150,6 +151,7 @@ class NewFormState extends State<NewForm> {
   final AutoBendingCreatedBy = TextEditingController();
   final LaserCuttingCreatedBy = TextEditingController();
   final AccountsCreatedBy = TextEditingController();
+  final AccountStatus = TextEditingController();
   final EmbossCreatedBy = TextEditingController();
   final ManualBendingStatus = TextEditingController();
   final ManualBendingCreatedBy = TextEditingController();
@@ -378,6 +380,7 @@ class NewFormState extends State<NewForm> {
       "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
       "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
       "AccountsCreatedBy": AccountsCreatedBy.text,
+      "AccountStatus": AccountStatus.text,
       "EmbossCreatedBy": EmbossCreatedBy.text,
       "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
       "ManualBendingFittingDoneBy": ManualBendingFittingDoneBy.text,
@@ -386,7 +389,7 @@ class NewFormState extends State<NewForm> {
       // Other
       "GSTType": GSTType.text,
       "PartyName": PartyName.text,
-      "ParticularJobName": ParticularJobName.text,
+      "particularJobName": ParticularJobName.text,
       "Priority": Priority.text,
       "PlyType": PlyType.text,
       "Amounts3": Amounts3.text,
@@ -513,6 +516,7 @@ class NewFormState extends State<NewForm> {
     AutoBendingCreatedBy.clear();
     LaserCuttingCreatedBy.clear();
     AccountsCreatedBy.clear();
+    AccountStatus.clear();
     EmbossCreatedBy.clear();
     ManualBendingCreatedBy.clear();
     ManualBendingFittingDoneBy.clear();
@@ -642,6 +646,175 @@ class NewFormState extends State<NewForm> {
       }
     }
   }
+  //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  // ────────────────────────────────────────────
+// METHOD 1: Called from initState on edit mode
+// ────────────────────────────────────────────
+  void _loadDataFromQueryParam() {
+    try {
+      final uri = GoRouterState.of(context).uri;
+      final dataJson = uri.queryParameters['data'];
+
+      if (dataJson == null || dataJson.isEmpty) {
+        debugPrint("⚠️ No data param in URL — falling back to Firestore");
+        loadExistingFormData();
+        return;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(dataJson);
+      debugPrint("✅ Loaded ${data.keys.length} fields from URL param");
+      _populateControllers(data);
+
+    } catch (e) {
+      debugPrint("❌ _loadDataFromQueryParam error: $e — falling back to Firestore");
+      loadExistingFormData();
+    }
+  }
+
+// ────────────────────────────────────────────
+// METHOD 2: Firestore fallback
+// (used when URL data is missing or too long)
+// ────────────────────────────────────────────
+  Future<void> loadExistingFormData() async {
+    try {
+      final lpm = widget.lpm!;
+      final parts = lpm.split("-");
+
+      final mainOrderId = parts.length >= 4
+          ? "${parts[0]}-${parts[1]}-${parts[2]}-${parts[3]}"
+          : lpm;
+
+      debugPrint("📂 Firestore fallback load: $mainOrderId");
+
+      final snap = await FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(mainOrderId)
+          .get();
+
+      if (!snap.exists) {
+        debugPrint("❌ No doc found at jobs/$mainOrderId");
+        return;
+      }
+
+      // Data is stored at: jobs/{mainOrderId}/designer/data
+      final Map<String, dynamic> data =
+          (snap.data()?["designer"]?["data"] as Map<String, dynamic>?) ?? {};
+
+      if (data.isEmpty) {
+        debugPrint("⚠️ designer.data is empty in Firestore");
+        return;
+      }
+
+      debugPrint("✅ Firestore loaded ${data.keys.length} fields");
+      _populateControllers(data);
+
+    } catch (e) {
+      debugPrint("❌ loadExistingFormData error: $e");
+    }
+  }
+
+// ────────────────────────────────────────────
+// METHOD 3: Fills all controllers from a map
+// (shared by both URL and Firestore paths)
+// ────────────────────────────────────────────
+  void _populateControllers(Map<String, dynamic> data) {
+
+    // 🔍 DEBUG — add these lines
+    debugPrint("🔍 _populateControllers called");
+    debugPrint("🔍 ParticularJobName value in data: ${data['ParticularJobName']}");
+    debugPrint("🔍 PartyName value in data: ${data['PartyName']}");
+    debugPrint("🔍 All keys: ${data.keys.toList()}");
+    setState(() {
+      void set(TextEditingController c, String key) {
+        final val = data[key];
+        if (val != null && val.toString().isNotEmpty) {
+          c.text = val.toString();
+        }
+      }
+
+      set(PartyName,             "PartyName");
+      set(DesignerCreatedBy,     "DesignerCreatedBy");
+      set(DeliveryAt,            "DeliveryAt");
+      set(OrderBy,               "Orderby");
+      final jobNameVal = data['particularJobName'] ?? data['ParticularJobName'];
+      if (jobNameVal != null && jobNameVal.toString().isNotEmpty) {
+        ParticularJobName.text = jobNameVal.toString();
+      }
+      set(Priority,              "Priority");
+      set(Remark,                "Remark");
+      set(DesigningStatus,       "DesigningStatus");
+      set(BuyerOrderNo,          "BuyerOrderNo");
+      set(Ups,                   "Ups");
+      set(PartyWorkName,         "PartyworkName");
+      set(Size,                  "Size");
+      set(Size2,                 "Size2");
+      set(Size3,                 "Size3");
+      set(Size4,                 "Size4");
+      set(Size5,                 "Size5");
+      set(Ups_32,                "Ups_32");
+      set(PlyType,               "PlyType");
+      set(PlyLength,             "PlyLength");
+      set(PlyBreadth,            "PlyBreadth");
+      set(PlySelectedBy,         "PlySelectedBy");
+      set(Blade,                 "Blade");
+      set(BladeSize,             "BladeSize");
+      set(BladeSelectedBy,       "BladeSelectedBy");
+      set(Creasing,              "Creasing");
+      set(CreasingSize,          "CreasingSize");
+      set(CreasingSelectedBy,    "CreasingSelectedBy");
+      set(Perforation,           "Perforation");
+      set(PerforationSize,       "PerforationSize");
+      set(PerforationSelectedBy, "PerforationSelectedBy");
+      set(ZigZagBlade,           "ZigZagBlade");
+      set(ZigZagBladeType,       "ZigZagBladeType");
+      set(ZigZagBladeSize,       "ZigZagBladeSize");
+      set(ZigZagBladeSelectedBy, "ZigZagBladeSelectedBy");
+      set(RubberType,            "RubberType");
+      set(RubberSize,            "RubberSize");
+      set(RubberDoneBy,          "RubberDoneBy");
+      set(RubberSelectedBy,      "RubberSelectedBy");
+      set(HoleType,              "HoleType");
+      set(HoleSelectedBy,        "HoleSelectedBy");
+      set(EmbossStatus,          "EmbossStatus");
+      set(EmbossPcs,             "EmbossPcs");
+      set(MaleEmbossType,        "MaleEmbossType");
+      set(MaleRate,              "MaleRate");
+      set(X,                     "X");
+      set(Y,                     "Y");
+      set(XYSize,                "XYSize");
+      set(FemaleEmbossType,      "FemaleEmbossType");
+      set(FemaleRate,            "FemaleRate");
+      set(X2,                    "X2");
+      set(Y2,                    "Y2");
+      set(XY2Size,               "XY2Size");
+      set(StrippingType,         "StrippingType");
+      set(StrippingSize,         "StrippingSize");
+      set(Extra,                 "Extra");
+      set(LaserPunchNew,         "LaserPunchNew");
+      set(LaserRate,             "LaserRate");
+      set(LaserDoneBy,           "LaserDoneBy");
+      set(LaserCuttingStatus,    "LaserCuttingStatus");
+      set(CourierCharges,        "CourierCharges");
+      set(AddressOutput,         "FullAddress");
+      set(DeliveryURL,           "DeliveryURL");
+      set(ReceiverName,          "ReceiverName");
+      set(TransportName,         "TransportName");
+      set(DesignSendBy,          "DesignSendBy");
+      set(DesignedBy,            "DesignedBy");
+      set(RubberFixingDone,      "RubberFixingDone");
+      set(WhiteProfileRubber,    "WhiteProfileRubber");
+      set(GSTType,               "GSTType");
+      set(Amounts3,              "Amounts3");
+      set(ParticularSlider,      "ParticularSlider");
+      set(AutoBendingStatus,     "AutobendingStatus");
+      set(ManualBendingStatus,   "ManualBendingStatus");
+      set(DeliveryStatus,        "DeliveryStatus");
+      set(InvoiceStatus,         "InvoiceStatus");
+      set(LpmAutoIncrement,      "LpmAutoIncrement");
+    });
+  }
+
+  //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 
 
 
@@ -934,15 +1107,7 @@ class NewFormState extends State<NewForm> {
     isEditMode = widget.mode == 'edit';
     department = widget.department;
 
-    if (widget.lpm != null) {
-      // 🔥 Existing job
-      LpmAutoIncrement.text = widget.lpm!;
-    } else {
-      // 🔥 New job (Designer only)
-      loadCurrentLpm();
-    }
-
-    // defaults
+    // ── Set all defaults first ──
     Remark.text = "NO REMARK";
     Ups.text = "NO";
     PartyWorkName.text = "NO";
@@ -952,15 +1117,33 @@ class NewFormState extends State<NewForm> {
     Size4.text = "NO";
     Size5.text = "NO";
     DeliveryURL.text = "URL";
-
+    EmbossPcs.text = "No";
+    TotalSize.text = "No";
+    Unknown.text = "";
+    AutoBendingStatus.text = "Pending";
+    ManualBendingStatus.text = "Pending";
     DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
     LaserPunchNew.text = "No";
-
     PlyType.text = "No";
     Creasing.text = "No";
+
+    if (widget.lpm != null) {
+      // ── Existing job ──
+      LpmAutoIncrement.text = widget.lpm!;
+
+      if (isEditMode) {
+        // ✅ Wait for widget tree, then load existing data
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadDataFromQueryParam();
+        });
+      }
+    } else {
+      // ── New job (Designer only) ──
+      loadCurrentLpm();
+    }
   }
 
 
@@ -1039,6 +1222,7 @@ class NewFormState extends State<NewForm> {
     AutoBendingCreatedBy.dispose();
     LaserCuttingCreatedBy.dispose();
     AccountsCreatedBy.dispose();
+    AccountStatus.dispose();
     EmbossCreatedBy.dispose();
     ManualBendingCreatedBy.dispose();
     ManualBendingFittingDoneBy.dispose();
@@ -1088,7 +1272,8 @@ class NewFormState extends State<NewForm> {
             Expanded(child: widget.child),
 
             // 🔹 PREV / NEXT BUTTONS
-            if (isJobFormRoute)
+            // ✅ FIX: Hide global previous/next buttons for the Account flow
+            if (isJobFormRoute && department != "Account")
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(

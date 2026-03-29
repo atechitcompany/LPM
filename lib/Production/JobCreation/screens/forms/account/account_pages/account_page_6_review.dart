@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../new_form_scope.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/NumberStepper.dart';
 import 'package:lightatech/FormComponents/AutoCalcTextbox.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/FlexibleSlider.dart';
+import '../../new_form_scope.dart';
 
 class AccountPage6Review extends StatefulWidget {
   const AccountPage6Review({super.key});
@@ -24,9 +26,9 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // ===== TOTAL SIZE =====
+          // ===== CONTROLLED EDIT FIELDS =====
 
-          if (form.canView("TotalSize"))
+          if (form.canView("TotalSize")) ...[
             IgnorePointer(
               ignoring: !form.canEdit("TotalSize"),
               child: Opacity(
@@ -38,10 +40,8 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
                 ),
               ),
             ),
-
-          const SizedBox(height: 30),
-
-          // ===== MINIMUM CHARGES =====
+            const SizedBox(height: 30),
+          ],
 
           if (form.canView("MinimumChargeApply")) ...[
             const Text(
@@ -49,15 +49,13 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
-
             IgnorePointer(
               ignoring: !form.canEdit("MinimumChargeApply"),
               child: Opacity(
                 opacity: form.canEdit("MinimumChargeApply") ? 1 : 0.6,
                 child: NumberStepper(
                   step: 1,
-                  initialValue:
-                  double.tryParse(form.MinimumChargeApply.text) ?? 0,
+                  initialValue: double.tryParse(form.MinimumChargeApply.text) ?? 0,
                   controller: form.MinimumChargeApply,
                   onChanged: (val) {
                     form.MinimumChargeApply.text = val.toString();
@@ -66,11 +64,8 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
                 ),
               ),
             ),
+            const SizedBox(height: 30),
           ],
-
-          const SizedBox(height: 30),
-
-          // ===== MALE RATE =====
 
           if (form.canView("MaleRate")) ...[
             const Text(
@@ -78,15 +73,13 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
-
             IgnorePointer(
               ignoring: !form.canEdit("MaleRate"),
               child: Opacity(
                 opacity: form.canEdit("MaleRate") ? 1 : 0.6,
                 child: NumberStepper(
                   step: 0.01,
-                  initialValue:
-                  double.tryParse(form.MaleRate.text) ?? 0,
+                  initialValue: double.tryParse(form.MaleRate.text) ?? 0,
                   controller: form.MaleRate,
                   onChanged: (val) {
                     form.MaleRate.text = val.toString();
@@ -95,17 +88,16 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
                 ),
               ),
             ),
+            const SizedBox(height: 30),
           ],
 
-          const SizedBox(height: 30),
-
+          // ===== FREE UI (AUTOCALC) =====
           AutoCalcTextBox(label: "XY Size", value: "0"),
           const SizedBox(height: 30),
           AutoCalcTextBox(label: "Male Amount", value: "0"),
-
           const SizedBox(height: 30),
 
-          // ===== FEMALE RATE =====
+          // ===== CONTROLLED EDIT FIELDS =====
 
           if (form.canView("FemaleRate")) ...[
             const Text(
@@ -113,15 +105,13 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
-
             IgnorePointer(
               ignoring: !form.canEdit("FemaleRate"),
               child: Opacity(
                 opacity: form.canEdit("FemaleRate") ? 1 : 0.6,
                 child: NumberStepper(
                   step: 0.01,
-                  initialValue:
-                  double.tryParse(form.FemaleRate.text) ?? 0,
+                  initialValue: double.tryParse(form.FemaleRate.text) ?? 0,
                   controller: form.FemaleRate,
                   onChanged: (val) {
                     form.FemaleRate.text = val.toString();
@@ -130,46 +120,42 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
                 ),
               ),
             ),
+            const SizedBox(height: 30),
           ],
 
-          const SizedBox(height: 30),
-
+          // ===== FREE UI (AUTOCALC) =====
           AutoCalcTextBox(label: "XY Size2", value: "0"),
           const SizedBox(height: 30),
           AutoCalcTextBox(label: "Female Amount", value: "0"),
-
           const SizedBox(height: 30),
-
-          // ===== STRIPPING =====
-
           AutoCalcTextBox(label: "Stripping Amount", value: "0"),
-
           const SizedBox(height: 30),
 
-          // ===== INVOICE STATUS =====
+          // ===== CONTROLLED EDIT FIELDS =====
 
-          IgnorePointer(
-            ignoring: !form.canEdit("InvoiceStatus"),
-            child: Opacity(
-              opacity: form.canEdit("InvoiceStatus") ? 1 : 0.6,
-              child: FlexibleToggle(
-                label: "Invoice",
-                inactiveText: "Pending",
-                activeText: "Done",
-                initialValue:
-                form.InvoiceStatus.text.toLowerCase() == "done",
-                onChanged: (val) {
-                  form.InvoiceStatus.text = val ? "Done" : "Pending";
-                },
+          if (form.canView("InvoiceStatus")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("InvoiceStatus"),
+              child: Opacity(
+                opacity: form.canEdit("InvoiceStatus") ? 1 : 0.6,
+                child: FlexibleToggle(
+                  label: "Invoice",
+                  inactiveText: "Pending",
+                  activeText: "Done",
+                  initialValue: form.InvoiceStatus.text.toLowerCase() == "done" ||
+                      form.InvoiceStatus.text.toLowerCase() == "yes",
+                  onChanged: (val) {
+                    setState(() {
+                      form.InvoiceStatus.text = val ? "Done" : "Pending";
+                    });
+                  },
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          // ===== INVOICE PRINTED BY =====
-
-          if (form.canView("InvoicePrintedBy"))
+          if (form.canView("InvoicePrintedBy")) ...[
             IgnorePointer(
               ignoring: !form.canEdit("InvoicePrintedBy"),
               child: Opacity(
@@ -181,10 +167,30 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
                 ),
               ),
             ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          // ===== PARTICULAR SLIDER =====
+          // ===== ACCOUNT STATUS TOGGLE =====
+          if (form.canView("AccountStatus")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("AccountStatus"),
+              child: Opacity(
+                opacity: form.canEdit("AccountStatus") ? 1 : 0.6,
+                child: FlexibleToggle(
+                  label: "Account Status",
+                  inactiveText: "Pending",
+                  activeText: "Done",
+                  initialValue: form.AccountStatus.text.toLowerCase() == "done",
+                  onChanged: (val) {
+                    setState(() {
+                      form.AccountStatus.text = val ? "Done" : "Pending";
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
 
           if (form.canView("ParticularSlider")) ...[
             const Text(
@@ -192,7 +198,6 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
-
             IgnorePointer(
               ignoring: !form.canEdit("ParticularSlider"),
               child: Opacity(
@@ -205,8 +210,14 @@ class _AccountPage6ReviewState extends State<AccountPage6Review> {
                 ),
               ),
             ),
+            const SizedBox(height: 40),
           ],
 
+          // ===== SUBMIT & SAVE BUTTON =====
+
+
+
+          const SizedBox(height: 40),
         ],
       ),
     );
