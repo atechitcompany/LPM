@@ -24,61 +24,67 @@ class _AccountPage2SizesState extends State<AccountPage2Sizes> {
 
           // ===== EDIT FIELDS =====
 
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Size2",
-                hint: "name",
-                controller: form.Size2,
+          if (form.canView("Size2")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("Size2"),
+              child: Opacity(
+                opacity: form.canEdit("Size2") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Size2",
+                  hint: "name",
+                  controller: form.Size2,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Size3",
-                hint: "name",
-                controller: form.Size3,
+          if (form.canView("Size3")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("Size3"),
+              child: Opacity(
+                opacity: form.canEdit("Size3") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Size3",
+                  hint: "name",
+                  controller: form.Size3,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Size4",
-                hint: "name",
-                controller: form.Size4,
+          if (form.canView("Size4")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("Size4"),
+              child: Opacity(
+                opacity: form.canEdit("Size4") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Size4",
+                  hint: "name",
+                  controller: form.Size4,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
-
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: TextInput(
-                label: "Size5",
-                hint: "name",
-                controller: form.Size5,
+          if (form.canView("Size5")) ...[
+            IgnorePointer(
+              ignoring: !form.canEdit("Size5"),
+              child: Opacity(
+                opacity: form.canEdit("Size5") ? 1 : 0.6,
+                child: TextInput(
+                  label: "Size5",
+                  hint: "name",
+                  controller: form.Size5,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
+          // ===== FREE UI (SLIDERS) =====
 
           const Text(
             "Sizes",
@@ -93,29 +99,34 @@ class _AccountPage2SizesState extends State<AccountPage2Sizes> {
 
           const SizedBox(height: 30),
 
-          const Text(
-            "Ups_32",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
+          // ===== CONTROLLED STEPPER =====
 
-          IgnorePointer(
-            ignoring: false,
-            child: Opacity(
-              opacity: 1,
-              child: NumberStepper(
-                step: 1,
-                initialValue: double.tryParse(form.Ups_32.text) ?? 0,
-                controller: form.Ups_32,
-                onChanged: (val) {
-                  form.Ups_32.text = val.toString();
-                  setState(() {});
-                },
+          if (form.canView("Ups_32")) ...[
+            const Text(
+              "Ups_32",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 10),
+
+            IgnorePointer(
+              ignoring: !form.canEdit("Ups_32"),
+              child: Opacity(
+                opacity: form.canEdit("Ups_32") ? 1 : 0.6,
+                child: NumberStepper(
+                  step: 1,
+                  initialValue: double.tryParse(form.Ups_32.text) ?? 0,
+                  controller: form.Ups_32,
+                  onChanged: (val) {
+                    form.Ups_32.text = val.toString();
+                    setState(() {}); // Using setState as you had it
+                  },
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 30),
+          ],
 
-          const SizedBox(height: 30),
+          // ===== FREE UI (SLIDERS) =====
 
           const Text(
             "Extra Slider",
