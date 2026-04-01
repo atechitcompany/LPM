@@ -193,6 +193,7 @@ class NewFormState extends State<NewForm> {
   //new
   final PartyName = TextEditingController();
   final TextEditingController DesignedBy = TextEditingController();
+  final TextEditingController DesignedByTimestamp = TextEditingController();
   final TextEditingController PlySelectedBy = TextEditingController();
   final TextEditingController BladeSelectedBy = TextEditingController();
   final TextEditingController CreasingSelectedBy = TextEditingController();
@@ -378,6 +379,8 @@ class NewFormState extends State<NewForm> {
       "InvoicePrintedBy": InvoicePrintedBy.text,
       "CreatedBy": CreatedBy.text,
       "DesignerCreatedBy": DesignerCreatedBy.text,
+      "DesignedBy": DesignedBy.text,
+      "DesignedByTimestamp": DesignedByTimestamp.text,
       "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
       "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
       "AccountsCreatedBy": AccountsCreatedBy.text,
@@ -535,6 +538,7 @@ class NewFormState extends State<NewForm> {
     //new
     // ✅ clear new fields
     DesignedBy.clear();
+    DesignedByTimestamp.clear();
     PlySelectedBy.clear();
     BladeSelectedBy.clear();
     CreasingSelectedBy.clear();
@@ -804,6 +808,7 @@ class NewFormState extends State<NewForm> {
       set(TransportName,         "TransportName");
       set(DesignSendBy,          "DesignSendBy");
       set(DesignedBy,            "DesignedBy");
+      set(DesignedByTimestamp,   "DesignedByTimestamp");
       set(RubberFixingDone,      "RubberFixingDone");
       set(WhiteProfileRubber,    "WhiteProfileRubber");
       set(GSTType,               "GSTType");
@@ -1243,6 +1248,7 @@ class NewFormState extends State<NewForm> {
     WhiteProfileRubber.dispose();
     //new
     DesignedBy.dispose();
+    DesignedByTimestamp.dispose();
     PlySelectedBy.dispose();
     BladeSelectedBy.dispose();
     CreasingSelectedBy.dispose();
