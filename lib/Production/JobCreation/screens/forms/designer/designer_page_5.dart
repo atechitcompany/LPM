@@ -43,7 +43,7 @@ class _DesignerPage5State extends State<DesignerPage5> {
           form.X.text = decodedData["X"] ?? "";
           form.Y.text = decodedData["Y"] ?? "";
           form.XYSize.text = decodedData["XYSize"] ?? "";
-          form.FemaleEmbossType.text = decodedData["femaleEmbossType"] ?? "";
+          form.FemaleEmbossType.text = decodedData["FemaleEmbossType"] ?? "";
           form.X2.text = decodedData["X2"] ?? "";
           form.Y2.text = decodedData["Y2"] ?? "";
           form.XY2Size.text = decodedData["XY2Size"] ?? "";
