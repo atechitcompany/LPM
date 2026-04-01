@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lightatech/core/session/session_manager.dart';
+import 'package:provider/provider.dart';
+import 'package:lightatech/core/theme/theme_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     "Emboss",
     "Lasercut",
     "ManualBending",
-    "Rubber"
+    "Rubber",
   ];
 
   List<String> selectedDepartments = [];
@@ -40,20 +42,20 @@ class _LoginScreenState extends State<LoginScreen> {
     rememberMe = SessionManager.isRememberMe();
   }
 
-  // 🔐 LOGIN
   Future<void> login() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
     setState(() => isLoading = true);
 
     try {
-      final snapshot =
-      await FirebaseFirestore.instance.collection('Staff').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('Staff')
+          .get();
 
       bool found = false;
 
@@ -73,14 +75,14 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  // ✅ APPROVE
   Future<void> approve() async {
     setState(() => isLoading = true);
 
@@ -92,9 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
           .get();
 
       if (snapshot.docs.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid credentials")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Invalid credentials")));
         return;
       }
 
@@ -119,8 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
         const SnackBar(content: Text("Request sent for approval")),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() => isLoading = false);
     }
@@ -132,7 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
       department: department,
     );
 
-    // ✅ Save Session with Remember Me value
     await SessionManager.saveSession(
       email: emailController.text.trim(),
       department: department,
@@ -141,10 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     context.go(
       '/dashboard',
-      extra: {
-        'department': department,
-        'email': emailController.text.trim(),
-      },
+      extra: {'department': department, 'email': emailController.text.trim()},
     );
   }
 
@@ -159,14 +158,18 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Widget safeIcon(IconData icon) {
-    return Icon(icon, size: 18, color: Colors.grey);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF202244);
+    final subTextColor = isDark
+        ? Colors.grey.shade400
+        : const Color(0xFF545454);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -174,7 +177,6 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 60),
-
               Center(
                 child: CircleAvatar(
                   radius: 45,
@@ -186,48 +188,44 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 50),
-
-              const Text(
+              Text(
                 "Let's Sign In!",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF202244),
+                  color: textColor,
                 ),
               ),
-
               const SizedBox(height: 8),
-
-              const Text(
+              Text(
                 "Login to your account to continue",
-                style: TextStyle(fontSize: 14, color: Color(0xFF545454)),
+                style: TextStyle(fontSize: 14, color: subTextColor),
               ),
-
               const SizedBox(height: 40),
-
-              inputBox(
-                icon: safeIcon(Icons.email),
+              _buildInputBox(
+                icon: Icons.email,
                 child: TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Email",
+                    hintStyle: TextStyle(color: subTextColor),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              inputBox(
-                icon: safeIcon(Icons.lock),
+              _buildInputBox(
+                icon: Icons.lock,
                 child: TextField(
                   controller: passwordController,
                   obscureText: !showPassword,
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Password",
+                    hintStyle: TextStyle(color: subTextColor),
                   ),
                 ),
                 trailing: GestureDetector(
@@ -235,47 +233,46 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Icon(
                     showPassword ? Icons.visibility : Icons.visibility_off,
                     size: 20,
-                    color: Colors.grey,
+                    color: subTextColor,
                   ),
                 ),
               ),
-
               const SizedBox(height: 18),
-
               CheckboxListTile(
                 value: rememberMe,
                 onChanged: (v) => setState(() => rememberMe = v!),
-                title: const Text("Remember Me"),
+                title: Text("Remember Me", style: TextStyle(color: textColor)),
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
-
               const SizedBox(height: 35),
-
-              primaryButton("Sign In", login),
-
+              _buildPrimaryButton("Sign In", login),
               const SizedBox(height: 40),
-
               if (showDepartmentForm) ...[
-                const Text(
+                Text(
                   "Select Department",
                   style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w700),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                ...departments.map((dept) => CheckboxListTile(
-                  title: Text(dept),
-                  value: selectedDepartments.contains(dept),
-                  onChanged: (v) {
-                    setState(() {
-                      v!
-                          ? selectedDepartments.add(dept)
-                          : selectedDepartments.remove(dept);
-                    });
-                  },
-                )),
+                ...departments.map(
+                  (dept) => CheckboxListTile(
+                    title: Text(dept, style: TextStyle(color: textColor)),
+                    value: selectedDepartments.contains(dept),
+                    onChanged: (v) {
+                      setState(() {
+                        v!
+                            ? selectedDepartments.add(dept)
+                            : selectedDepartments.remove(dept);
+                      });
+                    },
+                  ),
+                ),
                 const SizedBox(height: 20),
-                primaryButton("Continue", approve),
+                _buildPrimaryButton("Continue", approve),
               ],
             ],
           ),
@@ -284,20 +281,33 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget inputBox(
-      {required Widget icon, required Widget child, Widget? trailing}) {
+  Widget _buildInputBox({
+    required IconData icon,
+    required Widget child,
+    Widget? trailing,
+  }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final iconColor = isDark ? Colors.grey.shade400 : Colors.grey;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black12,
+            blurRadius: 8,
+          ),
         ],
-        color: Colors.white,
+        color: cardColor,
       ),
       child: Row(
         children: [
-          icon,
+          Icon(icon, size: 18, color: iconColor),
           const SizedBox(width: 10),
           Expanded(child: child),
           if (trailing != null) trailing,
@@ -306,15 +316,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget primaryButton(String text, VoidCallback onTap) {
+  Widget _buildPrimaryButton(String text, VoidCallback onTap) {
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFF8D94B),
         minimumSize: const Size(double.infinity, 60),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       child: Text(
         text,

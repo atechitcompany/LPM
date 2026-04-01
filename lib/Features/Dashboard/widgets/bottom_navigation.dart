@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:lightatech/core/theme/theme_provider.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -28,30 +30,27 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final iconColor = isDark ? Colors.white : Colors.black;
+    final borderColor = isDark ? Colors.grey.shade800 : Colors.black12;
+
     return SafeArea(
       top: false,
       child: Container(
         width: double.infinity,
-
-        // ✅ Removed margin so it touches screen edges
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
 
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bgColor,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(26),
             topRight: Radius.circular(26),
           ),
-
-          // ✅ Subtle top border so curve becomes visible
-          border: Border(
-            top: BorderSide(
-              color: Colors.black12,
-              width: 1,
-            ),
-          ),
+          border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
-
 
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -76,20 +75,16 @@ class BottomNavBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      _icons[index],
-                      size: 22,
-                      color: Colors.black,
-                    ),
+                    Icon(_icons[index], size: 22, color: iconColor),
                     if (isSelected) ...[
                       const SizedBox(width: 6),
                       Text(
                         _labels[index],
                         overflow: TextOverflow.fade,
                         softWrap: false,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: iconColor,
                         ),
                       ),
                     ],
