@@ -102,13 +102,21 @@ class _CustomerRequestDetailScreenState
   }
 
   // ✅ BUILD DESIGNER DATA - Maps customer request data to designer format
+  // ✅ FIXED: Handles both lowercase and uppercase keys from source data
   Map<String, dynamic> _buildDesignerData(Map<String, dynamic> customerData) {
+    // Helper function to get value with case-insensitive fallback
+    T? _getValue<T>(String camelCase, String pascalCase) {
+      final camel = customerData[camelCase];
+      if (camel != null) return camel as T?;
+      return customerData[pascalCase] as T?;
+    }
+
     return {
       "LpmAutoIncrement": "", // Will be set during submission
-      "BuyerOrderNo": customerData["buyerOrderNo"] ?? "",
-      "DeliveryAt": customerData["deliveryAt"] ?? "",
-      "Orderby": customerData["orderBy"] ?? "",
-      "Remark": customerData["remark"] ?? "NO REMARK",
+      "BuyerOrderNo": _getValue("buyerOrderNo", "BuyerOrderNo") ?? "",
+      "DeliveryAt": _getValue("deliveryAt", "DeliveryAt") ?? "",
+      "Orderby": _getValue("orderBy", "Orderby") ?? "",
+      "Remark": _getValue("remark", "Remark") ?? "NO REMARK",
       "Ups": "NO",
       "PartyworkName": "NO",
       "Size": "NO",
@@ -124,7 +132,7 @@ class _CustomerRequestDetailScreenState
       "Extra": "",
       "Creasing": "No",
       "CreasingSize": "",
-      "CapsuleType": customerData["capsuleType"] ?? "",
+      "CapsuleType": _getValue("capsuleType", "CapsuleType") ?? "",
       "CapsuleRate": "",
       "CapsulePcs": "",
       "CapsuleAmt": "",
@@ -141,14 +149,14 @@ class _CustomerRequestDetailScreenState
       "MinimumChargeApply": "",
       "MaleEmbossType": "No",
       "MaleRate": "",
-      "X": "",
-      "Y": "",
-      "XYSize": "",
+      "X": _getValue("x", "X") ?? "",
+      "Y": _getValue("y", "Y") ?? "",
+      "XYSize": _getValue("xySize", "XYSize") ?? "",
       "FemaleEmbossType": "No",
       "FemaleRate": "",
-      "X2": "",
-      "Y2": "",
-      "XY2Size": "",
+      "X2": _getValue("x2", "X2") ?? "",  // ✅ FIX: Now handles both cases
+      "Y2": _getValue("y2", "Y2") ?? "",  // ✅ FIX: Now handles both cases
+      "XY2Size": _getValue("xy2Size", "XY2Size") ?? "",
       "StrippingType": "No",
       "StrippingSize": "",
       "CourierCharges": "",
@@ -181,9 +189,9 @@ class _CustomerRequestDetailScreenState
       "ManualBendingFittingDoneBy": "",
       "DeliveryCreatedBy": "",
       "GSTType": "",
-      "PartyName": customerData["partyName"] ?? "",
-      "particularJobName": customerData["particularJobName"] ?? "",
-      "Priority": customerData["priority"] ?? "Normal",
+      "PartyName": _getValue("partyName", "PartyName") ?? "",
+      "particularJobName": _getValue("particularJobName", "ParticularJobName") ?? "",
+      "Priority": _getValue("priority", "Priority") ?? "Normal",
       "PlyType": "No",
       "Amounts3": "",
       "ParticularSlider": "",
@@ -720,8 +728,8 @@ class _CustomerRequestDetailScreenState
                     "Female Emboss Type", data["femaleEmbossType"]),
                 _buildDetailRow("X", data["x"]),
                 _buildDetailRow("Y", data["y"]),
-                _buildDetailRow("X2", data["x2"]),
-                _buildDetailRow("Y2", data["y2"]),
+                _buildDetailRow("X2", data["x2"]),  // ✅ Shows lowercase from source
+                _buildDetailRow("Y2", data["y2"]),  // ✅ Shows lowercase from source
 
                 const SizedBox(height: 20),
 

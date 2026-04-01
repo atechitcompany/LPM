@@ -13,6 +13,11 @@ import 'package:lightatech/Features/Intro/screens/biometric_screen.dart';
 import 'package:lightatech/Features/Intro/screens/fill_profile_screen.dart';
 import 'package:lightatech/Features/Intro/screens/create_pin_screen.dart';
 import 'package:lightatech/Features/Intro/auth/screens/lets_you_in_screen.dart';
+import 'package:lightatech/Features/adminAccess/screens/admin_panel_screen.dart';
+import 'package:lightatech/Features/adminAccess/screens/add_staff_screen.dart';
+import 'package:lightatech/Features/adminAccess/screens/add_customer_screen.dart';
+import 'package:lightatech/Features/adminAccess/screens/admin_user_list_screen.dart';
+
 
 // Login
 import 'package:lightatech/Login/LoginScreen.dart';
@@ -188,8 +193,31 @@ class AppRoutes {
           ),
 
           GoRoute(
+            path: '/admin-panel',
+            builder: (context, state) => const AdminPanelScreen(),
+          ),
+
+          GoRoute(
+            path: '/add-staff',
+            builder: (context, state) => const AddStaffScreen(),
+          ),
+
+          GoRoute(
+            path: '/add-customer',
+            builder: (context, state) => const AddCustomerScreen(),
+          ),
+
+          GoRoute(
             path: '/customer-requests',
             builder: (context, state) => const CustomerRequestsScreen(),
+          ),
+
+          GoRoute(
+            path: '/admin-users',
+            builder: (context, state) {
+              final type = state.uri.queryParameters['type'] ?? "Staff";
+              return AdminUserListScreen(type: type);
+            },
           ),
 
           GoRoute(
