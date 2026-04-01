@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/sidebar_logo.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/core/session/session_manager.dart';
 
-// Screens
+import '../../adminAccess/screens/admin_panel_screen.dart';
 import '../../adminAccess/screens/user_rights_screen.dart';
 import 'package:lightatech/customer/intro/viewmodel/order_detail_view.dart';
 
@@ -10,11 +11,11 @@ class SidebarMenu extends StatelessWidget {
   const SidebarMenu({Key? key}) : super(key: key);
 
   Widget buildMenuItem(
-      BuildContext context,
-      String label,
-      IconData icon,
-      VoidCallback onTap,
-      ) {
+    BuildContext context,
+    String label,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return ListTile(
       leading: Icon(icon, color: Colors.blue),
       title: Text(label),
@@ -31,112 +32,61 @@ class SidebarMenu extends StatelessWidget {
           children: [
             const SidebarLogo(),
 
-            buildMenuItem(
-              context,
-              'All Staffs Dashboard',
-              Icons.dashboard,
-                  () {},
-            ),
+            buildMenuItem(context, 'Reach Dashboard', Icons.people_outline, () {
+              Navigator.pop(context); // close drawer
+              context.push('/admin-panel'); // 👈 NEW SCREEN
+            }),
 
-            buildMenuItem(
-              context,
-              'Projects',
-              Icons.work_outline,
-                  () {},
-            ),
+            if (SessionManager.getDepartment() == 'Admin')
+              buildMenuItem(
+                context,
+                'Admin Access',
+                Icons.admin_panel_settings,
+                () {
+                  Navigator.pop(context);
+                  context.push('/admin-panel');
+                },
+              ),
 
-            /// 🔥 ONLY CHANGE IS HERE
-            buildMenuItem(
-              context,
-              'Reach Dashboard',
-              Icons.people_outline,
-                  () {
-                Navigator.pop(context); // close drawer
-                context.push('/admin-panel'); // 👈 NEW SCREEN
-              },
-            ),
+            buildMenuItem(context, 'Projects', Icons.work_outline, () {}),
 
-            buildMenuItem(
-              context,
-              'Turnover',
-              Icons.bar_chart,
-                  () {},
-            ),
+            buildMenuItem(context, 'Turnover', Icons.bar_chart, () {}),
 
-            buildMenuItem(
-              context,
-              'Packages',
-              Icons.card_giftcard,
-                  () {},
-            ),
+            buildMenuItem(context, 'Packages', Icons.card_giftcard, () {}),
 
-            buildMenuItem(
-              context,
-              'Productivity',
-              Icons.show_chart,
-                  () {
-                Navigator.pop(context);
-                context.go('/productivity');
-              },
-            ),
+            buildMenuItem(context, 'Productivity', Icons.show_chart, () {
+              Navigator.pop(context);
+              context.go('/productivity');
+            }),
 
             const Divider(),
 
-            buildMenuItem(
-              context,
-              'About',
-              Icons.info_outline,
-                  () {},
-            ),
+            buildMenuItem(context, 'About', Icons.info_outline, () {}),
 
-            buildMenuItem(
-              context,
-              'Feedback',
-              Icons.feedback_outlined,
-                  () {},
-            ),
+            buildMenuItem(context, 'Feedback', Icons.feedback_outlined, () {}),
 
-            buildMenuItem(
-              context,
-              'Share',
-              Icons.share_outlined,
-                  () {
-                Navigator.pop(context);
-                context.go('/intro/splash');
-              },
-            ),
+            buildMenuItem(context, 'Share', Icons.share_outlined, () {
+              Navigator.pop(context);
+              context.go('/intro/splash');
+            }),
 
             const Divider(),
 
-            buildMenuItem(
-              context,
-              'App Gallery',
-              Icons.apps,
-                  () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => OrderDetailScreen(),
-                  ),
-                );
-              },
-            ),
+            buildMenuItem(context, 'App Gallery', Icons.apps, () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => OrderDetailScreen()),
+              );
+            }),
 
-            buildMenuItem(
-              context,
-              'Add Shortcut',
-              Icons.add_box_outlined,
-                  () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => UserRightsScreen(),
-                  ),
-                );
-              },
-            ),
+            buildMenuItem(context, 'Add Shortcut', Icons.add_box_outlined, () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => UserRightsScreen()),
+              );
+            }),
           ],
         ),
       ),
