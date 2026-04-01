@@ -7,6 +7,7 @@ import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/routes/app_route_config.dart';
 import 'package:lightatech/routes/app_route_constants.dart';
+import 'package:lightatech/core/session/session_manager.dart';
 import 'dart:convert';
 
 class DesignerPage6 extends StatefulWidget {
@@ -47,6 +48,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
         form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
         form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
         form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+        form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
         form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
 
         debugPrint("✅ DesignerPage6 loaded data from route");
@@ -67,7 +69,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
         }
 
         final decodedData =
-            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
@@ -75,6 +77,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
           form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
           form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
           form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+          form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
           form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
         });
 
@@ -82,6 +85,39 @@ class _DesignerPage6State extends State<DesignerPage6> {
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
       }
+    }
+  }
+
+  /// ✅ Gets current logged-in user's name from Firestore Staff collection
+  Future<String> _getCurrentUserName() async {
+    try {
+      final email = SessionManager.getEmail();
+
+      if (email == null || email.isEmpty) {
+        debugPrint("⚠️ No email in SessionManager");
+        return "Current User";
+      }
+
+      // Query Firestore Staff collection for this user's Name field
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection("Staff")
+          .where("Email", isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        debugPrint("⚠️ Staff record not found for email: $email");
+        return "Current User";
+      }
+
+      final staffDoc = querySnapshot.docs.first;
+      final name = staffDoc.data()["Name"] ?? "Current User";
+
+      debugPrint("✅ Got user name from Staff: $name");
+      return name.toString();
+    } catch (e) {
+      debugPrint("❌ Error getting current user name: $e");
+      return "Current User";
     }
   }
 
@@ -192,36 +228,69 @@ class _DesignerPage6State extends State<DesignerPage6> {
                 inactiveText: "Pending",
                 activeText: "Done",
                 initialValue: isDesigningDone,
-                onChanged: (val) {
+                onChanged: (val) async {
                   setState(() {
                     form.DesigningStatus.text =
                     val ? "Done" : "Pending";
                   });
 
-                  if (!val) {
+                  if (val) {
+                    // ✅ When toggle is ON: auto-populate with current user's name and timestamp
+                    final userName = await _getCurrentUserName();
+                    if (mounted) {
+                      setState(() {
+                        form.DesignedBy.text = userName;
+                        form.DesignedByTimestamp.text = DateTime.now().toString();
+                      });
+                    }
+                  } else {
+                    // ✅ When toggle is OFF: clear both fields
                     form.DesignedBy.clear();
+                    form.DesignedByTimestamp.clear();
                   }
                 },
               ),
               const SizedBox(height: 30),
             ],
 
-            if (form.canView("DesignerCreatedBy"))
-              SearchableDropdownWithInitial(
-                label: "Designer Created By",
-                items: form.parties,
-                initialValue: form.DesignerCreatedBy.text.isEmpty
-                    ? "Select"
-                    : form.DesignerCreatedBy.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.DesignerCreatedBy.text = (v ?? "").trim();
-                  });
-                },
+            /// ✅ READ-ONLY "Designed By" Field (Shows when Designing is Done)
+            if (form.canView("DesigningStatus") && isDesigningDone) ...[
+              // Read-only Name field
+              TextField(
+                controller: form.DesignedBy,
+                enabled: false,  // ← NOT EDITABLE
+                decoration: InputDecoration(
+                  labelText: "Designed By",
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                style: const TextStyle(color: Colors.black87),
               ),
+              const SizedBox(height: 16),
 
-            if (form.canView("DesignerCreatedBy"))
+              // Read-only Timestamp field
+              TextField(
+                controller: form.DesignedByTimestamp,
+                enabled: false,  // ← NOT EDITABLE
+                decoration: InputDecoration(
+                  labelText: "Designed At",
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                style: const TextStyle(color: Colors.black87, fontSize: 12),
+              ),
               const SizedBox(height: 30),
+            ],
 
 
             /// ✅ Submit Button
