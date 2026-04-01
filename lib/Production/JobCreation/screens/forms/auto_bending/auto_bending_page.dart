@@ -72,7 +72,7 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
     // 🔒 DESIGNER (VIEW ONLY)
     form.PartyName.text = designer["PartyName"] ?? "";
     form.DeliveryAt.text = designer["DeliveryAt"] ?? "";
-    form.Orderby.text = designer["Orderby"] ?? "";
+    form.OrderBy.text = designer["Orderby"] ?? "";
     form.ParticularJobName.text =
         designer["ParticularJobName"] ?? "";
     form.Priority.text = designer["Priority"] ?? "";
