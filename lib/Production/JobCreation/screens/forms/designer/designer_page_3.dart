@@ -317,6 +317,7 @@ class _DesignerPage3State extends State<DesignerPage3> {
               const SizedBox(height: 26),
             ],
 
+
             /// ✅ Capsule
             if (form.canView("CapsuleType")) ...[
               _loadingCapsules
