@@ -247,31 +247,7 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
                     final isDone =
                         form.AutoBendingStatus.text.trim().toLowerCase() == "done";
 
-                    final updateData = {
-                      "autoBending": {
-                        "submitted": true,
-                        "data": {
-                          "AutoBendingStatus": form.AutoBendingStatus.text,
-                          "AutoBendingCreatedBy": form.AutoBendingCreatedBy.text,
-                          "AutoCreasing": form.AutoCreasing,
-                          "AutoCreasingStatus": form.AutoCreasingStatus.text,
-                        },
-                      },
-                      "currentDepartment": isDone ? "ManualBending" : "AutoBending",
-                      "updatedAt": FieldValue.serverTimestamp(),
-                    };
-
-                    // ✅ Only add ManualBending if Done
-                    if (isDone) {
-                      updateData["visibleTo"] =
-                          FieldValue.arrayUnion(["ManualBending"]);
-                    }
-
-                    await FirebaseFirestore.instance
-                        .collection("jobs")
-                        .doc(form.LpmAutoIncrement.text)
-                        .set(updateData, SetOptions(merge: true));
-
+                    await form.submitDepartmentForm("AutoBending");
                     if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(

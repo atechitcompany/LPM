@@ -204,6 +204,14 @@ class NewFormState extends State<NewForm> {
   final LpmAutoIncrement = TextEditingController();
   final JobDone = TextEditingController();
   final DrawingAttachment = TextEditingController();
+  //new Flow system
+  // ===== DEPARTMENT ROUTING TOGGLES (NEW PARALLEL SYSTEM) =====
+  final ReqAutoBending = TextEditingController();
+  final ReqManualBending = TextEditingController();
+  final ReqLaserCutting = TextEditingController();
+  final ReqRubber = TextEditingController();
+  final ReqEmboss = TextEditingController();
+  final ReqAccount = TextEditingController();
 
 
 
@@ -403,6 +411,15 @@ class NewFormState extends State<NewForm> {
       "WhiteProfileRubber": WhiteProfileRubber.text,
       "DrawingAttachment": DrawingAttachment.text,
 
+      //New Form Flow
+      // Routing Toggles
+      "ReqAutoBending": ReqAutoBending.text,
+      "ReqManualBending": ReqManualBending.text,
+      "ReqLaserCutting": ReqLaserCutting.text,
+      "ReqRubber": ReqRubber.text,
+      "ReqEmboss": ReqEmboss.text,
+      "ReqAccount": ReqAccount.text,
+
       "Timestamp": DateTime.now().toIso8601String(),
     };
   }
@@ -549,6 +566,23 @@ class NewFormState extends State<NewForm> {
     Perforation.clear();
     PartyName.clear();
     DrawingAttachment.clear();
+
+    //New Flow
+    // ✅ Clear routing toggles
+    ReqAutoBending.clear();
+    ReqManualBending.clear();
+    ReqLaserCutting.clear();
+    ReqRubber.clear();
+    ReqEmboss.clear();
+    ReqAccount.clear();
+
+    // Set defaults
+    ReqAutoBending.text = "NO";
+    ReqManualBending.text = "NO";
+    ReqLaserCutting.text = "NO";
+    ReqRubber.text = "NO";
+    ReqEmboss.text = "NO";
+    ReqAccount.text = "NO";
 
 
 
@@ -819,6 +853,14 @@ class NewFormState extends State<NewForm> {
       set(DeliveryStatus,        "DeliveryStatus");
       set(InvoiceStatus,         "InvoiceStatus");
       set(LpmAutoIncrement,      "LpmAutoIncrement");
+
+      //New Form Flow
+      set(ReqAutoBending,        "ReqAutoBending");
+      set(ReqManualBending,      "ReqManualBending");
+      set(ReqLaserCutting,       "ReqLaserCutting");
+      set(ReqRubber,             "ReqRubber");
+      set(ReqEmboss,             "ReqEmboss");
+      set(ReqAccount,            "ReqAccount");
     });
   }
 
@@ -918,14 +960,22 @@ class NewFormState extends State<NewForm> {
       debugPrint("💾 Writing main order document...");
       final isDesigningDone = DesigningStatus.text.trim().toLowerCase() == "done";
 
+// ✅ Build visibleTo based on Req* toggles — only if designing is done
+      final List<String> visibleTo = ["Designer"];
+      if (isDesigningDone) {
+        if (ReqAutoBending.text.toUpperCase() == "YES") visibleTo.add("AutoBending");
+        if (ReqManualBending.text.toUpperCase() == "YES") visibleTo.add("ManualBending");
+        if (ReqLaserCutting.text.toUpperCase() == "YES") visibleTo.add("LaserCutting");
+        if (ReqRubber.text.toUpperCase() == "YES") visibleTo.add("Rubber");
+        if (ReqEmboss.text.toUpperCase() == "YES") visibleTo.add("Emboss");
+      }
+
       await mainOrderRef.set({
         "orderNo": orderNo,
         "month": month,
         "year": year,
-        "currentDepartment": isDesigningDone ? "AutoBending" : "Designer",
-        "visibleTo": isDesigningDone
-            ? ["Designer", "AutoBending"]
-            : ["Designer"],
+        "currentDepartment": isDesigningDone ? "InProgress" : "Designer",
+        "visibleTo": visibleTo,
         "designer": {
           "submitted": true,
           "submittedAt": FieldValue.serverTimestamp(),
@@ -945,10 +995,8 @@ class NewFormState extends State<NewForm> {
       await itemRef.set({
         "fullLpm": resolvedLpm,
         "subOrderNo": subOrderNo,
-        "currentDepartment": isDesigningDone ? "AutoBending" : "Designer",
-        "visibleTo": isDesigningDone
-            ? ["Designer", "AutoBending"]
-            : ["Designer"],
+        "currentDepartment": isDesigningDone ? "InProgress" : "Designer",
+        "visibleTo": visibleTo,
         "status": "InProgress",
         "designer": {
           "submitted": true,
@@ -980,55 +1028,134 @@ class NewFormState extends State<NewForm> {
 // 🔧 FIXED submitForm() Method
 // Replace the existing submitForm() in new_form.dart with this version
 
-  Future<void> submitDepartmentForm(String nextDepartment) async {
-    final data = buildFormData();
+  // 🔧 FIXED submitDepartmentForm() Method (Parallel Routing Logic)
+  Future<void> submitDepartmentForm(String currentDept) async {
     final lpm = LpmAutoIncrement.text;
+
+    if (lpm.isEmpty) {
+      throw Exception("LPM is empty. Cannot save.");
+    }
 
     bool isDone = false;
 
-    // ✅ CORRECT STATUS CHECK PER DEPARTMENT
-    switch (department) {
+    switch (currentDept) {
       case "AutoBending":
         isDone = AutoBendingStatus.text.trim().toLowerCase() == "done";
         break;
-
       case "ManualBending":
         isDone = ManualBendingStatus.text.trim().toLowerCase() == "done";
         break;
-
       case "LaserCutting":
         isDone = LaserCuttingStatus.text.trim().toLowerCase() == "done";
         break;
-
       case "Rubber":
         isDone = RubberStatus.text.trim().toLowerCase() == "done";
         break;
-
       case "Emboss":
         isDone = EmbossStatus.text.trim().toLowerCase() == "done";
         break;
-
+      case "Account":
+        isDone = AccountStatus.text.trim().toLowerCase() == "done";
+        break;
       default:
         isDone = false;
     }
 
-    // Build the update map
+    final docRef = FirebaseFirestore.instance.collection("jobs").doc(lpm);
+    final deptKey = _deptKey(currentDept);
+
+    // ✅ Build dept-specific data only
+    Map<String, dynamic> deptData = {};
+    switch (currentDept) {
+      case "AutoBending":
+        deptData = {
+          "AutoBendingStatus": AutoBendingStatus.text,
+          "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
+          "AutoCreasing": AutoCreasing,
+          "AutoCreasingStatus": AutoCreasingStatus.text,
+        };
+        break;
+      case "ManualBending":
+        deptData = {
+          "ManualBendingStatus": ManualBendingStatus.text,
+          "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
+        };
+        break;
+      case "LaserCutting":
+        deptData = {
+          "LaserCuttingStatus": LaserCuttingStatus.text,
+          "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
+        };
+        break;
+      case "Rubber":
+        deptData = {
+          "RubberStatus": RubberStatus.text,
+          "RubberCreatedBy": RubberCreatedBy.text,
+        };
+        break;
+      case "Emboss":
+        deptData = {
+          "EmbossStatus": EmbossStatus.text,
+          "MaleEmbossType": MaleEmbossType.text,
+          "FemaleEmbossType": FemaleEmbossType.text,
+          "EmbossCreatedBy": EmbossCreatedBy.text,
+        };
+        break;
+      case "Account":
+        deptData = {
+          "AccountStatus": AccountStatus.text,
+          "AccountsCreatedBy": AccountsCreatedBy.text,
+          "InvoiceStatus": InvoiceStatus.text,
+          "InvoicePrintedBy": InvoicePrintedBy.text,
+        };
+        break;
+    }
+
+    // ✅ Use dotted keys — works correctly with .update()
     final updateMap = <String, dynamic>{
-      "${_deptKey(department)}.submitted": true,
-      "${_deptKey(department)}.data": data,
-      "currentDepartment": isDone ? nextDepartment : department,
+      "$deptKey.submitted": true,
+      "$deptKey.data": deptData,
       "updatedAt": FieldValue.serverTimestamp(),
     };
 
-// Only add visibleTo if toggled done
-    if (isDone) {
-      updateMap["visibleTo"] = FieldValue.arrayUnion([nextDepartment]);
+    if (!isDone) {
+      // Just save progress, don't change visibleTo
+      await docRef.update(updateMap);
+      debugPrint("✅ $currentDept progress saved (not done yet)");
+      return;
     }
 
-    await FirebaseFirestore.instance
-        .collection("jobs")
-        .doc(lpm)
-        .update(updateMap);
+    // ── PARALLEL FINISH LOGIC ──
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(docRef);
+      if (!snap.exists) throw Exception("Document does not exist!");
+
+      List<dynamic> visibleTo = List.from(snap.data()?['visibleTo'] ?? []);
+
+      // Remove the dept that just finished
+      visibleTo.remove(currentDept);
+
+      // Check if any production depts are still active
+      final productionDepts = ["AutoBending", "ManualBending", "LaserCutting", "Rubber", "Emboss"];
+      final remainingProduction = visibleTo
+          .where((dept) => productionDepts.contains(dept))
+          .toList();
+
+      if (remainingProduction.isEmpty) {
+        // All production depts done → add Account
+        if (!visibleTo.contains("Account")) {
+          visibleTo.add("Account");
+        }
+        updateMap["currentDepartment"] = "Account";
+      } else {
+        updateMap["currentDepartment"] = "InProgress";
+      }
+
+      updateMap["visibleTo"] = visibleTo;
+      transaction.update(docRef, updateMap);
+    });
+
+    debugPrint("✅ $currentDept finished. isDone: $isDone");
   }
 
   /// ✅ Validates all required fields
@@ -1260,6 +1387,14 @@ class NewFormState extends State<NewForm> {
     PartyName.dispose();
     DrawingAttachment.dispose();
 
+    //New Form Flow
+    ReqAutoBending.dispose();
+    ReqManualBending.dispose();
+    ReqLaserCutting.dispose();
+    ReqRubber.dispose();
+    ReqEmboss.dispose();
+    ReqAccount.dispose();
+
     super.dispose();
   }
 
@@ -1379,7 +1514,6 @@ class NewFormState extends State<NewForm> {
       return;
     }
   }
-
 
   void _goPrev() {
     if (context.canPop()) {
