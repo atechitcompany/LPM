@@ -19,6 +19,36 @@ class _DesignerPage6State extends State<DesignerPage6> {
   bool isSubmitting = false;
   bool _initialized = false;
 
+  List<String> _strippingItems = ["No"];
+  bool _loadingStrippings = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStrippings();
+  }
+
+  Future<void> _fetchStrippings() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Strippings")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Strippings'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _strippingItems = ["No", ...items];
+        _loadingStrippings = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Strippings: $e");
+      setState(() => _loadingStrippings = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -37,9 +67,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
         form.StrippingType.text = decodedData["StrippingType"] ?? "No";
-        form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+        form.LaserCuttingStatus.text =
+            decodedData["LaserCuttingStatus"] ?? "Pending";
         form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
-        form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
+        form.WhiteProfileRubber.text =
+            decodedData["WhiteProfileRubber"] ?? "No";
         form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
         form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
         form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
@@ -67,21 +99,60 @@ class _DesignerPage6State extends State<DesignerPage6> {
     }
   }
 
+  /// ✅ Gets current logged-in user's name
   Future<String> _getCurrentUserName() async {
     try {
-      final email = SessionManager.getEmail();
-      if (email == null || email.isEmpty) return "Current User";
+      // Method 1: Try SharedPreferences 'userName' (set during login)
+      final prefs = await SharedPreferences.getInstance();
+      String? userName = prefs.getString('userName');
 
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection("Staff")
-          .where("Email", isEqualTo: email)
-          .limit(1)
-          .get();
+      if (userName != null && userName.isNotEmpty && userName != 'User') {
+        debugPrint("✅ Got user name from SharedPreferences: $userName");
+        return userName;
+      }
 
-      if (querySnapshot.docs.isEmpty) return "Current User";
-      return querySnapshot.docs.first.data()["Name"] ?? "Current User";
+      // Method 2: Try SessionManager email
+      String? email = SessionManager.getEmail();
+      if (email != null && email.isNotEmpty) {
+        // Query Staff collection
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where("Email", isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          userName = querySnapshot.docs.first.data()["Name"];
+          if (userName != null && userName.isNotEmpty) {
+            debugPrint("✅ Got user name from Staff: $userName");
+            return userName;
+          }
+        }
+      }
+
+      // Method 3: Try SharedPreferences 'userEmail'
+      email = prefs.getString('userEmail');
+      if (email != null && email.isNotEmpty) {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where("Email", isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          userName = querySnapshot.docs.first.data()["Name"];
+          if (userName != null && userName.isNotEmpty) {
+            debugPrint("✅ Got user name from Staff (via userEmail): $userName");
+            return userName;
+          }
+        }
+      }
+
+      debugPrint("⚠️ Could not find user name, returning 'Unknown'");
+      return "Unknown";
     } catch (e) {
-      return "Current User";
+      debugPrint("❌ Error getting current user name: $e");
+      return "Unknown";
     }
   }
 
@@ -109,14 +180,28 @@ class _DesignerPage6State extends State<DesignerPage6> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
+            /// ✅ Stripping
             if (form.canView("StrippingType")) ...[
-              AddableSearchDropdown(
+              _loadingStrippings
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Stripping",
-                items: form.strippingTypes,
-                initialValue: form.StrippingType.text.isEmpty ? "No" : form.StrippingType.text,
-                onAdd: (newJob) => form.strippingTypes.add(newJob),
-                onChanged: (v) => setState(() => form.StrippingType.text = (v ?? "No").trim()),
+                items: _strippingItems,
+                initialValue: form.StrippingType.text.isEmpty
+                    ? "No"
+                    : form.StrippingType.text,
+                firestoreCollection: "Strippings",
+                firestoreField: "Strippings",
+                onChanged: (v) {
+                  setState(() {
+                    form.StrippingType.text = (v ?? "No").trim();
+                  });
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _strippingItems.add(newItem);
+                  });
+                },
               ),
               const SizedBox(height: 30),
             ],
@@ -126,7 +211,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
                 label: "Laser Cutting Status",
                 inactiveText: "Pending", activeText: "Done",
                 initialValue: laserDone,
-                onChanged: (v) => setState(() => form.LaserCuttingStatus.text = v ? "Done" : "Pending"),
+                onChanged: (v) {
+                  setState(() {
+                    form.LaserCuttingStatus.text = v ? "Done" : "Pending";
+                  });
+                },
               ),
               const SizedBox(height: 30),
             ],
@@ -158,13 +247,17 @@ class _DesignerPage6State extends State<DesignerPage6> {
                 inactiveText: "Pending", activeText: "Done",
                 initialValue: isDesigningDone,
                 onChanged: (val) async {
-                  setState(() => form.DesigningStatus.text = val ? "Done" : "Pending");
+                  setState(() {
+                    form.DesigningStatus.text = val ? "Done" : "Pending";
+                  });
+
                   if (val) {
                     final userName = await _getCurrentUserName();
                     if (mounted) {
                       setState(() {
                         form.DesignedBy.text = userName;
-                        form.DesignedByTimestamp.text = DateTime.now().toString();
+                        form.DesignedByTimestamp.text = DateTime.now()
+                            .toString();
                       });
                     }
                   } else {
@@ -178,18 +271,43 @@ class _DesignerPage6State extends State<DesignerPage6> {
 
             /// 🟢 REPLACED BULKY TEXTFIELDS WITH CUSTOM COMPONENT 🟢
             if (form.canView("DesigningStatus") && isDesigningDone) ...[
-              TextInput(
-                label: "Designed By",
+              TextField(
                 controller: form.DesignedBy,
-                readOnly: true,
-                hint: "",
+                enabled: false, // ← NOT EDITABLE
+                decoration: InputDecoration(
+                  labelText: "Designed By",
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                style: const TextStyle(color: Colors.black87),
               ),
               const SizedBox(height: 16),
-              TextInput(
-                label: "Designed At",
+
+              TextField(
                 controller: form.DesignedByTimestamp,
-                readOnly: true,
-                hint: "",
+                enabled: false, // ← NOT EDITABLE
+                decoration: InputDecoration(
+                  labelText: "Designed At",
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                style: const TextStyle(color: Colors.black87, fontSize: 12),
               ),
               const SizedBox(height: 30),
             ],
