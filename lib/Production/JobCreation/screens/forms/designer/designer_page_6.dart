@@ -22,6 +22,36 @@ class _DesignerPage6State extends State<DesignerPage6> {
   bool isSubmitting = false;
   bool _initialized = false;
 
+  List<String> _strippingItems = ["No"];
+  bool _loadingStrippings = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStrippings();
+  }
+
+  Future<void> _fetchStrippings() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Strippings")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Strippings'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _strippingItems = ["No", ...items];
+        _loadingStrippings = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Strippings: $e");
+      setState(() => _loadingStrippings = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -156,10 +186,8 @@ class _DesignerPage6State extends State<DesignerPage6> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    // ✅ Check if Designing is done (this is the key field)
     final bool isDesigningDone =
         form.DesigningStatus.text.trim().toLowerCase() == "done";
-
     final bool laserDone =
         form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
     final bool rubberFixingDone =
@@ -184,16 +212,24 @@ class _DesignerPage6State extends State<DesignerPage6> {
           children: [
             /// ✅ Stripping
             if (form.canView("StrippingType")) ...[
-              AddableSearchDropdown(
+              _loadingStrippings
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Stripping",
-                items: form.strippingTypes,
+                items: _strippingItems,
                 initialValue: form.StrippingType.text.isEmpty
                     ? "No"
                     : form.StrippingType.text,
-                onAdd: (newJob) => form.strippingTypes.add(newJob),
+                firestoreCollection: "Strippings",
+                firestoreField: "Strippings",
                 onChanged: (v) {
                   setState(() {
                     form.StrippingType.text = (v ?? "No").trim();
+                  });
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _strippingItems.add(newItem);
                   });
                 },
               ),
@@ -261,7 +297,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   });
 
                   if (val) {
-                    // ✅ When toggle is ON: auto-populate with current user's name and timestamp
                     final userName = await _getCurrentUserName();
                     if (mounted) {
                       setState(() {
@@ -271,7 +306,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
                       });
                     }
                   } else {
-                    // ✅ When toggle is OFF: clear both fields
                     form.DesignedBy.clear();
                     form.DesignedByTimestamp.clear();
                   }
@@ -282,7 +316,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
 
             /// ✅ READ-ONLY "Designed By" Field (Shows when Designing is Done)
             if (form.canView("DesigningStatus") && isDesigningDone) ...[
-              // Read-only Name field
               TextField(
                 controller: form.DesignedBy,
                 enabled: false, // ← NOT EDITABLE
@@ -303,7 +336,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
               ),
               const SizedBox(height: 16),
 
-              // Read-only Timestamp field
               TextField(
                 controller: form.DesignedByTimestamp,
                 enabled: false, // ← NOT EDITABLE
