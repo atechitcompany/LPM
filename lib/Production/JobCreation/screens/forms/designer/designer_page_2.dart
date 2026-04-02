@@ -20,6 +20,37 @@ class _DesignerPage2State extends State<DesignerPage2> {
   bool isDesigningDone = false;
   bool _initialized = false;
 
+  // ✅ NEW
+  List<String> _plyItems = [];
+  bool _loadingPlys = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlys();
+  }
+
+  Future<void> _fetchPlys() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Plys")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Plys'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _plyItems = ["No", ...items];
+        _loadingPlys = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Plys: $e");
+      setState(() => _loadingPlys = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -27,7 +58,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
     if (_initialized) return;
     _initialized = true;
 
-    // ✅ Load data from route parameters if in edit mode
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
     }
@@ -68,7 +98,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
         }
 
         final decodedData =
-            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
@@ -131,7 +161,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 30),
             ],
 
-
             /// ✅ Drawing Attachment
             if (form.canView("DrawingAttachment")) ...[
               const Text(
@@ -179,10 +208,15 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
             /// ✅ Ply
             if (form.canView("PlyType")) ...[
-              AddableSearchDropdown(
+              _loadingPlys
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Ply",
-                items: form.ply,
-                initialValue: form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
+                items: _plyItems,
+                initialValue:
+                form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
+                firestoreCollection: "Plys",  // ✅ saves new entries
+                firestoreField: "Plys",       // ✅ field name in Firestore
                 onChanged: (v) {
                   setState(() {
                     form.PlyType.text = v ?? "";
@@ -198,11 +232,15 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
                       "at ${TimeOfDay.now().format(context)}";
                 },
-                onAdd: (v) => form.ply.add(v),
+                onAdd: (newItem) {
+                  setState(() {
+                    _plyItems.add(newItem);
+                  });
+                },
               ),
             ],
 
-            /// ✅ Ply Selected By (auto-filled, view-only logically)
+            /// ✅ Ply Selected By
             if (isPlySelected && form.canView("PlySelectedBy")) ...[
               const SizedBox(height: 30),
               const Text(

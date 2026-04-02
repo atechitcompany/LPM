@@ -18,6 +18,63 @@ class DesignerPage3 extends StatefulWidget {
 class _DesignerPage3State extends State<DesignerPage3> {
   bool _initialized = false;
 
+  List<String> _bladeItems = ["No"];
+  List<String> _creasingItems = ["No"];
+  List<String> _capsuleItems = ["No"];
+  bool _loadingBlades = true;
+  bool _loadingCreasings = true;
+  bool _loadingCapsules = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBlades();
+    _fetchCreasings();
+    _fetchCapsules();
+  }
+
+  Future<void> _fetchBlades() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Blades")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Blades'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _bladeItems = ["No", ...items];
+        _loadingBlades = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Blades: $e");
+      setState(() => _loadingBlades = false);
+    }
+  }
+
+  Future<void> _fetchCreasings() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Creasings")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Creasings'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _creasingItems = ["No", ...items];
+        _loadingCreasings = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Creasings: $e");
+      setState(() => _loadingCreasings = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -27,6 +84,27 @@ class _DesignerPage3State extends State<DesignerPage3> {
 
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
+    }
+  }
+
+  Future<void> _fetchCapsules() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Capsules")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Capsules'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _capsuleItems = ["No", ...items];
+        _loadingCapsules = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Capsules: $e");
+      setState(() => _loadingCapsules = false);
     }
   }
 
@@ -67,7 +145,7 @@ class _DesignerPage3State extends State<DesignerPage3> {
         }
 
         final decodedData =
-            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
           form.Blade.text = decodedData["Blade"] ?? "No";
@@ -117,9 +195,11 @@ class _DesignerPage3State extends State<DesignerPage3> {
 
             /// ✅ Blade
             if (form.canView("Blade")) ...[
-              SearchableDropdownWithInitial(
+              _loadingBlades
+                  ? const Center(child: CircularProgressIndicator())
+                  : SearchableDropdownWithInitial(
                 label: "Blade",
-                items: form.ply,
+                items: _bladeItems,
                 initialValue:
                 form.Blade.text.isEmpty ? "No" : form.Blade.text,
                 onChanged: (v) {
@@ -160,9 +240,11 @@ class _DesignerPage3State extends State<DesignerPage3> {
 
             /// ✅ Creasing
             if (form.canView("Creasing")) ...[
-              SearchableDropdownWithInitial(
+              _loadingCreasings
+                  ? const Center(child: CircularProgressIndicator())
+                  : SearchableDropdownWithInitial(
                 label: "Creasing",
-                items: form.ply,
+                items: _creasingItems,
                 initialValue:
                 form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
                 onChanged: (v) {
@@ -237,14 +319,22 @@ class _DesignerPage3State extends State<DesignerPage3> {
 
             /// ✅ Capsule
             if (form.canView("CapsuleType")) ...[
-              AddableSearchDropdown(
+              _loadingCapsules
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Capsule",
-                items: form.jobs,
+                items: _capsuleItems,
                 initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
+                firestoreCollection: "Capsules",  // ✅ NEW
+                firestoreField: "Capsules",       // ✅ NEW
                 onChanged: (v) {
                   form.CapsuleType.text = v ?? "";
                 },
-                onAdd: (newJob) => form.jobs.add(newJob),
+                onAdd: (newItem) {
+                  setState(() {
+                    _capsuleItems.add(newItem);
+                  });
+                },
               ),
               const SizedBox(height: 26),
             ],
