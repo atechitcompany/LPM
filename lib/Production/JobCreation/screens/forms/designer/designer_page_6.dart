@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../FormComponents/SearchableDropdownWithInitial.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
@@ -74,9 +75,11 @@ class _DesignerPage6State extends State<DesignerPage6> {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
         form.StrippingType.text = decodedData["StrippingType"] ?? "No";
-        form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+        form.LaserCuttingStatus.text =
+            decodedData["LaserCuttingStatus"] ?? "Pending";
         form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
-        form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
+        form.WhiteProfileRubber.text =
+            decodedData["WhiteProfileRubber"] ?? "No";
         form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
         form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
         form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
@@ -98,15 +101,19 @@ class _DesignerPage6State extends State<DesignerPage6> {
           return;
         }
 
-        final decodedData =
-        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        final decodedData = Map<String, dynamic>.from(
+          snap.data()?["designer"]?["data"] ?? {},
+        );
 
         setState(() {
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
-          form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+          form.LaserCuttingStatus.text =
+              decodedData["LaserCuttingStatus"] ?? "Pending";
           form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
-          form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
-          form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+          form.WhiteProfileRubber.text =
+              decodedData["WhiteProfileRubber"] ?? "No";
+          form.DesigningStatus.text =
+              decodedData["DesigningStatus"] ?? "Pending";
           form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
           form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
         });
@@ -118,35 +125,60 @@ class _DesignerPage6State extends State<DesignerPage6> {
     }
   }
 
-  /// ✅ Gets current logged-in user's name from Firestore Staff collection
+  /// ✅ Gets current logged-in user's name
   Future<String> _getCurrentUserName() async {
     try {
-      final email = SessionManager.getEmail();
+      // Method 1: Try SharedPreferences 'userName' (set during login)
+      final prefs = await SharedPreferences.getInstance();
+      String? userName = prefs.getString('userName');
 
-      if (email == null || email.isEmpty) {
-        debugPrint("⚠️ No email in SessionManager");
-        return "Current User";
+      if (userName != null && userName.isNotEmpty && userName != 'User') {
+        debugPrint("✅ Got user name from SharedPreferences: $userName");
+        return userName;
       }
 
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection("Staff")
-          .where("Email", isEqualTo: email)
-          .limit(1)
-          .get();
+      // Method 2: Try SessionManager email
+      String? email = SessionManager.getEmail();
+      if (email != null && email.isNotEmpty) {
+        // Query Staff collection
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where("Email", isEqualTo: email)
+            .limit(1)
+            .get();
 
-      if (querySnapshot.docs.isEmpty) {
-        debugPrint("⚠️ Staff record not found for email: $email");
-        return "Current User";
+        if (querySnapshot.docs.isNotEmpty) {
+          userName = querySnapshot.docs.first.data()["Name"];
+          if (userName != null && userName.isNotEmpty) {
+            debugPrint("✅ Got user name from Staff: $userName");
+            return userName;
+          }
+        }
       }
 
-      final staffDoc = querySnapshot.docs.first;
-      final name = staffDoc.data()["Name"] ?? "Current User";
+      // Method 3: Try SharedPreferences 'userEmail'
+      email = prefs.getString('userEmail');
+      if (email != null && email.isNotEmpty) {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where("Email", isEqualTo: email)
+            .limit(1)
+            .get();
 
-      debugPrint("✅ Got user name from Staff: $name");
-      return name.toString();
+        if (querySnapshot.docs.isNotEmpty) {
+          userName = querySnapshot.docs.first.data()["Name"];
+          if (userName != null && userName.isNotEmpty) {
+            debugPrint("✅ Got user name from Staff (via userEmail): $userName");
+            return userName;
+          }
+        }
+      }
+
+      debugPrint("⚠️ Could not find user name, returning 'Unknown'");
+      return "Unknown";
     } catch (e) {
       debugPrint("❌ Error getting current user name: $e");
-      return "Current User";
+      return "Unknown";
     }
   }
 
@@ -178,7 +210,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// ✅ Stripping
             if (form.canView("StrippingType")) ...[
               _loadingStrippings
@@ -270,7 +301,8 @@ class _DesignerPage6State extends State<DesignerPage6> {
                     if (mounted) {
                       setState(() {
                         form.DesignedBy.text = userName;
-                        form.DesignedByTimestamp.text = DateTime.now().toString();
+                        form.DesignedByTimestamp.text = DateTime.now()
+                            .toString();
                       });
                     }
                   } else {
@@ -286,7 +318,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
             if (form.canView("DesigningStatus") && isDesigningDone) ...[
               TextField(
                 controller: form.DesignedBy,
-                enabled: false,
+                enabled: false, // ← NOT EDITABLE
                 decoration: InputDecoration(
                   labelText: "Designed By",
                   labelStyle: const TextStyle(color: Colors.grey),
@@ -295,7 +327,10 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   ),
                   filled: true,
                   fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 style: const TextStyle(color: Colors.black87),
               ),
@@ -303,7 +338,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
 
               TextField(
                 controller: form.DesignedByTimestamp,
-                enabled: false,
+                enabled: false, // ← NOT EDITABLE
                 decoration: InputDecoration(
                   labelText: "Designed At",
                   labelStyle: const TextStyle(color: Colors.grey),
@@ -312,7 +347,10 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   ),
                   filled: true,
                   fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 style: const TextStyle(color: Colors.black87, fontSize: 12),
               ),
@@ -328,31 +366,32 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   onPressed: isSubmitting
                       ? null
                       : () async {
-                    setState(() {
-                      isSubmitting = true;
-                    });
+                          setState(() {
+                            isSubmitting = true;
+                          });
 
-                    try {
-                      await form.submitDesignerForm();
+                          try {
+                            await form.submitDesignerForm();
 
-                      if (mounted) {
-                        context.go('/dashboard');
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Error submitting form: $e"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } finally {
-                      if (mounted) {
-                        setState(() {
-                          isSubmitting = false;
-                        });
-                      }
-                    }
-                  },
+                            // ✅ Navigate to dashboard
+                            if (mounted) {
+                              context.go('/dashboard');
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error submitting form: $e"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() {
+                                isSubmitting = false;
+                              });
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF8D94B),
                     shape: RoundedRectangleBorder(
@@ -362,17 +401,17 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   ),
                   child: isSubmitting
                       ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text(
-                    "Submit",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                          "Submit",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],

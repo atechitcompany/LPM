@@ -18,14 +18,14 @@ enum Department {
   Completed,
 }
 
-
 class NewForm extends StatefulWidget {
   final Widget child;
   final String department;
   final String? lpm;
   final String? mode;
 
-  const NewForm({super.key,
+  const NewForm({
+    super.key,
     required this.child,
     required this.department,
     this.lpm,
@@ -34,7 +34,6 @@ class NewForm extends StatefulWidget {
 
   @override
   State<NewForm> createState() => NewFormState();
-
 }
 
 class NewFormState extends State<NewForm> {
@@ -66,10 +65,7 @@ class NewFormState extends State<NewForm> {
 
   bool canView(String key) => fieldPermission(key) != "hide";
 
-  bool canEdit(String key) =>
-      fieldPermission(key) == "edit" && isEditMode;
-
-
+  bool canEdit(String key) => fieldPermission(key) == "edit" && isEditMode;
 
   List<String> parties = ["Tata", "Jindal", "Infosys"];
   List<String> jobs = ["Laser", "Bending", "Cutting"];
@@ -194,6 +190,10 @@ class NewFormState extends State<NewForm> {
   final PartyName = TextEditingController();
   final TextEditingController DesignedBy = TextEditingController();
   final TextEditingController DesignedByTimestamp = TextEditingController();
+  final TextEditingController AutoBendingCreatedByName =
+      TextEditingController();
+  final TextEditingController AutoBendingCreatedByTimestamp =
+      TextEditingController();
   final TextEditingController PlySelectedBy = TextEditingController();
   final TextEditingController BladeSelectedBy = TextEditingController();
   final TextEditingController CreasingSelectedBy = TextEditingController();
@@ -205,12 +205,7 @@ class NewFormState extends State<NewForm> {
   final JobDone = TextEditingController();
   final DrawingAttachment = TextEditingController();
 
-
-
-
-
   bool AutoCreasing = false;
-
 
   String HouseNo = "";
   String Appartment = "";
@@ -226,7 +221,6 @@ class NewFormState extends State<NewForm> {
     ParticularJobName.clear();
     Priority.clear();
     Remark.clear();
-
 
     DesignedBy.clear();
 
@@ -382,6 +376,8 @@ class NewFormState extends State<NewForm> {
       "DesignedBy": DesignedBy.text,
       "DesignedByTimestamp": DesignedByTimestamp.text,
       "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
+      "AutoBendingCreatedByName": AutoBendingCreatedByName.text,
+      "AutoBendingCreatedByTimestamp": AutoBendingCreatedByTimestamp.text,
       "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
       "AccountsCreatedBy": AccountsCreatedBy.text,
       "AccountStatus": AccountStatus.text,
@@ -539,6 +535,8 @@ class NewFormState extends State<NewForm> {
     // ✅ clear new fields
     DesignedBy.clear();
     DesignedByTimestamp.clear();
+    AutoBendingCreatedByName.clear();
+    AutoBendingCreatedByTimestamp.clear();
     PlySelectedBy.clear();
     BladeSelectedBy.clear();
     CreasingSelectedBy.clear();
@@ -549,8 +547,6 @@ class NewFormState extends State<NewForm> {
     Perforation.clear();
     PartyName.clear();
     DrawingAttachment.clear();
-
-
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -568,13 +564,12 @@ class NewFormState extends State<NewForm> {
 
     // Example Toggles (default values):
     AutoBendingStatus.text = "Pending";
-    ManualBendingStatus.text="Pending";
+    ManualBendingStatus.text = "Pending";
     DesigningStatus.text = "Pending";
     DeliveryStatus.text = "Pending";
     InvoiceStatus.text = "Pending";
     LaserCuttingStatus.text = "Pending";
     LaserPunchNew.text = "No";
-
 
     // Dropdowns default
     PlyType.text = "No";
@@ -624,7 +619,6 @@ class NewFormState extends State<NewForm> {
           LpmAutoIncrement.text = fullLpm;
         });
       }
-
     } catch (e) {
       debugPrint("❌ LPM Load Error: $e");
 
@@ -633,7 +627,9 @@ class NewFormState extends State<NewForm> {
         final now = DateTime.now();
         final month = now.month.toString().padLeft(2, '0');
         final year = (now.year % 100).toString().padLeft(2, '0');
-        final tempNo = now.millisecondsSinceEpoch.toString().substring(7); // last 6 digits
+        final tempNo = now.millisecondsSinceEpoch.toString().substring(
+          7,
+        ); // last 6 digits
         final fallbackLpm = "LPM-TEMP$tempNo-$month-$year-01";
 
         debugPrint("⚠️ Using fallback LPM: $fallbackLpm");
@@ -645,7 +641,9 @@ class NewFormState extends State<NewForm> {
         // Show a warning to the user
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("⚠️ No internet — using temporary LPM. Please resubmit when online."),
+            content: Text(
+              "⚠️ No internet — using temporary LPM. Please resubmit when online.",
+            ),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 4),
           ),
@@ -653,10 +651,11 @@ class NewFormState extends State<NewForm> {
       }
     }
   }
+
   //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
   // ────────────────────────────────────────────
-// METHOD 1: Called from initState on edit mode
-// ────────────────────────────────────────────
+  // METHOD 1: Called from initState on edit mode
+  // ────────────────────────────────────────────
   void _loadDataFromQueryParam() {
     try {
       final uri = GoRouterState.of(context).uri;
@@ -671,17 +670,18 @@ class NewFormState extends State<NewForm> {
       final Map<String, dynamic> data = jsonDecode(dataJson);
       debugPrint("✅ Loaded ${data.keys.length} fields from URL param");
       _populateControllers(data);
-
     } catch (e) {
-      debugPrint("❌ _loadDataFromQueryParam error: $e — falling back to Firestore");
+      debugPrint(
+        "❌ _loadDataFromQueryParam error: $e — falling back to Firestore",
+      );
       loadExistingFormData();
     }
   }
 
-// ────────────────────────────────────────────
-// METHOD 2: Firestore fallback
-// (used when URL data is missing or too long)
-// ────────────────────────────────────────────
+  // ────────────────────────────────────────────
+  // METHOD 2: Firestore fallback
+  // (used when URL data is missing or too long)
+  // ────────────────────────────────────────────
   Future<void> loadExistingFormData() async {
     try {
       final lpm = widget.lpm!;
@@ -714,21 +714,21 @@ class NewFormState extends State<NewForm> {
 
       debugPrint("✅ Firestore loaded ${data.keys.length} fields");
       _populateControllers(data);
-
     } catch (e) {
       debugPrint("❌ loadExistingFormData error: $e");
     }
   }
 
-// ────────────────────────────────────────────
-// METHOD 3: Fills all controllers from a map
-// (shared by both URL and Firestore paths)
-// ────────────────────────────────────────────
+  // ────────────────────────────────────────────
+  // METHOD 3: Fills all controllers from a map
+  // (shared by both URL and Firestore paths)
+  // ────────────────────────────────────────────
   void _populateControllers(Map<String, dynamic> data) {
-
     // 🔍 DEBUG — add these lines
     debugPrint("🔍 _populateControllers called");
-    debugPrint("🔍 ParticularJobName value in data: ${data['ParticularJobName']}");
+    debugPrint(
+      "🔍 ParticularJobName value in data: ${data['ParticularJobName']}",
+    );
     debugPrint("🔍 PartyName value in data: ${data['PartyName']}");
     debugPrint("🔍 All keys: ${data.keys.toList()}");
     setState(() {
@@ -739,100 +739,101 @@ class NewFormState extends State<NewForm> {
         }
       }
 
-      set(PartyName,             "PartyName");
-      set(DesignerCreatedBy,     "DesignerCreatedBy");
-      set(DeliveryAt,            "DeliveryAt");
-      set(OrderBy,               "Orderby");
+      set(PartyName, "PartyName");
+      set(DesignerCreatedBy, "DesignerCreatedBy");
+      set(DeliveryAt, "DeliveryAt");
+      set(OrderBy, "Orderby");
       final jobNameVal = data['particularJobName'] ?? data['ParticularJobName'];
       if (jobNameVal != null && jobNameVal.toString().isNotEmpty) {
         ParticularJobName.text = jobNameVal.toString();
       }
-      set(Priority,              "Priority");
-      set(Remark,                "Remark");
-      set(DesigningStatus,       "DesigningStatus");
-      set(BuyerOrderNo,          "BuyerOrderNo");
-      set(Ups,                   "Ups");
-      set(PartyWorkName,         "PartyworkName");
-      set(Size,                  "Size");
-      set(Size2,                 "Size2");
-      set(Size3,                 "Size3");
-      set(Size4,                 "Size4");
-      set(Size5,                 "Size5");
-      set(Ups_32,                "Ups_32");
-      set(PlyType,               "PlyType");
-      set(PlyLength,             "PlyLength");
-      set(PlyBreadth,            "PlyBreadth");
-      set(PlySelectedBy,         "PlySelectedBy");
-      set(Blade,                 "Blade");
-      set(BladeSize,             "BladeSize");
-      set(BladeSelectedBy,       "BladeSelectedBy");
-      set(Creasing,              "Creasing");
-      set(CreasingSize,          "CreasingSize");
-      set(CreasingSelectedBy,    "CreasingSelectedBy");
-      set(Perforation,           "Perforation");
-      set(PerforationSize,       "PerforationSize");
+      set(Priority, "Priority");
+      set(Remark, "Remark");
+      set(DesigningStatus, "DesigningStatus");
+      set(BuyerOrderNo, "BuyerOrderNo");
+      set(Ups, "Ups");
+      set(PartyWorkName, "PartyworkName");
+      set(Size, "Size");
+      set(Size2, "Size2");
+      set(Size3, "Size3");
+      set(Size4, "Size4");
+      set(Size5, "Size5");
+      set(Ups_32, "Ups_32");
+      set(PlyType, "PlyType");
+      set(PlyLength, "PlyLength");
+      set(PlyBreadth, "PlyBreadth");
+      set(PlySelectedBy, "PlySelectedBy");
+      set(Blade, "Blade");
+      set(BladeSize, "BladeSize");
+      set(BladeSelectedBy, "BladeSelectedBy");
+      set(Creasing, "Creasing");
+      set(CreasingSize, "CreasingSize");
+      set(CreasingSelectedBy, "CreasingSelectedBy");
+      set(Perforation, "Perforation");
+      set(PerforationSize, "PerforationSize");
       set(PerforationSelectedBy, "PerforationSelectedBy");
-      set(ZigZagBlade,           "ZigZagBlade");
-      set(ZigZagBladeType,       "ZigZagBladeType");
-      set(ZigZagBladeSize,       "ZigZagBladeSize");
+      set(ZigZagBlade, "ZigZagBlade");
+      set(ZigZagBladeType, "ZigZagBladeType");
+      set(ZigZagBladeSize, "ZigZagBladeSize");
       set(ZigZagBladeSelectedBy, "ZigZagBladeSelectedBy");
-      set(RubberType,            "RubberType");
-      set(RubberSize,            "RubberSize");
-      set(RubberDoneBy,          "RubberDoneBy");
-      set(RubberSelectedBy,      "RubberSelectedBy");
-      set(HoleType,              "HoleType");
-      set(HoleSelectedBy,        "HoleSelectedBy");
-      set(EmbossStatus,          "EmbossStatus");
-      set(EmbossPcs,             "EmbossPcs");
-      set(MaleEmbossType,        "MaleEmbossType");
-      set(MaleRate,              "MaleRate");
-      set(X,                     "X");
-      set(Y,                     "Y");
-      set(XYSize,                "XYSize");
-      set(FemaleEmbossType,      "FemaleEmbossType");
-      set(FemaleRate,            "FemaleRate");
-      set(X2,                    "X2");
-      set(Y2,                    "Y2");
-      set(XY2Size,               "XY2Size");
-      set(StrippingType,         "StrippingType");
-      set(StrippingSize,         "StrippingSize");
-      set(Extra,                 "Extra");
-      set(LaserPunchNew,         "LaserPunchNew");
-      set(LaserRate,             "LaserRate");
-      set(LaserDoneBy,           "LaserDoneBy");
-      set(LaserCuttingStatus,    "LaserCuttingStatus");
-      set(CourierCharges,        "CourierCharges");
-      set(AddressOutput,         "FullAddress");
-      set(DeliveryURL,           "DeliveryURL");
-      set(ReceiverName,          "ReceiverName");
-      set(TransportName,         "TransportName");
-      set(DesignSendBy,          "DesignSendBy");
-      set(DesignedBy,            "DesignedBy");
-      set(DesignedByTimestamp,   "DesignedByTimestamp");
-      set(RubberFixingDone,      "RubberFixingDone");
-      set(WhiteProfileRubber,    "WhiteProfileRubber");
-      set(GSTType,               "GSTType");
-      set(Amounts3,              "Amounts3");
-      set(ParticularSlider,      "ParticularSlider");
-      set(AutoBendingStatus,     "AutobendingStatus");
-      set(ManualBendingStatus,   "ManualBendingStatus");
-      set(DeliveryStatus,        "DeliveryStatus");
-      set(InvoiceStatus,         "InvoiceStatus");
-      set(LpmAutoIncrement,      "LpmAutoIncrement");
+      set(RubberType, "RubberType");
+      set(RubberSize, "RubberSize");
+      set(RubberDoneBy, "RubberDoneBy");
+      set(RubberSelectedBy, "RubberSelectedBy");
+      set(HoleType, "HoleType");
+      set(HoleSelectedBy, "HoleSelectedBy");
+      set(EmbossStatus, "EmbossStatus");
+      set(EmbossPcs, "EmbossPcs");
+      set(MaleEmbossType, "MaleEmbossType");
+      set(MaleRate, "MaleRate");
+      set(X, "X");
+      set(Y, "Y");
+      set(XYSize, "XYSize");
+      set(FemaleEmbossType, "FemaleEmbossType");
+      set(FemaleRate, "FemaleRate");
+      set(X2, "X2");
+      set(Y2, "Y2");
+      set(XY2Size, "XY2Size");
+      set(StrippingType, "StrippingType");
+      set(StrippingSize, "StrippingSize");
+      set(Extra, "Extra");
+      set(LaserPunchNew, "LaserPunchNew");
+      set(LaserRate, "LaserRate");
+      set(LaserDoneBy, "LaserDoneBy");
+      set(LaserCuttingStatus, "LaserCuttingStatus");
+      set(CourierCharges, "CourierCharges");
+      set(AddressOutput, "FullAddress");
+      set(DeliveryURL, "DeliveryURL");
+      set(ReceiverName, "ReceiverName");
+      set(TransportName, "TransportName");
+      set(DesignSendBy, "DesignSendBy");
+      set(DesignedBy, "DesignedBy");
+      set(DesignedByTimestamp, "DesignedByTimestamp");
+      set(AutoBendingCreatedByName, "AutoBendingCreatedByName");
+      set(AutoBendingCreatedByTimestamp, "AutoBendingCreatedByTimestamp");
+      set(RubberFixingDone, "RubberFixingDone");
+      set(WhiteProfileRubber, "WhiteProfileRubber");
+      set(GSTType, "GSTType");
+      set(Amounts3, "Amounts3");
+      set(ParticularSlider, "ParticularSlider");
+      set(AutoBendingStatus, "AutobendingStatus");
+      set(ManualBendingStatus, "ManualBendingStatus");
+      set(DeliveryStatus, "DeliveryStatus");
+      set(InvoiceStatus, "InvoiceStatus");
+      set(LpmAutoIncrement, "LpmAutoIncrement");
     });
   }
 
   //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-
-
 
   Future<void> incrementMonthlyCounter() async {
     final now = DateTime.now();
     final month = now.month.toString().padLeft(2, '0');
     final counterDocId = "${now.year}_$month";
 
-    final counterRef =
-    FirebaseFirestore.instance.collection("counters").doc(counterDocId);
+    final counterRef = FirebaseFirestore.instance
+        .collection("counters")
+        .doc(counterDocId);
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
@@ -843,11 +844,9 @@ class NewFormState extends State<NewForm> {
         lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
       }
 
-      transaction.set(
-        counterRef,
-        {"lastOrderNo": lastOrderNo + 1},
-        SetOptions(merge: true),
-      );
+      transaction.set(counterRef, {
+        "lastOrderNo": lastOrderNo + 1,
+      }, SetOptions(merge: true));
     });
   }
 
@@ -865,7 +864,7 @@ class NewFormState extends State<NewForm> {
 
       // ✅ VALIDATION: Check LPM format
       // ✅ If editing, LpmAutoIncrement might be the main doc ID (4 parts)
-// Append "-01" to make it a valid full LPM
+      // Append "-01" to make it a valid full LPM
       String resolvedLpm = fullLpm;
       if (fullLpm.split("-").length == 4) {
         resolvedLpm = "$fullLpm-01";
@@ -877,8 +876,8 @@ class NewFormState extends State<NewForm> {
 
       if (parts.length < 5) {
         throw Exception(
-            "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
-                "Got: $resolvedLpm (${parts.length} parts instead of 5)"
+          "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
+          "Got: $resolvedLpm (${parts.length} parts instead of 5)",
         );
       }
 
@@ -888,14 +887,18 @@ class NewFormState extends State<NewForm> {
       String year = parts[3];
       String subOrderNo = parts[4];
 
-      debugPrint("✅ Parsed LPM: orderNo=$orderNo, month=$month, year=$year, sub=$subOrderNo");
+      debugPrint(
+        "✅ Parsed LPM: orderNo=$orderNo, month=$month, year=$year, sub=$subOrderNo",
+      );
 
       // ✅ BUILD: Create main order ID
       final mainOrderId = "LPM-$orderNo-$month-$year";
       debugPrint("📋 Main Order ID: $mainOrderId");
 
       // ✅ GET: References
-      final mainOrderRef = FirebaseFirestore.instance.collection("jobs").doc(mainOrderId);
+      final mainOrderRef = FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(mainOrderId);
       final itemRef = mainOrderRef.collection("items").doc(subOrderNo);
 
       debugPrint("📌 Document References created");
@@ -916,7 +919,8 @@ class NewFormState extends State<NewForm> {
 
       // ✅ SAVE: Main order document
       debugPrint("💾 Writing main order document...");
-      final isDesigningDone = DesigningStatus.text.trim().toLowerCase() == "done";
+      final isDesigningDone =
+          DesigningStatus.text.trim().toLowerCase() == "done";
 
       await mainOrderRef.set({
         "orderNo": orderNo,
@@ -970,15 +974,14 @@ class NewFormState extends State<NewForm> {
       debugPrint("✅ Monthly counter incremented");
 
       debugPrint("🎉 Designer form submission successful!");
-
     } catch (e, stackTrace) {
       debugPrint("❌ ERROR in submitDesignerForm: $e");
       debugPrint("📍 Stack trace: $stackTrace");
       rethrow; // Re-throw to be caught by submitForm()
     }
   }
-// 🔧 FIXED submitForm() Method
-// Replace the existing submitForm() in new_form.dart with this version
+  // 🔧 FIXED submitForm() Method
+  // Replace the existing submitForm() in new_form.dart with this version
 
   Future<void> submitDepartmentForm(String nextDepartment) async {
     final data = buildFormData();
@@ -1020,7 +1023,7 @@ class NewFormState extends State<NewForm> {
       "updatedAt": FieldValue.serverTimestamp(),
     };
 
-// Only add visibleTo if toggled done
+    // Only add visibleTo if toggled done
     if (isDone) {
       updateMap["visibleTo"] = FieldValue.arrayUnion([nextDepartment]);
     }
@@ -1107,8 +1110,6 @@ class NewFormState extends State<NewForm> {
   """);
   }
 
-
-
   @override
   void initState() {
     super.initState();
@@ -1153,9 +1154,6 @@ class NewFormState extends State<NewForm> {
       loadCurrentLpm();
     }
   }
-
-
-
 
   // Dispose controllers to prevent memory leaks
   @override
@@ -1249,6 +1247,8 @@ class NewFormState extends State<NewForm> {
     //new
     DesignedBy.dispose();
     DesignedByTimestamp.dispose();
+    AutoBendingCreatedByName.dispose();
+    AutoBendingCreatedByTimestamp.dispose();
     PlySelectedBy.dispose();
     BladeSelectedBy.dispose();
     CreasingSelectedBy.dispose();
@@ -1264,14 +1264,13 @@ class NewFormState extends State<NewForm> {
   }
 
   @override
-
   Widget build(BuildContext context) {
     debugPrint(
       'NEWFORM BUILD → '
-          'dept=${widget.department}, '
-          'lpm=${widget.lpm}, '
-          'mode=${widget.mode}, '
-          'uri=${GoRouterState.of(context).uri}',
+      'dept=${widget.department}, '
+      'lpm=${widget.lpm}, '
+      'mode=${widget.mode}, '
+      'uri=${GoRouterState.of(context).uri}',
     );
     return NewFormScope(
       form: this,
@@ -1346,7 +1345,6 @@ class NewFormState extends State<NewForm> {
     }
   }
 
-
   void _goNext() {
     final uri = GoRouterState.of(context).uri;
     final path = uri.path;
@@ -1371,21 +1369,19 @@ class NewFormState extends State<NewForm> {
       final index = accountPages.indexOf(path);
 
       if (index != -1 && index < accountPages.length - 1) {
-        context.push(
-          accountPages[index + 1] + '?${uri.query}',
-        );
+        context.push(accountPages[index + 1] + '?${uri.query}');
       }
 
       return;
     }
   }
 
-
   void _goPrev() {
     if (context.canPop()) {
       context.pop(); // ✅ Goes back without rebuilding state
     }
   }
+
   String _nextDepartment(String current) {
     const flow = [
       "Designer",
@@ -1428,5 +1424,4 @@ class NewFormState extends State<NewForm> {
         throw Exception("Unknown department: $dept");
     }
   }
-
 }
