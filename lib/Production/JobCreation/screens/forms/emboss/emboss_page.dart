@@ -231,30 +231,7 @@ class _EmbossPageState extends State<EmbossPage> {
                     final isDone =
                         form.EmbossStatus.text.trim().toLowerCase() == "done";
 
-                    final updateData = {
-                      "emboss": {
-                        "submitted": true,
-                        "data": {
-                          "EmbossStatus": form.EmbossStatus.text,
-                          "MaleEmbossType": form.MaleEmbossType.text,
-                          "FemaleEmbossType": form.FemaleEmbossType.text,
-                          "EmbossCreatedBy": form.EmbossCreatedBy.text,
-                        },
-                      },
-                      "currentDepartment": isDone ? "Account" : "Emboss",
-                      "updatedAt": FieldValue.serverTimestamp(),
-                    };
-
-                    if (isDone) {
-                      updateData["visibleTo"] =
-                          FieldValue.arrayUnion(["Account"]);
-                    }
-
-                    await FirebaseFirestore.instance
-                        .collection("jobs")
-                        .doc(form.LpmAutoIncrement.text)
-                        .set(updateData, SetOptions(merge: true));
-
+                    await form.submitDepartmentForm("Emboss");
                     if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(

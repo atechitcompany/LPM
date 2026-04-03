@@ -17,6 +17,108 @@ class DesignerPage4 extends StatefulWidget {
 class _DesignerPage4State extends State<DesignerPage4> {
   bool _initialized = false;
 
+  List<String> _perforationItems = ["No"];
+  List<String> _zigZagBladeItems = ["No"];
+  List<String> _rubberItems = ["No"];
+  List<String> _holeItems = ["No"];
+  bool _loadingPerforations = true;
+  bool _loadingZigZagBlades = true;
+  bool _loadingRubbers = true;
+  bool _loadingHoles = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPerforations();
+    _fetchZigZagBlades();
+    _fetchRubbers();
+    _fetchHoles();
+  }
+
+  Future<void> _fetchPerforations() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Perforations")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Perforations'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _perforationItems = ["No", ...items];
+        _loadingPerforations = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Perforations: $e");
+      setState(() => _loadingPerforations = false);
+    }
+  }
+
+  Future<void> _fetchZigZagBlades() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Zig Zags Blades")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Zig Zags Blades'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _zigZagBladeItems = ["No", ...items];
+        _loadingZigZagBlades = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Zig Zag Blades: $e");
+      setState(() => _loadingZigZagBlades = false);
+    }
+  }
+
+  Future<void> _fetchRubbers() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Rubbers")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Rubbers'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _rubberItems = ["No", ...items];
+        _loadingRubbers = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Rubbers: $e");
+      setState(() => _loadingRubbers = false);
+    }
+  }
+
+  Future<void> _fetchHoles() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Holes")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Holes'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _holeItems = ["No", ...items];
+        _loadingHoles = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Holes: $e");
+      setState(() => _loadingHoles = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -70,7 +172,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
         }
 
         final decodedData =
-            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
           form.Perforation.text = decodedData["Perforation"] ?? "No";
@@ -128,29 +230,35 @@ class _DesignerPage4State extends State<DesignerPage4> {
 
             /// ✅ Perforation
             if (form.canView("Perforation")) ...[
-              AddableSearchDropdown(
+              _loadingPerforations
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Perforation",
-                items: form.jobs,
+                items: _perforationItems,
                 initialValue: form.Perforation.text.isEmpty ? "No" : form.Perforation.text,
-                onAdd: (newJob) => form.jobs.add(newJob),
+                firestoreCollection: "Perforations",
+                firestoreField: "Perforations",
                 onChanged: (v) {
                   setState(() {
-                    form.Perforation.text = v ?? "";
+                    form.Perforation.text = (v ?? "No").trim();
                   });
 
-                  if ((v ?? "").trim().toLowerCase() == "no") {
+                  if (form.Perforation.text.toLowerCase() == "no") {
                     form.PerforationSelectedBy.clear();
                   } else {
-                    form.PerforationSelectedBy.text =
-                        selectedByText(context);
+                    form.PerforationSelectedBy.text = selectedByText(context);
                   }
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _perforationItems.add(newItem);
+                  });
                 },
               ),
             ],
 
             /// ✅ Perforation Selected By
-            if (isPerforationSelected &&
-                form.canView("PerforationSelectedBy")) ...[
+            if (isPerforationSelected && form.canView("PerforationSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Perforation Done By",
@@ -173,29 +281,35 @@ class _DesignerPage4State extends State<DesignerPage4> {
 
             /// ✅ Zig Zag Blade
             if (form.canView("ZigZagBlade")) ...[
-              AddableSearchDropdown(
+              _loadingZigZagBlades
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Zig Zag Blade",
-                items: form.bladeTypes,
+                items: _zigZagBladeItems,
                 initialValue: form.ZigZagBlade.text.isEmpty ? "No" : form.ZigZagBlade.text,
-                onAdd: (newJob) => form.bladeTypes.add(newJob),
+                firestoreCollection: "Zig Zags Blades",
+                firestoreField: "Zig Zags Blades",
                 onChanged: (v) {
                   setState(() {
-                    form.ZigZagBlade.text = v ?? "";
+                    form.ZigZagBlade.text = (v ?? "No").trim();
                   });
 
-                  if ((v ?? "").trim().toLowerCase() == "no") {
+                  if (form.ZigZagBlade.text.toLowerCase() == "no") {
                     form.ZigZagBladeSelectedBy.clear();
                   } else {
-                    form.ZigZagBladeSelectedBy.text =
-                        selectedByText(context);
+                    form.ZigZagBladeSelectedBy.text = selectedByText(context);
                   }
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _zigZagBladeItems.add(newItem);
+                  });
                 },
               ),
             ],
 
             /// ✅ Zig Zag Blade Selected By
-            if (isZigZagBladeSelected &&
-                form.canView("ZigZagBladeSelectedBy")) ...[
+            if (isZigZagBladeSelected && form.canView("ZigZagBladeSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Zig Zag Blade Selected By",
@@ -218,29 +332,35 @@ class _DesignerPage4State extends State<DesignerPage4> {
 
             /// ✅ Rubber
             if (form.canView("RubberType")) ...[
-              AddableSearchDropdown(
+              _loadingRubbers
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Rubber",
-                items: form.rubberTypes,
+                items: _rubberItems,
                 initialValue: form.RubberType.text.isEmpty ? "No" : form.RubberType.text,
-                onAdd: (newJob) => form.rubberTypes.add(newJob),
+                firestoreCollection: "Rubbers",
+                firestoreField: "Rubbers",
                 onChanged: (v) {
                   setState(() {
-                    form.RubberType.text = v ?? "";
+                    form.RubberType.text = (v ?? "No").trim();
                   });
 
-                  if ((v ?? "").trim().toLowerCase() == "no") {
+                  if (form.RubberType.text.toLowerCase() == "no") {
                     form.RubberSelectedBy.clear();
                   } else {
-                    form.RubberSelectedBy.text =
-                        selectedByText(context);
+                    form.RubberSelectedBy.text = selectedByText(context);
                   }
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _rubberItems.add(newItem);
+                  });
                 },
               ),
             ],
 
             /// ✅ Rubber Selected By
-            if (isRubberSelected &&
-                form.canView("RubberSelectedBy")) ...[
+            if (isRubberSelected && form.canView("RubberSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Rubber Selected By",
@@ -263,29 +383,35 @@ class _DesignerPage4State extends State<DesignerPage4> {
 
             /// ✅ Hole
             if (form.canView("HoleType")) ...[
-              AddableSearchDropdown(
+              _loadingHoles
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Hole",
-                items: form.holeTypes,
+                items: _holeItems,
                 initialValue: form.HoleType.text.isEmpty ? "No" : form.HoleType.text,
-                onAdd: (newJob) => form.holeTypes.add(newJob),
+                firestoreCollection: "Holes",
+                firestoreField: "Holes",
                 onChanged: (v) {
                   setState(() {
-                    form.HoleType.text = v ?? "";
+                    form.HoleType.text = (v ?? "No").trim();
                   });
 
-                  if ((v ?? "").trim().toLowerCase() == "no") {
+                  if (form.HoleType.text.toLowerCase() == "no") {
                     form.HoleSelectedBy.clear();
                   } else {
-                    form.HoleSelectedBy.text =
-                        selectedByText(context);
+                    form.HoleSelectedBy.text = selectedByText(context);
                   }
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _holeItems.add(newItem);
+                  });
                 },
               ),
             ],
 
             /// ✅ Hole Selected By
-            if (isHoleSelected &&
-                form.canView("HoleSelectedBy")) ...[
+            if (isHoleSelected && form.canView("HoleSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Hole Selected By",

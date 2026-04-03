@@ -12,7 +12,6 @@ class DepartmentFieldAccess {
       case "ManualBending":
         return _manualBending();
 
-    // ✅ ADD THESE
       case "LaserCutting":
         return _laser();
 
@@ -89,9 +88,14 @@ class DepartmentFieldAccess {
     "WhiteProfileRubber": "edit",
     "submitButton": "edit",
 
+    // 🟢 NEW PARALLEL ROUTING TOGGLES 🟢
+    "ReqAutoBending": "edit",
+    "ReqManualBending": "edit",
+    "ReqLaserCutting": "edit",
+    "ReqRubber": "edit",
+    "ReqEmboss": "edit",
+    "ReqAccount": "edit",
   };
-
-
 
   static Map<String, String> _autoBending() => {
     // 👀 Designer fields
@@ -105,8 +109,6 @@ class DepartmentFieldAccess {
     "AutoCreasing": "edit",
     "AutoCreasingStatus": "edit",
     "LaserCuttingStatus": "edit",
-
-
   };
 
   static Map<String, String> _manualBending() => {
@@ -169,7 +171,7 @@ class DepartmentFieldAccess {
     // ===== PAGE 1 =====
     "AccountsCreatedBy": "edit",
     "BuyerOrderNo": "edit",
-    "OrderBy": "edit", // Fixed case
+    "OrderBy": "edit",
     "DeliveryAt": "edit",
     "Remark": "edit",
 
@@ -227,7 +229,7 @@ class DepartmentFieldAccess {
     // ===== EDIT FIELDS (For the Delivery team) =====
     "DeliveryStatus": "edit",
     "AddressOutput": "edit",
-    "DrawingAttachment": "edit",// We will use AddressOutput for Delivery Address
+    "DrawingAttachment": "edit",
     "JobDone": "edit",
   };
 }

@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../../FormComponents/SearchableDropdownWithInitial.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
-import 'package:lightatech/routes/app_route_config.dart';
-import 'package:lightatech/routes/app_route_constants.dart';
+import 'package:lightatech/FormComponents/TextInput.dart'; // 🟢 Added your TextInput component!
 import 'package:lightatech/core/session/session_manager.dart';
 import 'dart:convert';
 
@@ -22,16 +20,42 @@ class _DesignerPage6State extends State<DesignerPage6> {
   bool isSubmitting = false;
   bool _initialized = false;
 
+  List<String> _strippingItems = ["No"];
+  bool _loadingStrippings = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStrippings();
+  }
+
+  Future<void> _fetchStrippings() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Strippings")
+          .get();
+
+      final items = snap.docs
+          .map((doc) => (doc.data()['Strippings'] ?? '').toString())
+          .where((val) => val.isNotEmpty)
+          .toList();
+
+      setState(() {
+        _strippingItems = ["No", ...items];
+        _loadingStrippings = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Strippings: $e");
+      setState(() => _loadingStrippings = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (_initialized) return;
     _initialized = true;
-
-    if (NewFormScope.of(context).mode == "edit") {
-      _loadDesignerData();
-    }
+    if (NewFormScope.of(context).mode == "edit") _loadDesignerData();
   }
 
   Future<void> _loadDesignerData() async {
@@ -43,7 +67,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
-
         form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         form.LaserCuttingStatus.text =
             decodedData["LaserCuttingStatus"] ?? "Pending";
@@ -53,42 +76,24 @@ class _DesignerPage6State extends State<DesignerPage6> {
         form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
         form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
         form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
-
-        debugPrint("✅ DesignerPage6 loaded data from route");
       } catch (e) {
         debugPrint("❌ Error decoding data: $e");
       }
     } else if (lpmParam != null && lpmParam.isNotEmpty) {
-      debugPrint("⚠️ No data in route parameters, falling back to Firestore");
       try {
-        final snap = await FirebaseFirestore.instance
-            .collection("jobs")
-            .doc(lpmParam)
-            .get();
-
-        if (!snap.exists) {
-          debugPrint("❌ Firestore: document $lpmParam not found");
-          return;
+        final snap = await FirebaseFirestore.instance.collection("jobs").doc(lpmParam).get();
+        if (snap.exists) {
+          final decodedData = Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+          setState(() {
+            form.StrippingType.text = decodedData["StrippingType"] ?? "No";
+            form.LaserCuttingStatus.text = decodedData["LaserCuttingStatus"] ?? "Pending";
+            form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
+            form.WhiteProfileRubber.text = decodedData["WhiteProfileRubber"] ?? "No";
+            form.DesigningStatus.text = decodedData["DesigningStatus"] ?? "Pending";
+            form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
+            form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
+          });
         }
-
-        final decodedData = Map<String, dynamic>.from(
-          snap.data()?["designer"]?["data"] ?? {},
-        );
-
-        setState(() {
-          form.StrippingType.text = decodedData["StrippingType"] ?? "No";
-          form.LaserCuttingStatus.text =
-              decodedData["LaserCuttingStatus"] ?? "Pending";
-          form.RubberFixingDone.text = decodedData["RubberFixingDone"] ?? "No";
-          form.WhiteProfileRubber.text =
-              decodedData["WhiteProfileRubber"] ?? "No";
-          form.DesigningStatus.text =
-              decodedData["DesigningStatus"] ?? "Pending";
-          form.DesignedBy.text = decodedData["DesignedBy"] ?? "";
-          form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
-        });
-
-        debugPrint("✅ DesignerPage6 loaded data from Firestore");
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
       }
@@ -156,16 +161,10 @@ class _DesignerPage6State extends State<DesignerPage6> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    // ✅ Check if Designing is done (this is the key field)
-    final bool isDesigningDone =
-        form.DesigningStatus.text.trim().toLowerCase() == "done";
-
-    final bool laserDone =
-        form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
-    final bool rubberFixingDone =
-        form.RubberFixingDone.text.trim().toLowerCase() == "yes";
-    final bool whiteProfileRubber =
-        form.WhiteProfileRubber.text.trim().toLowerCase() == "yes";
+    final bool isDesigningDone = form.DesigningStatus.text.trim().toLowerCase() == "done";
+    final bool laserDone = form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
+    final bool rubberFixingDone = form.RubberFixingDone.text.trim().toLowerCase() == "yes";
+    final bool whiteProfileRubber = form.WhiteProfileRubber.text.trim().toLowerCase() == "yes";
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -184,28 +183,34 @@ class _DesignerPage6State extends State<DesignerPage6> {
           children: [
             /// ✅ Stripping
             if (form.canView("StrippingType")) ...[
-              AddableSearchDropdown(
+              _loadingStrippings
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Stripping",
-                items: form.strippingTypes,
+                items: _strippingItems,
                 initialValue: form.StrippingType.text.isEmpty
                     ? "No"
                     : form.StrippingType.text,
-                onAdd: (newJob) => form.strippingTypes.add(newJob),
+                firestoreCollection: "Strippings",
+                firestoreField: "Strippings",
                 onChanged: (v) {
                   setState(() {
                     form.StrippingType.text = (v ?? "No").trim();
+                  });
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _strippingItems.add(newItem);
                   });
                 },
               ),
               const SizedBox(height: 30),
             ],
 
-            /// ✅ Laser Cutting Status
             if (form.canView("LaserCuttingStatus")) ...[
               FlexibleToggle(
                 label: "Laser Cutting Status",
-                inactiveText: "Pending",
-                activeText: "Done",
+                inactiveText: "Pending", activeText: "Done",
                 initialValue: laserDone,
                 onChanged: (v) {
                   setState(() {
@@ -216,44 +221,31 @@ class _DesignerPage6State extends State<DesignerPage6> {
               const SizedBox(height: 30),
             ],
 
-            /// ✅ Rubber Fixing Done
             if (form.canView("RubberFixingDone")) ...[
               FlexibleToggle(
                 label: "Rubber Fixing Done",
-                inactiveText: "No",
-                activeText: "Yes",
+                inactiveText: "No", activeText: "Yes",
                 initialValue: rubberFixingDone,
-                onChanged: (val) {
-                  setState(() {
-                    form.RubberFixingDone.text = val ? "Yes" : "No";
-                  });
-                },
+                onChanged: (val) => setState(() => form.RubberFixingDone.text = val ? "Yes" : "No"),
               ),
               const SizedBox(height: 30),
             ],
 
-            /// ✅ White Profile Rubber
             if (form.canView("WhiteProfileRubber")) ...[
               FlexibleToggle(
                 label: "White Profile Rubber",
-                inactiveText: "No",
-                activeText: "Yes",
+                inactiveText: "No", activeText: "Yes",
                 initialValue: whiteProfileRubber,
-                onChanged: (val) {
-                  setState(() {
-                    form.WhiteProfileRubber.text = val ? "Yes" : "No";
-                  });
-                },
+                onChanged: (val) => setState(() => form.WhiteProfileRubber.text = val ? "Yes" : "No"),
               ),
               const SizedBox(height: 30),
             ],
 
-            /// ✅ Designing Status (CRITICAL FIELD)
+            /// ✅ Designing Status
             if (form.canView("DesigningStatus")) ...[
               FlexibleToggle(
                 label: "Designing",
-                inactiveText: "Pending",
-                activeText: "Done",
+                inactiveText: "Pending", activeText: "Done",
                 initialValue: isDesigningDone,
                 onChanged: (val) async {
                   setState(() {
@@ -261,7 +253,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   });
 
                   if (val) {
-                    // ✅ When toggle is ON: auto-populate with current user's name and timestamp
                     final userName = await _getCurrentUserName();
                     if (mounted) {
                       setState(() {
@@ -271,7 +262,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
                       });
                     }
                   } else {
-                    // ✅ When toggle is OFF: clear both fields
                     form.DesignedBy.clear();
                     form.DesignedByTimestamp.clear();
                   }
@@ -280,9 +270,8 @@ class _DesignerPage6State extends State<DesignerPage6> {
               const SizedBox(height: 30),
             ],
 
-            /// ✅ READ-ONLY "Designed By" Field (Shows when Designing is Done)
+            /// 🟢 REPLACED BULKY TEXTFIELDS WITH CUSTOM COMPONENT 🟢
             if (form.canView("DesigningStatus") && isDesigningDone) ...[
-              // Read-only Name field
               TextField(
                 controller: form.DesignedBy,
                 enabled: false, // ← NOT EDITABLE
@@ -303,7 +292,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
               ),
               const SizedBox(height: 16),
 
-              // Read-only Timestamp field
               TextField(
                 controller: form.DesignedByTimestamp,
                 enabled: false, // ← NOT EDITABLE
@@ -325,6 +313,65 @@ class _DesignerPage6State extends State<DesignerPage6> {
               const SizedBox(height: 30),
             ],
 
+            // 🟢 DISPATCHER UI 🟢
+            if (isDesigningDone) ...[
+              const Divider(thickness: 2),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  "Route Job To:",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              if (form.canView("ReqAutoBending")) ...[
+                FlexibleToggle(
+                  label: "Auto Bending",
+                  inactiveText: "NO", activeText: "YES",
+                  initialValue: form.ReqAutoBending.text.toUpperCase() == "YES",
+                  onChanged: (val) => setState(() => form.ReqAutoBending.text = val ? "YES" : "NO"),
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (form.canView("ReqManualBending")) ...[
+                FlexibleToggle(
+                  label: "Manual Bending",
+                  inactiveText: "NO", activeText: "YES",
+                  initialValue: form.ReqManualBending.text.toUpperCase() == "YES",
+                  onChanged: (val) => setState(() => form.ReqManualBending.text = val ? "YES" : "NO"),
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (form.canView("ReqLaserCutting")) ...[
+                FlexibleToggle(
+                  label: "Laser Cutting",
+                  inactiveText: "NO", activeText: "YES",
+                  initialValue: form.ReqLaserCutting.text.toUpperCase() == "YES",
+                  onChanged: (val) => setState(() => form.ReqLaserCutting.text = val ? "YES" : "NO"),
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (form.canView("ReqRubber")) ...[
+                FlexibleToggle(
+                  label: "Rubber",
+                  inactiveText: "NO", activeText: "YES",
+                  initialValue: form.ReqRubber.text.toUpperCase() == "YES",
+                  onChanged: (val) => setState(() => form.ReqRubber.text = val ? "YES" : "NO"),
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (form.canView("ReqEmboss")) ...[
+                FlexibleToggle(
+                  label: "Emboss",
+                  inactiveText: "NO", activeText: "YES",
+                  initialValue: form.ReqEmboss.text.toUpperCase() == "YES",
+                  onChanged: (val) => setState(() => form.ReqEmboss.text = val ? "YES" : "NO"),
+                ),
+                const SizedBox(height: 20),
+              ],
+              const SizedBox(height: 40),
+            ],
+
             /// ✅ Submit Button
             if (form.canView("submitButton")) ...[
               SizedBox(
@@ -334,55 +381,29 @@ class _DesignerPage6State extends State<DesignerPage6> {
                   onPressed: isSubmitting
                       ? null
                       : () async {
-                          setState(() {
-                            isSubmitting = true;
-                          });
-
-                          try {
-                            await form.submitDesignerForm();
-
-                            // ✅ Navigate to dashboard
-                            if (mounted) {
-                              context.go('/dashboard');
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Error submitting form: $e"),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          } finally {
-                            if (mounted) {
-                              setState(() {
-                                isSubmitting = false;
-                              });
-                            }
-                          }
-                        },
+                    setState(() => isSubmitting = true);
+                    try {
+                      await form.submitDesignerForm();
+                      if (mounted) context.go('/dashboard');
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+                      );
+                    } finally {
+                      if (mounted) setState(() => isSubmitting = false);
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF8D94B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: isSubmitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(
-                          "Submit",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text("Submit", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
+            const SizedBox(height: 40),
           ],
         ),
       ),

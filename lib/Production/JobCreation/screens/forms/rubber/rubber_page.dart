@@ -182,31 +182,7 @@ class _RubberPageState extends State<RubberPage> {
                     final isDone =
                         form.RubberStatus.text.trim().toLowerCase() == "done";
 
-                    final updateData = {
-                      "rubber": {
-                        "submitted": true,
-                        "data": {
-                          "RubberStatus": form.RubberStatus.text,
-                          "RubberCreatedBy": form.RubberCreatedBy.text,
-                        },
-                      },
-
-                      // 🚀 NEXT FLOW (you can change later)
-                      "currentDepartment": isDone ? "Emboss" : "Rubber",
-
-                      "updatedAt": FieldValue.serverTimestamp(),
-                    };
-
-                    // 🔥 VISIBILITY
-                    if (isDone) {
-                      updateData["visibleTo"] =
-                          FieldValue.arrayUnion(["Emboss"]);
-                    }
-
-                    await FirebaseFirestore.instance
-                        .collection("jobs")
-                        .doc(form.LpmAutoIncrement.text)
-                        .set(updateData, SetOptions(merge: true));
+                    await form.submitDepartmentForm("Rubber");
 
                     if (!context.mounted) return;
 

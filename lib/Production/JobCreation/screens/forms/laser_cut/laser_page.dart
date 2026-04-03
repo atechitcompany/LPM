@@ -326,6 +326,7 @@ class _LaserPageState extends State<LaserPage> {
                         .doc(form.LpmAutoIncrement.text)
                         .set(updateData, SetOptions(merge: true));
 
+                    await form.submitDepartmentForm("LaserCutting");
                     if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(

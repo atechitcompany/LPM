@@ -16,6 +16,69 @@ class DesignerPage5 extends StatefulWidget {
 class _DesignerPage5State extends State<DesignerPage5> {
   bool _initialized = false;
 
+  List<String> _maleEmbossItems = ["No"];
+  List<String> _femaleEmbossItems = ["No"];
+  bool _loadingMaleEmboss = true;
+  bool _loadingFemaleEmboss = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMaleEmboss();
+    _fetchFemaleEmboss();
+  }
+
+  Future<void> _fetchMaleEmboss() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Males Embosse")
+          .get();
+
+      final items = snap.docs
+          .map((doc) {
+        // Try both with and without trailing space
+        final data = doc.data();
+        final val = (data['Males Embosse '] ?? data['Males Embosse'] ?? '').toString().trim();
+        return val;
+      })
+          .where((val) => val.isNotEmpty && val != "No")
+          .toList();
+
+      setState(() {
+        _maleEmbossItems = ["No", ...items];
+        _loadingMaleEmboss = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Males Embosse: $e");
+      setState(() => _loadingMaleEmboss = false);
+    }
+  }
+
+  Future<void> _fetchFemaleEmboss() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Females Emobosse")
+          .get();
+
+      final items = snap.docs
+          .map((doc) {
+        final data = doc.data();
+        final val = (data['Females Emobosse '] ?? data['Females Emobosse'] ?? '').toString().trim();
+        return val;
+      })
+          .where((val) => val.isNotEmpty && val != "No")
+          .toList();
+
+      setState(() {
+        _femaleEmbossItems = ["No", ...items];
+        _loadingFemaleEmboss = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Females Emobosse: $e");
+      setState(() => _loadingFemaleEmboss = false);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -67,7 +130,7 @@ class _DesignerPage5State extends State<DesignerPage5> {
         }
 
         final decodedData =
-            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
           form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
@@ -109,13 +172,23 @@ class _DesignerPage5State extends State<DesignerPage5> {
 
             /// ✅ Male Emboss
             if (form.canView("MaleEmbossType")) ...[
-              AddableSearchDropdown(
+              _loadingMaleEmboss
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Male Emboss",
-                items: form.embossTypes,
+                items: _maleEmbossItems,
                 initialValue: form.MaleEmbossType.text.isEmpty ? "No" : form.MaleEmbossType.text,
-                onAdd: (newJob) => form.embossTypes.add(newJob),
+                firestoreCollection: "Males Embosse",
+                firestoreField: "Males Embosse",
                 onChanged: (v) {
-                  form.MaleEmbossType.text = v ?? "";
+                  setState(() {
+                    form.MaleEmbossType.text = v ?? "";
+                  });
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _maleEmbossItems.add(newItem);
+                  });
                 },
               ),
               const SizedBox(height: 30),
@@ -159,13 +232,23 @@ class _DesignerPage5State extends State<DesignerPage5> {
 
             /// ✅ Female Emboss
             if (form.canView("FemaleEmbossType")) ...[
-              AddableSearchDropdown(
+              _loadingFemaleEmboss
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
                 label: "Female Emboss",
-                items: form.embossTypes,
+                items: _femaleEmbossItems,
                 initialValue: form.FemaleEmbossType.text.isEmpty ? "No" : form.FemaleEmbossType.text,
-                onAdd: (newJob) => form.embossTypes.add(newJob),
+                firestoreCollection: "Females Emobosse",
+                firestoreField: "Females Emobosse",
                 onChanged: (v) {
-                  form.FemaleEmbossType.text = v ?? "";
+                  setState(() {
+                    form.FemaleEmbossType.text = v ?? "";
+                  });
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _femaleEmbossItems.add(newItem);
+                  });
                 },
               ),
               const SizedBox(height: 30),

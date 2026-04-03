@@ -315,6 +315,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                           .doc(form.LpmAutoIncrement.text)
                           .set(updateData, SetOptions(merge: true));
 
+                      await form.submitDepartmentForm("ManualBending");
                       if (!context.mounted) return;
 
                       ScaffoldMessenger.of(context).showSnackBar(
