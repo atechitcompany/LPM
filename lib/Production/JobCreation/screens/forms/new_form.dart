@@ -194,6 +194,14 @@ class NewFormState extends State<NewForm> {
       TextEditingController();
   final TextEditingController AutoBendingCreatedByTimestamp =
       TextEditingController();
+  final TextEditingController ManualBendingCreatedByName =
+  TextEditingController();
+  final TextEditingController ManualBendingCreatedByTimestamp =
+  TextEditingController();
+  final TextEditingController LaserCuttingCreatedByName =
+  TextEditingController();
+  final TextEditingController LaserCuttingCreatedByTimestamp =
+  TextEditingController();
   final TextEditingController PlySelectedBy = TextEditingController();
   final TextEditingController BladeSelectedBy = TextEditingController();
   final TextEditingController CreasingSelectedBy = TextEditingController();
@@ -386,6 +394,10 @@ class NewFormState extends State<NewForm> {
       "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
       "AutoBendingCreatedByName": AutoBendingCreatedByName.text,
       "AutoBendingCreatedByTimestamp": AutoBendingCreatedByTimestamp.text,
+      "ManualBendingCreatedByName": ManualBendingCreatedByName.text,
+      "ManualBendingCreatedByTimestamp": ManualBendingCreatedByTimestamp.text,
+      "LaserCuttingCreatedByName": LaserCuttingCreatedByName.text,
+      "LaserCuttingCreatedByTimestamp": LaserCuttingCreatedByTimestamp.text,
       "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
       "AccountsCreatedBy": AccountsCreatedBy.text,
       "AccountStatus": AccountStatus.text,
@@ -554,6 +566,10 @@ class NewFormState extends State<NewForm> {
     DesignedByTimestamp.clear();
     AutoBendingCreatedByName.clear();
     AutoBendingCreatedByTimestamp.clear();
+    ManualBendingCreatedByName.clear();
+    ManualBendingCreatedByTimestamp.clear();
+    LaserCuttingCreatedByName.clear();
+    LaserCuttingCreatedByTimestamp.clear();
     PlySelectedBy.clear();
     BladeSelectedBy.clear();
     CreasingSelectedBy.clear();
@@ -898,6 +914,9 @@ class NewFormState extends State<NewForm> {
       set(DesignedByTimestamp, "DesignedByTimestamp");
       set(AutoBendingCreatedByName, "AutoBendingCreatedByName");
       set(AutoBendingCreatedByTimestamp, "AutoBendingCreatedByTimestamp");
+      set(ManualBendingCreatedByName,      "ManualBendingCreatedByName");
+      set(ManualBendingCreatedByTimestamp, "ManualBendingCreatedByTimestamp");
+      set(ManualBendingCreatedByName,      "ManualBendingCreatedByName");
       set(RubberFixingDone, "RubberFixingDone");
       set(WhiteProfileRubber, "WhiteProfileRubber");
       set(GSTType, "GSTType");
@@ -1421,6 +1440,10 @@ class NewFormState extends State<NewForm> {
     DesignedByTimestamp.dispose();
     AutoBendingCreatedByName.dispose();
     AutoBendingCreatedByTimestamp.dispose();
+    ManualBendingCreatedByName.dispose();
+    ManualBendingCreatedByTimestamp.dispose();
+    LaserCuttingCreatedByName.dispose();
+    LaserCuttingCreatedByTimestamp.dispose();
     PlySelectedBy.dispose();
     BladeSelectedBy.dispose();
     CreasingSelectedBy.dispose();

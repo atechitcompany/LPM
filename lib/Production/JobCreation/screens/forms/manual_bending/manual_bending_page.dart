@@ -3,9 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
+import 'package:lightatech/core/session/session_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../new_form_scope.dart';
 import 'package:go_router/go_router.dart';
-
 
 class ManualBendingPage extends StatefulWidget {
   const ManualBendingPage({super.key});
@@ -58,6 +59,10 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
     // ✏ MANUAL DATA
     form.ManualBendingCreatedBy.text =
         manual["ManualBendingCreatedBy"] ?? "";
+    form.ManualBendingCreatedByName.text =
+        manual["ManualBendingCreatedByName"] ?? "";
+    form.ManualBendingCreatedByTimestamp.text =
+        manual["ManualBendingCreatedByTimestamp"] ?? "";
 
     form.ManualBendingStatus.text =
         manual["ManualBendingStatus"] ?? "Pending";
@@ -66,6 +71,63 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
         form.ManualBendingStatus.text.toLowerCase() == "done";
 
     setState(() => loading = false);
+  }
+
+  /// ✅ Gets current logged-in user's name
+  Future<String> _getCurrentUserName() async {
+    try {
+      // Method 1: Try SharedPreferences 'userName' (set during login)
+      final prefs = await SharedPreferences.getInstance();
+      String? userName = prefs.getString('userName');
+
+      if (userName != null && userName.isNotEmpty && userName != 'User') {
+        debugPrint("✅ Got user name from SharedPreferences: $userName");
+        return userName;
+      }
+
+      // Method 2: Try SessionManager email
+      String? email = SessionManager.getEmail();
+      if (email != null && email.isNotEmpty) {
+        // Query Staff collection
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where("Email", isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          userName = querySnapshot.docs.first.data()["Name"];
+          if (userName != null && userName.isNotEmpty) {
+            debugPrint("✅ Got user name from Staff: $userName");
+            return userName;
+          }
+        }
+      }
+
+      // Method 3: Try SharedPreferences 'userEmail'
+      email = prefs.getString('userEmail');
+      if (email != null && email.isNotEmpty) {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection("Staff")
+            .where("Email", isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          userName = querySnapshot.docs.first.data()["Name"];
+          if (userName != null && userName.isNotEmpty) {
+            debugPrint("✅ Got user name from Staff (via userEmail): $userName");
+            return userName;
+          }
+        }
+      }
+
+      debugPrint("⚠️ Could not find user name, returning 'Unknown'");
+      return "Unknown";
+    } catch (e) {
+      debugPrint("❌ Error getting current user name: $e");
+      return "Unknown";
+    }
   }
 
   @override
@@ -87,7 +149,6 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             // ===== VIEW FIELDS =====
 
             if (form.canView("PartyName"))
@@ -122,6 +183,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
 
             // ===== EDIT FIELDS =====
 
+            /// ✅ Manual Bending Status Toggle
             IgnorePointer(
               ignoring: false,
               child: Opacity(
@@ -131,36 +193,79 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                   inactiveText: "Pending",
                   activeText: "Done",
                   initialValue: manualDone,
-                  onChanged: (v) {
+                  onChanged: (val) async {
                     setState(() {
-                      manualDone = v;
+                      manualDone = val;
                       form.ManualBendingStatus.text =
-                      v ? "Done" : "Pending";
+                      val ? "Done" : "Pending";
                     });
+
+                    if (val) {
+                      // ✅ When toggle is ON: auto-populate with current user's name and timestamp
+                      final userName = await _getCurrentUserName();
+                      if (mounted) {
+                        setState(() {
+                          form.ManualBendingCreatedByName.text = userName;
+                          form.ManualBendingCreatedByTimestamp.text =
+                              DateTime.now().toString();
+                        });
+                      }
+                    } else {
+                      // ✅ When toggle is OFF: clear both fields
+                      form.ManualBendingCreatedByName.clear();
+                      form.ManualBendingCreatedByTimestamp.clear();
+                    }
                   },
                 ),
               ),
             ),
 
+            const SizedBox(height: 30),
 
-            IgnorePointer(
-              ignoring: false,
-              child: Opacity(
-                opacity: form.canEdit("ManualBendingCreatedBy") ? 1 : 0.6,
-                child: SearchableDropdownWithInitial(
-                  label: "Manual Bending Created By",
-                  items: form.parties,
-                  initialValue: form.ManualBendingCreatedBy.text.isEmpty
-                      ? "Select"
-                      : form.ManualBendingCreatedBy.text,
-                  onChanged: (v) {
-                    form.ManualBendingCreatedBy.text =
-                        (v ?? "").trim();
-                  },
+            /// ✅ READ-ONLY "Done By" Field (Shows when ManualBending is Done)
+            if (manualDone) ...[
+              // Read-only Name field
+              TextField(
+                controller: form.ManualBendingCreatedByName,
+                enabled: false, // ← NOT EDITABLE
+                decoration: InputDecoration(
+                  labelText: "Done By",
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
+                style: const TextStyle(color: Colors.black87),
               ),
-            ),
+              const SizedBox(height: 16),
 
+              // Read-only Timestamp field
+              TextField(
+                controller: form.ManualBendingCreatedByTimestamp,
+                enabled: false, // ← NOT EDITABLE
+                decoration: InputDecoration(
+                  labelText: "Done At",
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                style: const TextStyle(color: Colors.black87, fontSize: 12),
+              ),
+              const SizedBox(height: 30),
+            ],
 
             const SizedBox(height: 40),
 
@@ -174,13 +279,48 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                   onPressed: () async {
                     try {
                       final isDone =
-                          form.ManualBendingStatus.text.trim().toLowerCase() == "done";
+                          form.ManualBendingStatus.text.trim().toLowerCase() ==
+                              "done";
+
+                      final updateData = {
+                        "manualBending": {
+                          "submitted": true,
+                          "data": {
+                            "ManualBendingStatus":
+                            form.ManualBendingStatus.text,
+                            "ManualBendingCreatedBy":
+                            form.ManualBendingCreatedBy.text,
+                            "ManualBendingCreatedByName":
+                            form.ManualBendingCreatedByName.text,
+                            "ManualBendingCreatedByTimestamp":
+                            form.ManualBendingCreatedByTimestamp.text,
+                          },
+                        },
+
+                        // ✅ Only move forward if Done
+                        "currentDepartment":
+                        isDone ? "LaserCutting" : "ManualBending",
+
+                        "updatedAt": FieldValue.serverTimestamp(),
+                      };
+
+                      // ✅ THIS IS THE MOST IMPORTANT LINE
+                      if (isDone) {
+                        updateData["visibleTo"] =
+                            FieldValue.arrayUnion(["LaserCutting"]);
+                      }
+
+                      await FirebaseFirestore.instance
+                          .collection("jobs")
+                          .doc(form.LpmAutoIncrement.text)
+                          .set(updateData, SetOptions(merge: true));
 
                       await form.submitDepartmentForm("ManualBending");
                       if (!context.mounted) return;
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Form submitted successfully")),
+                        const SnackBar(
+                            content: Text("Form submitted successfully")),
                       );
 
                       context.pop();
@@ -192,9 +332,8 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                       );
                     }
                   },
-
-                child: const Text("Save & Continue"),
-              ),
+                  child: const Text("Save & Continue"),
+                ),
               ),
           ],
         ),
