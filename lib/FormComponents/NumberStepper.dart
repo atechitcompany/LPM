@@ -21,13 +21,62 @@ class NumberStepper extends StatefulWidget {
 
 class _NumberStepperState extends State<NumberStepper> {
   late double value;
-  late TextEditingController controller;
+  late TextEditingController _internalController;
 
   @override
   void initState() {
+    debugPrint("🔢 NumberStepper initState — controller.text=${widget.controller.text}, initialValue=${widget.initialValue}");
     super.initState();
-    value = widget.initialValue;
-    controller = TextEditingController(text: formatNumber(value));
+
+    // ✅ Use external controller value if it has data, else use initialValue
+    final externalVal = double.tryParse(widget.controller.text);
+    value = externalVal ?? widget.initialValue;
+    _internalController = TextEditingController(text: formatNumber(value));
+
+    // ✅ ADD THIS — sync initial value back to external controller
+    widget.controller.text = formatNumber(value);
+
+    // ✅ Listen to external controller changes
+    widget.controller.addListener(_onExternalControllerChanged);
+  }
+
+  // ✅ THIS IS THE KEY FIX — when parent sets controller.text, update internal state
+  void _onExternalControllerChanged() {
+    debugPrint("🔢 Listener fired — controller.text=${widget.controller.text}, current value=$value");
+    final externalVal = double.tryParse(widget.controller.text);
+    if (externalVal != null && externalVal != value) {
+      debugPrint("🔢 Updating value to $externalVal");
+      setState(() {
+        value = externalVal;
+        _internalController.text = formatNumber(value);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(NumberStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // ✅ If controller instance changed, re-attach listener
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_onExternalControllerChanged);
+      widget.controller.addListener(_onExternalControllerChanged);
+
+      final externalVal = double.tryParse(widget.controller.text);
+      if (externalVal != null) {
+        setState(() {
+          value = externalVal;
+          _internalController.text = formatNumber(value);
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onExternalControllerChanged);
+    _internalController.dispose();
+    super.dispose();
   }
 
   String formatNumber(double number) {
@@ -46,6 +95,7 @@ class _NumberStepperState extends State<NumberStepper> {
     final parsed = double.tryParse(text);
     if (parsed != null) {
       setState(() => value = parsed);
+      widget.controller.text = formatNumber(parsed); // ✅ sync external controller
       widget.onChanged(value);
     }
   }
@@ -70,7 +120,7 @@ class _NumberStepperState extends State<NumberStepper> {
               border: Border.all(color: Colors.black, width: 1),
             ),
             child: TextField(
-              controller: controller,
+              controller: _internalController,
               textAlign: TextAlign.center,
               keyboardType:
               const TextInputType.numberWithOptions(decimal: true),
@@ -98,7 +148,8 @@ class _NumberStepperState extends State<NumberStepper> {
                 onTap: () {
                   setState(() {
                     value += widget.step;
-                    controller.text = formatNumber(value);
+                    _internalController.text = formatNumber(value);
+                    widget.controller.text = formatNumber(value); // ✅ sync
                   });
                   widget.onChanged(value);
                 },
@@ -120,7 +171,8 @@ class _NumberStepperState extends State<NumberStepper> {
                 onTap: () {
                   setState(() {
                     value -= widget.step;
-                    controller.text = formatNumber(value);
+                    _internalController.text = formatNumber(value);
+                    widget.controller.text = formatNumber(value); // ✅ sync
                   });
                   widget.onChanged(value);
                 },

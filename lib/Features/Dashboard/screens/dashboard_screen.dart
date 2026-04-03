@@ -25,7 +25,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final searchController = TextEditingController();
   String _normalizeDepartment(String dept) {
-    switch (dept.toLowerCase()) {
+    final cleanDept = dept.replaceAll(" ", "").toLowerCase();
+    switch (cleanDept) {
       case "lasercut":
         return "LaserCutting";
       case "autobending":

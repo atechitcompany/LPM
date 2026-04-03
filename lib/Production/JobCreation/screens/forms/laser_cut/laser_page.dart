@@ -166,34 +166,7 @@ class _LaserPageState extends State<LaserPage> {
                     final isDone =
                         form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
 
-                    final updateData = {
-                      "laserCutting": {
-                        "submitted": true,
-                        "data": {
-                          "LaserCuttingStatus": form.LaserCuttingStatus.text,
-                          // ✅ REMOVE OLD FIELD
-                          "LaserPunchNew": FieldValue.delete(),
-
-                        },
-                      },
-
-                      // ✅ Workflow control
-                      "currentDepartment": isDone ? "Rubber" : "LaserCutting",
-
-                      "updatedAt": FieldValue.serverTimestamp(),
-                    };
-
-                    // ✅ Visibility control (MOST IMPORTANT)
-                    if (isDone) {
-                      updateData["visibleTo"] =
-                          FieldValue.arrayUnion(["Rubber"]);
-                    }
-
-                    await FirebaseFirestore.instance
-                        .collection("jobs")
-                        .doc(form.LpmAutoIncrement.text)
-                        .set(updateData, SetOptions(merge: true));
-
+                    await form.submitDepartmentForm("LaserCutting");
                     if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(

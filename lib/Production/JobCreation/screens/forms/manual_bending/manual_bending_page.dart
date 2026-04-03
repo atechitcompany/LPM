@@ -176,32 +176,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                       final isDone =
                           form.ManualBendingStatus.text.trim().toLowerCase() == "done";
 
-                      final updateData = {
-                        "manualBending": {
-                          "submitted": true,
-                          "data": {
-                            "ManualBendingStatus": form.ManualBendingStatus.text,
-                            "ManualBendingCreatedBy": form.ManualBendingCreatedBy.text,
-                          },
-                        },
-
-                        // ✅ Only move forward if Done
-                        "currentDepartment": isDone ? "LaserCutting" : "ManualBending",
-
-                        "updatedAt": FieldValue.serverTimestamp(),
-                      };
-
-                      // ✅ THIS IS THE MOST IMPORTANT LINE
-                      if (isDone) {
-                        updateData["visibleTo"] =
-                            FieldValue.arrayUnion(["LaserCutting"]);
-                      }
-
-                      await FirebaseFirestore.instance
-                          .collection("jobs")
-                          .doc(form.LpmAutoIncrement.text)
-                          .set(updateData, SetOptions(merge: true));
-
+                      await form.submitDepartmentForm("ManualBending");
                       if (!context.mounted) return;
 
                       ScaffoldMessenger.of(context).showSnackBar(
