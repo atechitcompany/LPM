@@ -1,0 +1,1630 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/department_field_access.dart';
+import 'dart:convert';
+
+import 'new_form_scope.dart';
+
+enum Department {
+  Designer,
+  AutoBending,
+  ManualBending,
+  LaserCutting,
+  Emboss,
+  Rubber,
+  Account,
+  Delivery,
+  Completed,
+}
+
+class NewForm extends StatefulWidget {
+  final Widget child;
+  final String department;
+  final String? lpm;
+  final String? mode;
+
+  const NewForm({
+    super.key,
+    required this.child,
+    required this.department,
+    this.lpm,
+    this.mode,
+  });
+
+  @override
+  State<NewForm> createState() => NewFormState();
+}
+
+class NewFormState extends State<NewForm> {
+  late String department;
+  late bool isEditMode;
+  bool get isLastDesignerPage {
+    if (department != "Designer") return false;
+
+    final location = GoRouterState.of(context).uri.path;
+    return location == '/jobform/designer-6';
+  }
+
+  bool get _isFirstDesignerPage {
+    if (department != "Designer") return false;
+
+    final location = GoRouterState.of(context).uri.path;
+    return location == '/jobform/designer-1';
+  }
+
+  bool get isJobFormRoute {
+    final location = GoRouterState.of(context).uri.toString();
+    return location.startsWith('/jobform');
+  }
+
+  String fieldPermission(String key) {
+    final access = DepartmentFieldAccess.access(department);
+    return access[key] ?? "hide";
+  }
+
+  bool canView(String key) => fieldPermission(key) != "hide";
+
+  bool canEdit(String key) => fieldPermission(key) == "edit" && isEditMode;
+
+  List<String> parties = ["Tata", "Jindal", "Infosys"];
+  List<String> jobs = ["Laser", "Bending", "Cutting"];
+  List<String> embossTypes = ["Type A", "Type B", "Type C"];
+  List<String> bladeTypes = ["Zig Zag 1", "Zig Zag 2", "Zig Zag 3"];
+  List<String> rubberTypes = ["Rubber A", "Rubber B", "Rubber C"];
+  List<String> holeTypes = ["Hole 1", "Hole 2", "Hole 3"];
+  List<String> capsuleTypes = ["Capsule A", "Capsule B", "Capsule C"];
+  List<String> strippingTypes = ["Strip 1", "Strip 2", "Strip 3"];
+  List<String> ply = [
+    "No",
+    "18mm CHW Ply",
+    "18mm White Birch",
+    "18mm Blue Birch",
+  ];
+  List<String> HouseNoList = ["101", "102", "103", "104", "B1-22"];
+  List<String> AppartmentList = [
+    "Om Heights",
+    "Green Palace",
+    "Skyline Residency",
+    "Sai Apartment",
+  ];
+  List<String> StreetList = [
+    "Link Road",
+    "M.G. Road",
+    "Station Road",
+    "SV Road",
+  ];
+  List<String> PincodeList = ["400104", "400058", "400064", "400092"];
+  String? get mode => widget.mode;
+  String? get lpm => widget.lpm;
+
+  final BuyerOrderNo = TextEditingController();
+  final DeliveryAt = TextEditingController();
+  final OrderBy = TextEditingController();
+  final Remark = TextEditingController();
+  final Ups = TextEditingController();
+  final PartyWorkName = TextEditingController();
+  final Size = TextEditingController();
+  final Size2 = TextEditingController();
+  final Size3 = TextEditingController();
+  final Size4 = TextEditingController();
+  final Size5 = TextEditingController();
+  final Ups_32 = TextEditingController();
+  final PlyLength = TextEditingController();
+  final PlyBreadth = TextEditingController();
+  final BladeSize = TextEditingController();
+  final Extra = TextEditingController();
+  final CapsuleRate = TextEditingController();
+  final CreasingSize = TextEditingController();
+  final DeliveryURL = TextEditingController();
+  final Unknown = TextEditingController();
+  final AddressOutput = TextEditingController();
+  final DesignSendBy = TextEditingController();
+  final CapsulePcs = TextEditingController();
+  final CapsuleAmt = TextEditingController();
+  final PerforationSize = TextEditingController();
+  final ZigZagBladeSize = TextEditingController();
+  final RubberSize = TextEditingController();
+  final EmbossPcs = TextEditingController();
+  final TotalSize = TextEditingController();
+  final MinimumChargeApply = TextEditingController();
+  final MaleRate = TextEditingController();
+  final X = TextEditingController();
+  final Y = TextEditingController();
+  final XYSize = TextEditingController();
+  final FemaleRate = TextEditingController();
+  final X2 = TextEditingController();
+  final Y2 = TextEditingController();
+  final XY2Size = TextEditingController();
+  final StrippingSize = TextEditingController();
+  final CourierCharges = TextEditingController();
+  final LaserRate = TextEditingController();
+  final InvoicePrintedBy = TextEditingController();
+  final CreatedBy = TextEditingController();
+  final Amounts3 = TextEditingController();
+  final DesignerCreatedBy = TextEditingController();
+  final AutoBendingStatus = TextEditingController();
+  final AutoBendingCreatedBy = TextEditingController();
+  final LaserCuttingCreatedBy = TextEditingController();
+  final AccountsCreatedBy = TextEditingController();
+  final AccountStatus = TextEditingController();
+  final EmbossCreatedBy = TextEditingController();
+  final ManualBendingStatus = TextEditingController();
+  final ManualBendingCreatedBy = TextEditingController();
+  final ManualBendingFittingDoneBy = TextEditingController();
+  final GSTType = TextEditingController();
+  final ParticularJobName = TextEditingController();
+  final Priority = TextEditingController();
+  final DesigningStatus = TextEditingController();
+  final LaserPunchNew = TextEditingController();
+  final PlyType = TextEditingController();
+  final Blade = TextEditingController();
+  final Creasing = TextEditingController();
+  final RubberDoneBy = TextEditingController();
+  final DeliveryCreatedBy = TextEditingController();
+  final DeliveryStatus = TextEditingController();
+  final ReceiverName = TextEditingController();
+  final TransportName = TextEditingController();
+  final CapsuleType = TextEditingController();
+  final ZigZagBlade = TextEditingController();
+  final ZigZagBladeType = TextEditingController();
+  final RubberType = TextEditingController();
+  final HoleType = TextEditingController();
+  final EmbossStatus = TextEditingController();
+  final MaleEmbossType = TextEditingController();
+  final FemaleEmbossType = TextEditingController();
+  final StrippingType = TextEditingController();
+  final AutoCreasingStatus = TextEditingController();
+  final LaserDoneBy = TextEditingController();
+  final LaserCuttingStatus = TextEditingController();
+  final AutoBendingDoneBy = TextEditingController();
+  final InvoiceStatus = TextEditingController();
+  final ParticularSlider = TextEditingController();
+  final RubberFixingDone = TextEditingController();
+  final RubberStatus = TextEditingController();
+  final RubberCreatedBy = TextEditingController();
+  final WhiteProfileRubber = TextEditingController();
+  final Perforation = TextEditingController();
+
+  //new
+  final PartyName = TextEditingController();
+  final TextEditingController DesignedBy = TextEditingController();
+  final TextEditingController DesignedByTimestamp = TextEditingController();
+  final TextEditingController AutoBendingCreatedByName =
+      TextEditingController();
+  final TextEditingController AutoBendingCreatedByTimestamp =
+      TextEditingController();
+  final TextEditingController ManualBendingCreatedByName =
+  TextEditingController();
+  final TextEditingController ManualBendingCreatedByTimestamp =
+  TextEditingController();
+  final TextEditingController LaserCuttingCreatedByName =
+  TextEditingController();
+  final TextEditingController LaserCuttingCreatedByTimestamp =
+  TextEditingController();
+  final TextEditingController PlySelectedBy = TextEditingController();
+  final TextEditingController BladeSelectedBy = TextEditingController();
+  final TextEditingController CreasingSelectedBy = TextEditingController();
+  final TextEditingController PerforationSelectedBy = TextEditingController();
+  final TextEditingController ZigZagBladeSelectedBy = TextEditingController();
+  final TextEditingController RubberSelectedBy = TextEditingController();
+  final TextEditingController HoleSelectedBy = TextEditingController();
+  final LpmAutoIncrement = TextEditingController();
+  final JobDone = TextEditingController();
+  final DrawingAttachment = TextEditingController();
+  //new Flow system
+  // ===== DEPARTMENT ROUTING TOGGLES (NEW PARALLEL SYSTEM) =====
+  final ReqAutoBending = TextEditingController();
+  final ReqManualBending = TextEditingController();
+  final ReqLaserCutting = TextEditingController();
+  final ReqRubber = TextEditingController();
+  final ReqEmboss = TextEditingController();
+  final ReqAccount = TextEditingController();
+
+  bool AutoCreasing = false;
+
+  String HouseNo = "";
+  String Appartment = "";
+  String Street = "";
+  String Pincode = "";
+  String User = "";
+
+  void clearDesignerData() {
+    PartyName.clear();
+    DesignerCreatedBy.clear();
+    DeliveryAt.clear();
+    OrderBy.clear();
+    ParticularJobName.clear();
+    Priority.clear();
+    Remark.clear();
+
+    DesignedBy.clear();
+
+    PlyType.text = "No";
+    PlySelectedBy.clear();
+
+    Blade.text = "No";
+    BladeSelectedBy.clear();
+
+    Creasing.text = "No";
+    CreasingSelectedBy.clear();
+
+    Perforation.text = "No";
+    PerforationSelectedBy.clear();
+
+    ZigZagBlade.text = "No";
+    ZigZagBladeSelectedBy.clear();
+
+    RubberType.text = "No";
+    RubberSelectedBy.clear();
+
+    HoleType.text = "No";
+    HoleSelectedBy.clear();
+
+    EmbossStatus.text = "No";
+    EmbossPcs.clear();
+
+    MaleEmbossType.text = "No";
+    FemaleEmbossType.text = "No";
+
+    X.clear();
+    Y.clear();
+    X2.clear();
+    Y2.clear();
+
+    StrippingType.text = "No";
+    LaserCuttingStatus.text = "Pending";
+    RubberFixingDone.text = "No";
+    WhiteProfileRubber.text = "No";
+  }
+
+  Map<String, dynamic> buildFormData() {
+    return {
+      // Basic Info
+      "LpmAutoIncrement": LpmAutoIncrement.text,
+
+      "BuyerOrderNo": BuyerOrderNo.text,
+      "DeliveryAt": DeliveryAt.text,
+      "Orderby": OrderBy.text,
+      "Remark": Remark.text,
+      "Ups": Ups.text,
+      "PartyworkName": PartyWorkName.text,
+      "Size": Size.text,
+      "Size2": Size2.text,
+      "Size3": Size3.text,
+      "Size4": Size4.text,
+      "Size5": Size5.text,
+      "Ups_32": Ups_32.text,
+
+      // Ply
+      "PlyLength": PlyLength.text,
+      "PlyBreadth": PlyBreadth.text,
+
+      // Blade
+      "Blade": Blade.text,
+      "BladeSize": BladeSize.text,
+
+      // Extra
+      "Extra": Extra.text,
+
+      // Creasing
+      "Creasing": Creasing.text,
+      "CreasingSize": CreasingSize.text,
+
+      // Capsule
+      "CapsuleType": CapsuleType.text,
+      "CapsuleRate": CapsuleRate.text,
+      "CapsulePcs": CapsulePcs.text,
+      "CapsuleAmt": CapsuleAmt.text,
+
+      // Perforation
+      "ZigZagBlade": ZigZagBlade.text,
+      "PerforationSize": PerforationSize.text,
+
+      // ZigZag
+      "ZigZagBladeType": ZigZagBladeType.text,
+      "ZigZagBladeSize": ZigZagBladeSize.text,
+
+      // Rubber
+      "RubberType": RubberType.text,
+      "RubberSize": RubberSize.text,
+      "RubberDoneBy": RubberDoneBy.text,
+
+      // Hole
+      "HoleType": HoleType.text,
+
+      // Emboss
+      "EmbossPcs": EmbossPcs.text,
+      "TotalSize": TotalSize.text,
+      "MinimumChargeApply": MinimumChargeApply.text,
+
+      // Male emboss
+      "MaleEmbossType": MaleEmbossType.text,
+      "MaleRate": MaleRate.text,
+      "X": X.text,
+      "Y": Y.text,
+      "XYSize": XYSize.text,
+
+      // Female emboss
+      "FemaleEmbossType": FemaleEmbossType.text,
+      "FemaleRate": FemaleRate.text,
+      "X2": X2.text,
+      "Y2": Y2.text,
+      "XY2Size": XY2Size.text,
+
+      // Stripping
+      "StrippingType": StrippingType.text,
+      "StrippingSize": StrippingSize.text,
+
+      // Courier
+      "CourierCharges": CourierCharges.text,
+
+      // Laser
+      "LaserPunchNew": LaserPunchNew.text,
+      "LaserRate": LaserRate.text,
+      "LaserDoneBy": LaserDoneBy.text,
+      "LaserCuttingStatus": LaserCuttingStatus.text,
+      "AutoBendingDoneBy": AutoBendingDoneBy.text,
+
+      // Address fields
+      "FullAddress": AddressOutput.text,
+      "DeliveryURL": DeliveryURL.text,
+
+      // Additional fields
+      "Unknown": Unknown.text,
+      "DesignSendBy": DesignSendBy.text,
+      "ReceiverName": ReceiverName.text,
+      "TransportName": TransportName.text,
+
+      // Status fields
+      "DesigningStatus": DesigningStatus.text,
+      "ManualBendingStatus": ManualBendingStatus.text,
+      "AutobendingStatus": AutoBendingStatus.text,
+      "DeliveryStatus": DeliveryStatus.text,
+      "EmbossStatus": EmbossStatus.text,
+      "AutoCreasingStatus": AutoCreasingStatus.text,
+      "InvoiceStatus": InvoiceStatus.text,
+
+      // Created By
+      "InvoicePrintedBy": InvoicePrintedBy.text,
+      "CreatedBy": CreatedBy.text,
+      "DesignerCreatedBy": DesignerCreatedBy.text,
+      "DesignedBy": DesignedBy.text,
+      "DesignedByTimestamp": DesignedByTimestamp.text,
+      "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
+      "AutoBendingCreatedByName": AutoBendingCreatedByName.text,
+      "AutoBendingCreatedByTimestamp": AutoBendingCreatedByTimestamp.text,
+      "ManualBendingCreatedByName": ManualBendingCreatedByName.text,
+      "ManualBendingCreatedByTimestamp": ManualBendingCreatedByTimestamp.text,
+      "LaserCuttingCreatedByName": LaserCuttingCreatedByName.text,
+      "LaserCuttingCreatedByTimestamp": LaserCuttingCreatedByTimestamp.text,
+      "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
+      "AccountsCreatedBy": AccountsCreatedBy.text,
+      "AccountStatus": AccountStatus.text,
+      "EmbossCreatedBy": EmbossCreatedBy.text,
+      "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
+      "ManualBendingFittingDoneBy": ManualBendingFittingDoneBy.text,
+      "DeliveryCreatedBy": DeliveryCreatedBy.text,
+
+      // Other
+      "GSTType": GSTType.text,
+      "PartyName": PartyName.text,
+      "particularJobName": ParticularJobName.text,
+      "Priority": Priority.text,
+      "PlyType": PlyType.text,
+      "Amounts3": Amounts3.text,
+      "ParticularSlider": ParticularSlider.text,
+
+      "RubberFixingDone": RubberFixingDone.text,
+      "WhiteProfileRubber": WhiteProfileRubber.text,
+      "DrawingAttachment": DrawingAttachment.text,
+
+      //New Form Flow
+      // Routing Toggles
+      "ReqAutoBending": ReqAutoBending.text,
+      "ReqManualBending": ReqManualBending.text,
+      "ReqLaserCutting": ReqLaserCutting.text,
+      "ReqRubber": ReqRubber.text,
+      "ReqEmboss": ReqEmboss.text,
+      "ReqAccount": ReqAccount.text,
+
+      "Timestamp": DateTime.now().toIso8601String(),
+    };
+  }
+
+  void updateAddress() {
+    String fullAddress = "$HouseNo, $Appartment, $Street, $Pincode"
+        .replaceAll(", ,", ",") // remove blank commas
+        .replaceAll(" ,", ",")
+        .trim();
+
+    AddressOutput.text = fullAddress;
+    setState(() {});
+  }
+
+  void updateCapsuleAmt() {
+    double pcs = double.tryParse(CapsulePcs.text) ?? 0;
+    double rate = double.tryParse(CapsuleRate.text) ?? 0;
+
+    double total = pcs * rate;
+
+    CapsuleAmt.text = total.toStringAsFixed(2);
+    setState(() {});
+  }
+
+  void calculateXY() {
+    double xVal = double.tryParse(X.text) ?? 0;
+    double yVal = double.tryParse(Y.text) ?? 0;
+
+    final result = xVal * yVal;
+
+    XYSize.text = result.toStringAsFixed(2);
+    setState(() {});
+  }
+
+  void calculateXY2() {
+    double xVal = double.tryParse(X2.text) ?? 0;
+    double yVal = double.tryParse(Y2.text) ?? 0;
+
+    final result = xVal * yVal;
+
+    XY2Size.text = result.toStringAsFixed(2);
+    setState(() {});
+  }
+
+  // ---------- add this inside NewFormState ----------
+
+  void clearForm() {
+    // Clear all text controllers
+    BuyerOrderNo.clear();
+    DeliveryAt.clear();
+    OrderBy.clear();
+    Remark.clear();
+    Ups.clear();
+    PartyWorkName.clear();
+    Size.clear();
+    Size2.clear();
+    Size3.clear();
+    Size4.clear();
+    Size5.clear();
+    Ups_32.clear();
+    PlyLength.clear();
+    PlyBreadth.clear();
+    Blade.clear();
+    BladeSize.clear();
+    Extra.clear();
+    Creasing.clear();
+    CreasingSize.clear();
+    CapsuleType.clear();
+    CapsuleRate.clear();
+    CapsulePcs.clear();
+    CapsuleAmt.clear();
+    ZigZagBlade.clear();
+    PerforationSize.clear();
+    ZigZagBladeType.clear();
+    ZigZagBladeSize.clear();
+    RubberType.clear();
+    RubberSize.clear();
+    RubberDoneBy.clear();
+    HoleType.clear();
+    EmbossPcs.clear();
+    TotalSize.clear();
+    MinimumChargeApply.clear();
+    MaleEmbossType.clear();
+    MaleRate.clear();
+    X.clear();
+    Y.clear();
+    XYSize.clear();
+    FemaleEmbossType.clear();
+    FemaleRate.clear();
+    X2.clear();
+    Y2.clear();
+    XY2Size.clear();
+    StrippingType.clear();
+    StrippingSize.clear();
+    CourierCharges.clear();
+    LaserPunchNew.clear();
+    LaserRate.clear();
+    LaserDoneBy.clear();
+    LaserCuttingStatus.clear();
+
+    DeliveryURL.clear();
+    Unknown.clear();
+    DesignSendBy.clear();
+    ReceiverName.clear();
+    TransportName.clear();
+    DesigningStatus.clear();
+    ManualBendingStatus.clear();
+    AutoBendingStatus.clear();
+    DeliveryStatus.clear();
+    EmbossStatus.clear();
+    AutoCreasingStatus.clear();
+    InvoiceStatus.clear();
+    InvoicePrintedBy.clear();
+    CreatedBy.clear();
+    DesignerCreatedBy.clear();
+    AutoBendingCreatedBy.clear();
+    LaserCuttingCreatedBy.clear();
+    AccountsCreatedBy.clear();
+    AccountStatus.clear();
+    EmbossCreatedBy.clear();
+    ManualBendingCreatedBy.clear();
+    ManualBendingFittingDoneBy.clear();
+    DeliveryCreatedBy.clear();
+    GSTType.clear();
+    ParticularJobName.clear();
+    Priority.clear();
+    PlyType.clear();
+    Amounts3.clear();
+    ParticularSlider.clear();
+    AddressOutput.clear();
+    RubberFixingDone.clear();
+    WhiteProfileRubber.clear();
+    //new
+    // ✅ clear new fields
+    DesignedBy.clear();
+    DesignedByTimestamp.clear();
+    AutoBendingCreatedByName.clear();
+    AutoBendingCreatedByTimestamp.clear();
+    ManualBendingCreatedByName.clear();
+    ManualBendingCreatedByTimestamp.clear();
+    LaserCuttingCreatedByName.clear();
+    LaserCuttingCreatedByTimestamp.clear();
+    PlySelectedBy.clear();
+    BladeSelectedBy.clear();
+    CreasingSelectedBy.clear();
+    PerforationSelectedBy.clear();
+    ZigZagBladeSelectedBy.clear();
+    RubberSelectedBy.clear();
+    HoleSelectedBy.clear();
+    Perforation.clear();
+    PartyName.clear();
+    DrawingAttachment.clear();
+
+    //New Flow
+    // ✅ Clear routing toggles
+    ReqAutoBending.clear();
+    ReqManualBending.clear();
+    ReqLaserCutting.clear();
+    ReqRubber.clear();
+    ReqEmboss.clear();
+    ReqAccount.clear();
+
+    // Set defaults
+    ReqAutoBending.text = "NO";
+    ReqManualBending.text = "NO";
+    ReqLaserCutting.text = "NO";
+    ReqRubber.text = "NO";
+    ReqEmboss.text = "NO";
+    ReqAccount.text = "NO";
+
+
+
+    Remark.text = "NO REMARK";
+    Ups.text = "NO";
+    PartyWorkName.text = "NO";
+    Size.text = "NO";
+    Size2.text = "NO";
+    Size3.text = "NO";
+    Size4.text = "NO";
+    Size5.text = "NO";
+    DeliveryURL.text = "URL";
+    EmbossPcs.text = "No";
+    TotalSize.text = "No";
+    Unknown.text = "";
+    // Add all fields that have initialValue
+
+    // Example Toggles (default values):
+    AutoBendingStatus.text = "Pending";
+    ManualBendingStatus.text = "Pending";
+    DesigningStatus.text = "Pending";
+    DeliveryStatus.text = "Pending";
+    InvoiceStatus.text = "Pending";
+    LaserCuttingStatus.text = "Pending";
+    LaserPunchNew.text = "No";
+
+    // Dropdowns default
+    PlyType.text = "No";
+    Creasing.text = "No";
+    // Reset dropdown / address selection state
+    setState(() {
+      HouseNo = "";
+      Appartment = "";
+      Street = "";
+      Pincode = "";
+    });
+  }
+
+  Future<void> loadCurrentLpm() async {
+    try {
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final counterDocId = "${now.year}_$month";
+
+      debugPrint("⏳ Loading LPM... counterDoc=$counterDocId");
+
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc(counterDocId);
+
+      // ✅ Set a timeout so it doesn't hang forever if offline
+      final snap = await counterRef.get().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
+      );
+
+      int lastOrderNo = 0;
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      } else {
+        await counterRef.set({"lastOrderNo": 0});
+      }
+
+      final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
+      final fullLpm = "LPM-$newOrderNo-$month-$year-01";
+
+      debugPrint("✅ LPM Generated: $fullLpm");
+
+      if (mounted) {
+        setState(() {
+          LpmAutoIncrement.text = fullLpm;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ LPM Load Error: $e");
+
+      // ✅ Fallback: generate a temporary LPM from timestamp (no Firestore needed)
+      if (mounted) {
+        final now = DateTime.now();
+        final month = now.month.toString().padLeft(2, '0');
+        final year = (now.year % 100).toString().padLeft(2, '0');
+        final tempNo = now.millisecondsSinceEpoch.toString().substring(
+          7,
+        ); // last 6 digits
+        final fallbackLpm = "LPM-TEMP$tempNo-$month-$year-01";
+
+        debugPrint("⚠️ Using fallback LPM: $fallbackLpm");
+
+        setState(() {
+          LpmAutoIncrement.text = fallbackLpm;
+        });
+
+        // Show a warning to the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "⚠️ No internet — using temporary LPM. Please resubmit when online.",
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  // ────────────────────────────────────────────
+  // METHOD 1: Called from initState on edit mode
+  // ────────────────────────────────────────────
+  void _loadDataFromQueryParam() {
+    try {
+      final uri = GoRouterState.of(context).uri;
+      final dataJson = uri.queryParameters['data'];
+
+      if (dataJson == null || dataJson.isEmpty) {
+        debugPrint("⚠️ No data param in URL — falling back to Firestore");
+        loadExistingFormData();
+        return;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(dataJson);
+      debugPrint("✅ Loaded ${data.keys.length} fields from URL param");
+      _populateControllers(data);
+    } catch (e) {
+      debugPrint(
+        "❌ _loadDataFromQueryParam error: $e — falling back to Firestore",
+      );
+      loadExistingFormData();
+    }
+  }
+
+  // ────────────────────────────────────────────
+  // METHOD 2: Firestore fallback
+  // (used when URL data is missing or too long)
+  // ────────────────────────────────────────────
+  Future<void> loadExistingFormData() async {
+    try {
+      final lpm = widget.lpm!;
+      final parts = lpm.split("-");
+
+      final mainOrderId = parts.length >= 4
+          ? "${parts[0]}-${parts[1]}-${parts[2]}-${parts[3]}"
+          : lpm;
+
+      debugPrint("📂 Firestore fallback load: $mainOrderId");
+
+      final snap = await FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(mainOrderId)
+          .get();
+
+      if (!snap.exists) {
+        debugPrint("❌ No doc found at jobs/$mainOrderId");
+        return;
+      }
+
+      // Data is stored at: jobs/{mainOrderId}/designer/data
+      final Map<String, dynamic> data =
+          (snap.data()?["designer"]?["data"] as Map<String, dynamic>?) ?? {};
+
+      if (data.isEmpty) {
+        debugPrint("⚠️ designer.data is empty in Firestore");
+        return;
+      }
+
+      debugPrint("✅ Firestore loaded ${data.keys.length} fields");
+      _populateControllers(data);
+    } catch (e) {
+      debugPrint("❌ loadExistingFormData error: $e");
+    }
+  }
+
+  // ────────────────────────────────────────────
+  // METHOD 3: Fills all controllers from a map
+  // (shared by both URL and Firestore paths)
+  // ────────────────────────────────────────────
+  void _populateControllers(Map<String, dynamic> data) {
+    // 🔍 DEBUG — add these lines
+    debugPrint("🔍 _populateControllers called");
+    debugPrint(
+      "🔍 ParticularJobName value in data: ${data['ParticularJobName']}",
+    );
+    debugPrint("🔍 PartyName value in data: ${data['PartyName']}");
+    debugPrint("🔍 All keys: ${data.keys.toList()}");
+    setState(() {
+      void set(TextEditingController c, String key) {
+        final val = data[key];
+        if (val != null && val.toString().isNotEmpty) {
+          c.text = val.toString();
+        }
+      }
+
+      set(PartyName, "PartyName");
+      set(DesignerCreatedBy, "DesignerCreatedBy");
+      set(DeliveryAt, "DeliveryAt");
+      set(OrderBy, "Orderby");
+      final jobNameVal = data['particularJobName'] ?? data['ParticularJobName'];
+      if (jobNameVal != null && jobNameVal.toString().isNotEmpty) {
+        ParticularJobName.text = jobNameVal.toString();
+      }
+      set(Priority, "Priority");
+      set(Remark, "Remark");
+      set(DesigningStatus, "DesigningStatus");
+      set(BuyerOrderNo, "BuyerOrderNo");
+      set(Ups, "Ups");
+      set(PartyWorkName, "PartyworkName");
+      set(Size, "Size");
+      set(Size2, "Size2");
+      set(Size3, "Size3");
+      set(Size4, "Size4");
+      set(Size5, "Size5");
+      set(Ups_32, "Ups_32");
+      set(PlyType, "PlyType");
+      set(PlyLength, "PlyLength");
+      set(PlyBreadth, "PlyBreadth");
+      set(PlySelectedBy, "PlySelectedBy");
+      set(Blade, "Blade");
+      set(BladeSize, "BladeSize");
+      set(BladeSelectedBy, "BladeSelectedBy");
+      set(Creasing, "Creasing");
+      set(CreasingSize, "CreasingSize");
+      set(CreasingSelectedBy, "CreasingSelectedBy");
+      set(Perforation, "Perforation");
+      set(PerforationSize, "PerforationSize");
+      set(PerforationSelectedBy, "PerforationSelectedBy");
+      set(ZigZagBlade, "ZigZagBlade");
+      set(ZigZagBladeType, "ZigZagBladeType");
+      set(ZigZagBladeSize, "ZigZagBladeSize");
+      set(ZigZagBladeSelectedBy, "ZigZagBladeSelectedBy");
+      set(RubberType,            "RubberType");
+      set(RubberSize,            "RubberSize");
+      set(RubberDoneBy,          "RubberDoneBy");
+      set(RubberSelectedBy,      "RubberSelectedBy");
+      set(HoleType,              "HoleType");
+      set(HoleSelectedBy,        "HoleSelectedBy");
+      set(EmbossStatus,          "EmbossStatus");
+      set(EmbossPcs,             "EmbossPcs");
+      set(MaleEmbossType,        "MaleEmbossType");
+      set(MaleRate,              "MaleRate");
+      set(X,                     "X");
+      set(Y,                     "Y");
+      set(XYSize,                "XYSize");
+      set(FemaleEmbossType,      "FemaleEmbossType");
+      set(FemaleRate,            "FemaleRate");
+      set(X2,                    "X2");
+      set(Y2,                    "Y2");
+      set(XY2Size,               "XY2Size");
+      set(StrippingType,         "StrippingType");
+      set(StrippingSize,         "StrippingSize");
+      set(Extra,                 "Extra");
+      set(LaserPunchNew,         "LaserPunchNew");
+      set(LaserRate,             "LaserRate");
+      set(LaserDoneBy,           "LaserDoneBy");
+      set(LaserCuttingStatus,    "LaserCuttingStatus");
+      set(CourierCharges,        "CourierCharges");
+      set(AddressOutput,         "FullAddress");
+      set(DeliveryURL,           "DeliveryURL");
+      set(ReceiverName,          "ReceiverName");
+      set(TransportName,         "TransportName");
+      set(DesignSendBy,          "DesignSendBy");
+      set(DesignedBy,            "DesignedBy");
+      set(DesignedByTimestamp,   "DesignedByTimestamp");
+      set(RubberFixingDone,      "RubberFixingDone");
+      set(WhiteProfileRubber,    "WhiteProfileRubber");
+      set(GSTType,               "GSTType");
+      set(Amounts3,              "Amounts3");
+      set(ParticularSlider,      "ParticularSlider");
+      set(AutoBendingStatus,     "AutobendingStatus");
+      set(ManualBendingStatus,   "ManualBendingStatus");
+      set(DeliveryStatus,        "DeliveryStatus");
+      set(InvoiceStatus,         "InvoiceStatus");
+      set(LpmAutoIncrement,      "LpmAutoIncrement");
+
+      //New Form Flow
+      set(ReqAutoBending,        "ReqAutoBending");
+      set(ReqManualBending,      "ReqManualBending");
+      set(ReqLaserCutting,       "ReqLaserCutting");
+      set(ReqRubber,             "ReqRubber");
+      set(ReqEmboss,             "ReqEmboss");
+      set(ReqAccount,            "ReqAccount");
+      set(RubberType, "RubberType");
+      set(RubberSize, "RubberSize");
+      set(RubberDoneBy, "RubberDoneBy");
+      set(RubberSelectedBy, "RubberSelectedBy");
+      set(HoleType, "HoleType");
+      set(HoleSelectedBy, "HoleSelectedBy");
+      set(EmbossStatus, "EmbossStatus");
+      set(EmbossPcs, "EmbossPcs");
+      set(MaleEmbossType, "MaleEmbossType");
+      set(MaleRate, "MaleRate");
+      set(X, "X");
+      set(Y, "Y");
+      set(XYSize, "XYSize");
+      set(FemaleEmbossType, "FemaleEmbossType");
+      set(FemaleRate, "FemaleRate");
+      set(X2, "X2");
+      set(Y2, "Y2");
+      set(XY2Size, "XY2Size");
+      set(StrippingType, "StrippingType");
+      set(StrippingSize, "StrippingSize");
+      set(Extra, "Extra");
+      set(LaserPunchNew, "LaserPunchNew");
+      set(LaserRate, "LaserRate");
+      set(LaserDoneBy, "LaserDoneBy");
+      set(LaserCuttingStatus, "LaserCuttingStatus");
+      set(CourierCharges, "CourierCharges");
+      set(AddressOutput, "FullAddress");
+      set(DeliveryURL, "DeliveryURL");
+      set(ReceiverName, "ReceiverName");
+      set(TransportName, "TransportName");
+      set(DesignSendBy, "DesignSendBy");
+      set(DesignedBy, "DesignedBy");
+      set(DesignedByTimestamp, "DesignedByTimestamp");
+      set(AutoBendingCreatedByName, "AutoBendingCreatedByName");
+      set(AutoBendingCreatedByTimestamp, "AutoBendingCreatedByTimestamp");
+      set(ManualBendingCreatedByName,      "ManualBendingCreatedByName");
+      set(ManualBendingCreatedByTimestamp, "ManualBendingCreatedByTimestamp");
+      set(ManualBendingCreatedByName,      "ManualBendingCreatedByName");
+      set(RubberFixingDone, "RubberFixingDone");
+      set(WhiteProfileRubber, "WhiteProfileRubber");
+      set(GSTType, "GSTType");
+      set(Amounts3, "Amounts3");
+      set(ParticularSlider, "ParticularSlider");
+      set(AutoBendingStatus, "AutobendingStatus");
+      set(ManualBendingStatus, "ManualBendingStatus");
+      set(DeliveryStatus, "DeliveryStatus");
+      set(InvoiceStatus, "InvoiceStatus");
+      set(LpmAutoIncrement, "LpmAutoIncrement");
+    });
+  }
+
+  //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+
+  Future<void> incrementMonthlyCounter() async {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final counterDocId = "${now.year}_$month";
+
+    final counterRef = FirebaseFirestore.instance
+        .collection("counters")
+        .doc(counterDocId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+
+      int lastOrderNo = 0;
+
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      }
+
+      transaction.set(counterRef, {
+        "lastOrderNo": lastOrderNo + 1,
+      }, SetOptions(merge: true));
+    });
+  }
+
+  Future<void> submitDesignerForm() async {
+    try {
+      final fullLpm = LpmAutoIncrement.text.trim();
+
+      debugPrint("📝 Starting Designer Form Submission");
+      debugPrint("🔑 Full LPM: $fullLpm");
+
+      // ✅ VALIDATION: Check if LPM is empty
+      if (fullLpm.isEmpty) {
+        throw Exception("❌ LPM Auto Increment is empty. Cannot submit form.");
+      }
+
+      // ✅ VALIDATION: Check LPM format
+      // ✅ If editing, LpmAutoIncrement might be the main doc ID (4 parts)
+      // Append "-01" to make it a valid full LPM
+      String resolvedLpm = fullLpm;
+      if (fullLpm.split("-").length == 4) {
+        resolvedLpm = "$fullLpm-01";
+        debugPrint("⚠️ LPM was 4 parts, resolved to: $resolvedLpm");
+      }
+
+      final parts = resolvedLpm.split("-");
+      debugPrint("🔍 LPM Parts: $parts (Total: ${parts.length} parts)");
+
+      if (parts.length < 5) {
+        throw Exception(
+          "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
+          "Got: $resolvedLpm (${parts.length} parts instead of 5)",
+        );
+      }
+
+      // ✅ PARSE: Extract LPM components safely
+      String orderNo = parts[1];
+      String month = parts[2];
+      String year = parts[3];
+      String subOrderNo = parts[4];
+
+      debugPrint(
+        "✅ Parsed LPM: orderNo=$orderNo, month=$month, year=$year, sub=$subOrderNo",
+      );
+
+      // ✅ BUILD: Create main order ID
+      final mainOrderId = "LPM-$orderNo-$month-$year";
+      debugPrint("📋 Main Order ID: $mainOrderId");
+
+      // ✅ GET: References
+      final mainOrderRef = FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(mainOrderId);
+      final itemRef = mainOrderRef.collection("items").doc(subOrderNo);
+
+      debugPrint("📌 Document References created");
+
+      // ✅ VALIDATE: Required fields for Designer
+      if (PartyName.text.trim().isEmpty) {
+        throw Exception("❌ Party Name is required");
+      }
+      if (ParticularJobName.text.trim().isEmpty) {
+        throw Exception("❌ Particular Job Name is required");
+      }
+
+      debugPrint("✅ Required fields validated");
+
+      // ✅ BUILD: Form data
+      final data = buildFormData();
+      debugPrint("📦 Form data prepared: ${data.keys.length} fields");
+
+      // ✅ SAVE: Main order document
+      debugPrint("💾 Writing main order document...");
+      final isDesigningDone =
+          DesigningStatus.text.trim().toLowerCase() == "done";
+
+// ✅ Build visibleTo based on Req* toggles — only if designing is done
+      final List<String> visibleTo = ["Designer"];
+      if (isDesigningDone) {
+        if (ReqAutoBending.text.toUpperCase() == "YES") visibleTo.add("AutoBending");
+        if (ReqManualBending.text.toUpperCase() == "YES") visibleTo.add("ManualBending");
+        if (ReqLaserCutting.text.toUpperCase() == "YES") visibleTo.add("LaserCutting");
+        if (ReqRubber.text.toUpperCase() == "YES") visibleTo.add("Rubber");
+        if (ReqEmboss.text.toUpperCase() == "YES") visibleTo.add("Emboss");
+      }
+
+      await mainOrderRef.set({
+        "orderNo": orderNo,
+        "month": month,
+        "year": year,
+        "currentDepartment": isDesigningDone ? "InProgress" : "Designer",
+        "visibleTo": visibleTo,
+        "designer": {
+          "submitted": true,
+          "submittedAt": FieldValue.serverTimestamp(),
+          "submittedBy": DesignerCreatedBy.text.isNotEmpty
+              ? DesignerCreatedBy.text
+              : "Unknown",
+          "data": data,
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint("✅ Main order document written");
+
+      // ✅ SAVE: Sub-order item document
+      debugPrint("💾 Writing sub-order item document...");
+      await itemRef.set({
+        "fullLpm": resolvedLpm,
+        "subOrderNo": subOrderNo,
+        "currentDepartment": isDesigningDone ? "InProgress" : "Designer",
+        "visibleTo": visibleTo,
+        "status": "InProgress",
+        "designer": {
+          "submitted": true,
+          "submittedAt": FieldValue.serverTimestamp(),
+          "submittedBy": DesignerCreatedBy.text.isNotEmpty
+              ? DesignerCreatedBy.text
+              : "Unknown",
+          "data": data,
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      });
+
+      debugPrint("✅ Sub-order item document written");
+
+      // ✅ INCREMENT: Monthly counter
+      debugPrint("⏱️ Incrementing monthly counter...");
+      await incrementMonthlyCounter();
+      debugPrint("✅ Monthly counter incremented");
+
+      debugPrint("🎉 Designer form submission successful!");
+    } catch (e, stackTrace) {
+      debugPrint("❌ ERROR in submitDesignerForm: $e");
+      debugPrint("📍 Stack trace: $stackTrace");
+      rethrow; // Re-throw to be caught by submitForm()
+    }
+  }
+  // 🔧 FIXED submitForm() Method
+  // Replace the existing submitForm() in new_form.dart with this version
+
+  // 🔧 FIXED submitDepartmentForm() Method (Parallel Routing Logic)
+  Future<void> submitDepartmentForm(String currentDept) async {
+    final lpm = LpmAutoIncrement.text;
+
+    if (lpm.isEmpty) {
+      throw Exception("LPM is empty. Cannot save.");
+    }
+
+    bool isDone = false;
+
+    switch (currentDept) {
+      case "AutoBending":
+        isDone = AutoBendingStatus.text.trim().toLowerCase() == "done";
+        break;
+      case "ManualBending":
+        isDone = ManualBendingStatus.text.trim().toLowerCase() == "done";
+        break;
+      case "LaserCutting":
+        isDone = LaserCuttingStatus.text.trim().toLowerCase() == "done";
+        break;
+      case "Rubber":
+        isDone = RubberStatus.text.trim().toLowerCase() == "done";
+        break;
+      case "Emboss":
+        isDone = EmbossStatus.text.trim().toLowerCase() == "done";
+        break;
+      case "Account":
+        isDone = AccountStatus.text.trim().toLowerCase() == "done";
+        break;
+      default:
+        isDone = false;
+    }
+
+    final docRef = FirebaseFirestore.instance.collection("jobs").doc(lpm);
+    final deptKey = _deptKey(currentDept);
+
+    // ✅ Build dept-specific data only
+    Map<String, dynamic> deptData = {};
+    switch (currentDept) {
+      case "AutoBending":
+        deptData = {
+          "AutoBendingStatus": AutoBendingStatus.text,
+          "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
+          "AutoCreasing": AutoCreasing,
+          "AutoCreasingStatus": AutoCreasingStatus.text,
+        };
+        break;
+      case "ManualBending":
+        deptData = {
+          "ManualBendingStatus": ManualBendingStatus.text,
+          "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
+        };
+        break;
+      case "LaserCutting":
+        deptData = {
+          "LaserCuttingStatus": LaserCuttingStatus.text,
+          "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
+        };
+        break;
+      case "Rubber":
+        deptData = {
+          "RubberStatus": RubberStatus.text,
+          "RubberCreatedBy": RubberCreatedBy.text,
+        };
+        break;
+      case "Emboss":
+        deptData = {
+          "EmbossStatus": EmbossStatus.text,
+          "MaleEmbossType": MaleEmbossType.text,
+          "FemaleEmbossType": FemaleEmbossType.text,
+          "EmbossCreatedBy": EmbossCreatedBy.text,
+        };
+        break;
+      case "Account":
+        deptData = {
+          "AccountStatus": AccountStatus.text,
+          "AccountsCreatedBy": AccountsCreatedBy.text,
+          "InvoiceStatus": InvoiceStatus.text,
+          "InvoicePrintedBy": InvoicePrintedBy.text,
+        };
+        break;
+    }
+
+    // ✅ Use dotted keys — works correctly with .update()
+    final updateMap = <String, dynamic>{
+      "$deptKey.submitted": true,
+      "$deptKey.data": deptData,
+      "updatedAt": FieldValue.serverTimestamp(),
+    };
+
+    if (!isDone) {
+      // Just save progress, don't change visibleTo
+      await docRef.update(updateMap);
+      debugPrint("✅ $currentDept progress saved (not done yet)");
+      return;
+    }
+
+    // ── PARALLEL FINISH LOGIC ──
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(docRef);
+      if (!snap.exists) throw Exception("Document does not exist!");
+
+      List<dynamic> visibleTo = List.from(snap.data()?['visibleTo'] ?? []);
+
+      // Remove the dept that just finished
+      visibleTo.remove(currentDept);
+
+      // Check if any production depts are still active
+      final productionDepts = ["AutoBending", "ManualBending", "LaserCutting", "Rubber", "Emboss"];
+      final remainingProduction = visibleTo
+          .where((dept) => productionDepts.contains(dept))
+          .toList();
+
+      if (remainingProduction.isEmpty) {
+        // All production depts done → add Account
+        if (!visibleTo.contains("Account")) {
+          visibleTo.add("Account");
+        }
+        updateMap["currentDepartment"] = "Account";
+      } else {
+        updateMap["currentDepartment"] = "InProgress";
+      }
+
+      updateMap["visibleTo"] = visibleTo;
+      transaction.update(docRef, updateMap);
+    });
+
+    debugPrint("✅ $currentDept finished. isDone: $isDone");
+  }
+
+  /// ✅ Validates all required fields
+  String? _validateRequiredFields() {
+    // Required fields for Designer module
+    if (LpmAutoIncrement.text.trim().isEmpty) {
+      return "❌ LPM Auto Increment is required";
+    }
+    if (PartyName.text.trim().isEmpty) {
+      return "❌ Party Name is required";
+    }
+    if (ParticularJobName.text.trim().isEmpty) {
+      return "❌ Particular Job Name is required";
+    }
+    // Add more validations as needed
+    return null; // ✅ All validations passed
+  }
+
+  /// ✅ Cleans and sanitizes form data to prevent index errors
+  Map<String, dynamic> _sanitizeFormData(Map<String, dynamic> rawData) {
+    final cleanData = <String, dynamic>{};
+
+    rawData.forEach((key, value) {
+      // ✅ Skip null values
+      if (value == null) {
+        debugPrint("⏭️  Skipping null field: $key");
+        return;
+      }
+
+      // ✅ Skip empty strings
+      if (value is String && value.trim().isEmpty) {
+        debugPrint("⏭️  Skipping empty field: $key");
+        return;
+      }
+
+      // ✅ Skip empty lists
+      if (value is List && value.isEmpty) {
+        debugPrint("⏭️  Skipping empty list: $key");
+        return;
+      }
+
+      // ✅ Skip empty maps
+      if (value is Map && value.isEmpty) {
+        debugPrint("⏭️  Skipping empty map: $key");
+        return;
+      }
+
+      // ✅ Keep valid values
+      cleanData[key] = value;
+    });
+
+    return cleanData;
+  }
+
+  /// 🔍 Debug helper - prints all form field values
+  void debugPrintFormData() {
+    debugPrint("""
+  ╔════════════════════ FORM DATA DEBUG ════════════════════╗
+  LpmAutoIncrement: ${LpmAutoIncrement.text}
+  PartyName: ${PartyName.text}
+  DesignerCreatedBy: ${DesignerCreatedBy.text}
+  DeliveryAt: ${DeliveryAt.text}
+  Orderby: ${OrderBy.text}
+  ParticularJobName: ${ParticularJobName.text}
+  Priority: ${Priority.text}
+  Remark: ${Remark.text}
+  DesigningStatus: ${DesigningStatus.text}
+  PlyType: ${PlyType.text}
+  Blade: ${Blade.text}
+  Creasing: ${Creasing.text}
+  Perforation: ${Perforation.text}
+  ZigZagBlade: ${ZigZagBlade.text}
+  RubberType: ${RubberType.text}
+  HoleType: ${HoleType.text}
+  ╚═══════════════════════════════════════════════════════════╝
+  """);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    isEditMode = widget.mode == 'edit';
+    department = widget.department;
+
+    // ── Set all defaults first ──
+    Remark.text = "NO REMARK";
+    Ups.text = "NO";
+    PartyWorkName.text = "NO";
+    Size.text = "NO";
+    Size2.text = "NO";
+    Size3.text = "NO";
+    Size4.text = "NO";
+    Size5.text = "NO";
+    DeliveryURL.text = "URL";
+    EmbossPcs.text = "No";
+    TotalSize.text = "No";
+    Unknown.text = "";
+    AutoBendingStatus.text = "Pending";
+    ManualBendingStatus.text = "Pending";
+    DesigningStatus.text = "Pending";
+    DeliveryStatus.text = "Pending";
+    InvoiceStatus.text = "Pending";
+    LaserCuttingStatus.text = "Pending";
+    LaserPunchNew.text = "No";
+    PlyType.text = "No";
+    Creasing.text = "No";
+
+    if (widget.lpm != null) {
+      // ── Existing job ──
+      LpmAutoIncrement.text = widget.lpm!;
+
+      if (isEditMode) {
+        // ✅ Wait for widget tree, then load existing data
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadDataFromQueryParam();
+        });
+      }
+    } else {
+      // ── New job (Designer only) ──
+      loadCurrentLpm();
+    }
+  }
+
+  // Dispose controllers to prevent memory leaks
+  @override
+  void dispose() {
+    BuyerOrderNo.dispose();
+    DeliveryAt.dispose();
+    OrderBy.dispose();
+    Remark.dispose();
+    Ups.dispose();
+    PartyWorkName.dispose();
+    Size.dispose();
+    Size2.dispose();
+    Size3.dispose();
+    Size4.dispose();
+    Size5.dispose();
+    Ups_32.dispose();
+    PlyLength.dispose();
+    PlyBreadth.dispose();
+    Blade.dispose();
+    BladeSize.dispose();
+    Extra.dispose();
+    Creasing.dispose();
+    CreasingSize.dispose();
+    CapsuleType.dispose();
+    CapsuleRate.dispose();
+    CapsulePcs.dispose();
+    CapsuleAmt.dispose();
+    ZigZagBlade.dispose();
+    PerforationSize.dispose();
+    ZigZagBladeType.dispose();
+    ZigZagBladeSize.dispose();
+    RubberType.dispose();
+    RubberSize.dispose();
+    RubberDoneBy.dispose();
+    HoleType.dispose();
+    EmbossPcs.dispose();
+    TotalSize.dispose();
+    MinimumChargeApply.dispose();
+    MaleEmbossType.dispose();
+    MaleRate.dispose();
+    X.dispose();
+    Y.dispose();
+    XYSize.dispose();
+    FemaleEmbossType.dispose();
+    FemaleRate.dispose();
+    X2.dispose();
+    Y2.dispose();
+    XY2Size.dispose();
+    StrippingType.dispose();
+    StrippingSize.dispose();
+    CourierCharges.dispose();
+    LaserPunchNew.dispose();
+    LaserRate.dispose();
+    LaserDoneBy.dispose();
+    LaserCuttingStatus.dispose();
+    AutoBendingDoneBy.dispose();
+    DeliveryURL.dispose();
+    Unknown.dispose();
+    DesignSendBy.dispose();
+    ReceiverName.dispose();
+    TransportName.dispose();
+    DesigningStatus.dispose();
+    AutoBendingStatus.dispose();
+    ManualBendingStatus.dispose();
+    DeliveryStatus.dispose();
+    EmbossStatus.dispose();
+    AutoCreasingStatus.dispose();
+    InvoiceStatus.dispose();
+    InvoicePrintedBy.dispose();
+    CreatedBy.dispose();
+    DesignerCreatedBy.dispose();
+    AutoBendingCreatedBy.dispose();
+    LaserCuttingCreatedBy.dispose();
+    AccountsCreatedBy.dispose();
+    AccountStatus.dispose();
+    EmbossCreatedBy.dispose();
+    ManualBendingCreatedBy.dispose();
+    ManualBendingFittingDoneBy.dispose();
+    DeliveryCreatedBy.dispose();
+    GSTType.dispose();
+    ParticularJobName.dispose();
+    Priority.dispose();
+    PlyType.dispose();
+    Amounts3.dispose();
+    ParticularSlider.dispose();
+    AddressOutput.dispose();
+    RubberFixingDone.dispose();
+    RubberStatus.dispose();
+    RubberCreatedBy.dispose();
+    WhiteProfileRubber.dispose();
+    //new
+    DesignedBy.dispose();
+    DesignedByTimestamp.dispose();
+    AutoBendingCreatedByName.dispose();
+    AutoBendingCreatedByTimestamp.dispose();
+    ManualBendingCreatedByName.dispose();
+    ManualBendingCreatedByTimestamp.dispose();
+    LaserCuttingCreatedByName.dispose();
+    LaserCuttingCreatedByTimestamp.dispose();
+    PlySelectedBy.dispose();
+    BladeSelectedBy.dispose();
+    CreasingSelectedBy.dispose();
+    PerforationSelectedBy.dispose();
+    ZigZagBladeSelectedBy.dispose();
+    RubberSelectedBy.dispose();
+    HoleSelectedBy.dispose();
+    Perforation.dispose();
+    PartyName.dispose();
+    DrawingAttachment.dispose();
+
+    //New Form Flow
+    ReqAutoBending.dispose();
+    ReqManualBending.dispose();
+    ReqLaserCutting.dispose();
+    ReqRubber.dispose();
+    ReqEmboss.dispose();
+    ReqAccount.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint(
+      'NEWFORM BUILD → '
+      'dept=${widget.department}, '
+      'lpm=${widget.lpm}, '
+      'mode=${widget.mode}, '
+      'uri=${GoRouterState.of(context).uri}',
+    );
+    return NewFormScope(
+      form: this,
+      child: Scaffold(
+        body: Column(
+          children: [
+            // 🔹 FORM PAGE
+            Expanded(child: widget.child),
+
+            // 🔹 PREV / NEXT BUTTONS
+            // ✅ FIX: Hide global previous/next buttons for the Account flow
+            if (isJobFormRoute && department != "Account")
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // ✅ Previous → goes back one page
+                    // ✅ Hidden on page 1 (no previous page to go to)
+                    if (!_isFirstDesignerPage)
+                      TextButton(
+                        onPressed: () {
+                          if (context.canPop()) context.pop();
+                        },
+                        child: const Text(
+                          "Previous",
+                          style: TextStyle(color: Colors.amber),
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+
+                    // ✅ Next → hidden on last page (Submit button in page 6 handles it)
+                    if (!(department == "Designer" && isLastDesignerPage))
+                      TextButton(
+                        onPressed: _goNext,
+                        child: const Text(
+                          "Next",
+                          style: TextStyle(color: Colors.amber),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------- Navigation Logic --------
+
+  void _goDesignerNext() {
+    final uri = GoRouterState.of(context).uri;
+    final path = uri.path; // 👈 IMPORTANT: path only
+
+    const designerPages = [
+      '/jobform/designer-1',
+      '/jobform/designer-2',
+      '/jobform/designer-3',
+      '/jobform/designer-4',
+      '/jobform/designer-5',
+      '/jobform/designer-6',
+    ];
+
+    final index = designerPages.indexOf(path);
+
+    if (index != -1 && index < designerPages.length - 1) {
+      context.push(
+        designerPages[index + 1] + '?${uri.query}', // 👈 preserve params
+      );
+    }
+  }
+
+  void _goNext() {
+    final uri = GoRouterState.of(context).uri;
+    final path = uri.path;
+
+    // DESIGNER FLOW
+    if (department == "Designer") {
+      _goDesignerNext();
+      return;
+    }
+
+    // ACCOUNT FLOW
+    if (department == "Account") {
+      const accountPages = [
+        '/jobform/account-1',
+        '/jobform/account-2',
+        '/jobform/account-3',
+        '/jobform/account-4',
+        '/jobform/account-5',
+        '/jobform/account-6',
+      ];
+
+      final index = accountPages.indexOf(path);
+
+      if (index != -1 && index < accountPages.length - 1) {
+        context.push(accountPages[index + 1] + '?${uri.query}');
+      }
+
+      return;
+    }
+  }
+
+  void _goPrev() {
+    if (context.canPop()) {
+      context.pop(); // ✅ Goes back without rebuilding state
+    }
+  }
+
+  String _nextDepartment(String current) {
+    const flow = [
+      "Designer",
+      "AutoBending",
+      "ManualBending",
+      "LaserCutting",
+      "Rubber",
+      "Emboss",
+      "Account",
+      "Delivery",
+    ];
+
+    final index = flow.indexOf(current);
+    if (index == -1 || index == flow.length - 1) {
+      return "Completed";
+    }
+
+    return flow[index + 1];
+  }
+
+  String _deptKey(String dept) {
+    switch (dept) {
+      case "Designer":
+        return "designer";
+      case "AutoBending":
+        return "autoBending";
+      case "ManualBending":
+        return "manualBending";
+      case "LaserCutting":
+        return "laserCutting";
+      case "Emboss":
+        return "emboss";
+      case "Rubber":
+        return "rubber";
+      case "Account":
+        return "account";
+      case "Delivery":
+        return "delivery";
+      default:
+        throw Exception("Unknown department: $dept");
+    }
+  }
+}

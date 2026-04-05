@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "930679859953",
+    "project_id": "light-punch-maker-atech1",
+    "storage_bucket": "light-punch-maker-atech1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930679859953:android:abc7cb1144da1796019750",
+        "android_client_info": {
+          "package_name": "com.example.lightatech"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "930679859953-hdunbr5egp8v5u7c9jlmjha6cagvh548.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lightatech",
+            "certificate_hash": "7ce9554c7cd8723cd9115eb10065d61c5f2a289d"
+          }
+        },
+        {
+          "client_id": "930679859953-ng0osk15cllejifgtfhs315dm5jc4vea.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lightatech",
+            "certificate_hash": "aa37ea7a193dabcc940a3d7428f7eedb95681bf0"
+          }
+        },
+        {
+          "client_id": "930679859953-bhg9bp70eropet4tsac59mg8amfulmhf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChRuJhT6oI1wdV1GKbjwf99lbaRYbo8jM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "930679859953-bhg9bp70eropet4tsac59mg8amfulmhf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "930679859953-s67vg7uccpqq06m2l9qipnvsuucevbeo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lightatech"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

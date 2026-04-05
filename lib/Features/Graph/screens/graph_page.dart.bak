@@ -1,0 +1,876 @@
+// lib/pages/graph_page.dart
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'form.dart' show TaskEntry;
+
+const _storageKey = "task_entries_v1";
+
+enum ChartType { bar, pie, line, scatter }
+enum DataSource {
+  work,
+  status,
+  location,
+  employee,
+  deadlinePerformance,
+  tasksPerDay,
+  workPerEmployee
+}
+
+/// Lightweight config for a graph card
+class GraphConfig {
+  final String id;
+  final ChartType chartType;
+  final DataSource dataSource;
+  final DateTime createdAt;
+
+  GraphConfig({
+    required this.id,
+    required this.chartType,
+    required this.dataSource,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+}
+
+class GraphPage extends StatefulWidget {
+  const GraphPage({super.key});
+
+  @override
+  State<GraphPage> createState() => _GraphPageState();
+}
+
+class _GraphPageState extends State<GraphPage> with TickerProviderStateMixin {
+  List<TaskEntry> _entries = [];
+  final ScrollController _scrollController = ScrollController();
+
+  // dynamic graph cards
+  final List<GraphConfig> _graphs = [];
+
+  // For animations: control visibility per card id
+  final Map<String, bool> _visible = {};
+
+  // UI state for "By Employee" filter
+  bool _employeeMode = false;
+  String? _selectedEmployee;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_storageKey) ?? [];
+    final decoded =
+    list.map((e) => TaskEntry.fromJson(json.decode(e))).toList();
+
+    setState(() {
+      _entries = decoded;
+    });
+  }
+
+  // ------------------- UI helpers -------------------
+
+  String _employeeKey(TaskEntry e) {
+    final name = e.name.trim();
+    final surname = e.surname.trim();
+    if (name.isEmpty && surname.isEmpty) return "";
+    if (surname.isEmpty) return name;
+    return "$name $surname";
+  }
+
+  List<String> get _employeeNames {
+    final set = <String>{};
+    for (final e in _entries) {
+      final k = _employeeKey(e);
+      if (k.isNotEmpty) set.add(k);
+    }
+    final list = set.toList()..sort();
+    return list;
+  }
+
+  // ------------------- Adding / Removing Graphs -------------------
+
+  void _openGraphTypeSelector() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.pie_chart),
+                title: const Text("Pie Chart"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openDataSourceSelector(ChartType.pie);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.bar_chart),
+                title: const Text("Bar Chart"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openDataSourceSelector(ChartType.bar);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.show_chart),
+                title: const Text("Line Chart"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openDataSourceSelector(ChartType.line);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.bubble_chart),
+                title: const Text("Scatter Plot"),
+                subtitle:
+                const Text("Deadline gap (X) vs Time taken (Y) - recommended"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openDataSourceSelector(ChartType.scatter);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openDataSourceSelector(ChartType type) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text("Work distribution"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.work);
+                },
+              ),
+              ListTile(
+                title: const Text("Pending vs Done (status)"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.status);
+                },
+              ),
+              ListTile(
+                title: const Text("Location (Home / Office)"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.location);
+                },
+              ),
+              ListTile(
+                title: const Text("Employee performance (per employee)"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.employee);
+                },
+              ),
+              ListTile(
+                title: const Text("Deadline performance (on-time / late)"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.deadlinePerformance);
+                },
+              ),
+              ListTile(
+                title: const Text("Tasks per day (last 14 days)"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.tasksPerDay);
+                },
+              ),
+              ListTile(
+                title: const Text("Work per employee (bar)"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGraph(type, DataSource.workPerEmployee);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _addGraph(ChartType chartType, DataSource dataSource) {
+    final cfg = GraphConfig(
+      id: UniqueKey().toString(),
+      chartType: chartType,
+      dataSource: dataSource,
+    );
+
+    setState(() {
+      _graphs.insert(0, cfg); // newest on top
+      _visible[cfg.id] = false;
+    });
+
+    // Delay a tick so implicit animations show: show after a frame
+    Future.delayed(const Duration(milliseconds: 10), () {
+      if (mounted) {
+        setState(() {
+          _visible[cfg.id] = true;
+        });
+      }
+    });
+
+    // Scroll to top so user sees new card
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _removeGraph(String id) async {
+    // animate out
+    setState(() {
+      _visible[id] = false;
+    });
+    await Future.delayed(const Duration(milliseconds: 300));
+    setState(() {
+      _graphs.removeWhere((g) => g.id == id);
+      _visible.remove(id);
+    });
+  }
+
+  // ------------------- Data aggregations -------------------
+
+  Map<String, int> _workCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final w = e.work.trim();
+      if (w.isEmpty) continue;
+      map[w] = (map[w] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, int> _employeeCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final name = _employeeKey(e);
+      if (name.isEmpty) continue;
+      map[name] = (map[name] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, int> _locationCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final loc = e.location.trim().isEmpty ? "Unknown" : e.location.trim();
+      map[loc] = (map[loc] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  // on-time vs late among completed
+  Map<String, int> _deadlinePerformance(List<TaskEntry> list) {
+    int onTime = 0;
+    int late = 0;
+    for (final e in list) {
+      if (e.completedAt == null || e.deadline == null) continue;
+      final completed = DateTime(e.completedAt!.year, e.completedAt!.month, e.completedAt!.day);
+      final deadline = DateTime(e.deadline!.year, e.deadline!.month, e.deadline!.day);
+      if (completed.isBefore(deadline) || completed.isAtSameMomentAs(deadline)) {
+        onTime++;
+      } else {
+        late++;
+      }
+    }
+    return {"On time": onTime, "Late": late};
+  }
+
+  Map<String, int> _statusCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final s = e.status.trim().isEmpty ? "Unknown" : e.status;
+      map[s] = (map[s] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  // tasks per last 14 days (by createdAt)
+  List<MapEntry<String, int>> _tasksPerDay(List<TaskEntry> list) {
+    final now = DateTime.now();
+    final days = List.generate(14, (i) {
+      final d = DateTime(now.year, now.month, now.day).subtract(Duration(days: 13 - i));
+      final label = DateFormat('d MMM').format(d);
+      return MapEntry(label, 0);
+    });
+    final counts = <String, int>{};
+    for (final e in list) {
+      final created = DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day);
+      final label = DateFormat('d MMM').format(created);
+      counts[label] = (counts[label] ?? 0) + 1;
+    }
+    final results = days.map((d) => MapEntry(d.key, counts[d.key] ?? 0)).toList();
+    return results;
+  }
+
+  // ---------- Scatter data: Deadline Gap (X) vs Time taken (Y) ----------
+  // X = days between createdAt and deadline (deadline - createdAt)
+  // Y = days between createdAt and completedAt (completedAt - createdAt)
+  List<ScatterSpot> _deadlineGapSpots(List<TaskEntry> list) {
+    final spots = <ScatterSpot>[];
+    for (var i = 0; i < list.length; i++) {
+      final e = list[i];
+      if (e.deadline == null || e.completedAt == null) continue;
+      final gapX = e.deadline!.difference(e.createdAt).inHours / 24.0;
+      final tookY = e.completedAt!.difference(e.createdAt).inHours / 24.0;
+      // Skip NaN/inf
+      if (gapX.isFinite && tookY.isFinite) {
+        spots.add(
+          ScatterSpot(
+            gapX,
+            tookY,
+            radius: 6,
+            color: Colors.blueAccent,
+          ),
+        );
+      }
+
+    }
+    return spots;
+  }
+
+  // ------------------- Build UI -------------------
+
+  @override
+  Widget build(BuildContext context) {
+    // Filtered entries if employeeMode
+    final displayed = (_employeeMode && _selectedEmployee != null)
+        ? _entries.where((e) => _employeeKey(e) == _selectedEmployee).toList()
+        : _entries;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Performance Dashboard"),
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openGraphTypeSelector,
+        child: const Icon(Icons.add),
+        tooltip: "Add graph",
+      ),
+
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Column(
+            children: [
+              // Mode + employee selector top row
+              Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text("Overall"),
+                    selected: !_employeeMode,
+                    onSelected: (v) {
+                      if (v) {
+                        setState(() {
+                          _employeeMode = false;
+                          _selectedEmployee = null;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text("By Employee"),
+                    selected: _employeeMode,
+                    onSelected: (v) {
+                      if (v) {
+                        setState(() {
+                          _employeeMode = true;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  if (_employeeMode)
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: _selectedEmployee,
+                        decoration: const InputDecoration(
+                          labelText: "Select employee",
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _employeeNames
+                            .map((w) => DropdownMenuItem(
+                          value: w,
+                          child: Text(w),
+                        ))
+                            .toList(),
+                        onChanged: (v) {
+                          setState(() => _selectedEmployee = v);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // show summary row
+              _buildSummaryRow(displayed),
+
+              const SizedBox(height: 12),
+
+              // dynamic graphs list
+              Expanded(
+                child: _graphs.isEmpty
+                    ? Center(
+                  child: Text(
+                    "No graphs yet. Tap + to add charts (Pie, Bar, Line, Scatter).",
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                )
+                    : RefreshIndicator(
+                  onRefresh: () async {
+                    await _load();
+                    // rebuild charts
+                    setState(() {});
+                  },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _graphs.length,
+                    itemBuilder: (context, idx) {
+                      final cfg = _graphs[idx];
+                      final visible = _visible[cfg.id] ?? true;
+                      return AnimatedSlide(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        offset: visible ? Offset.zero : const Offset(0, 0.08),
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: visible ? 1 : 0,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _GraphCard(
+                              key: ValueKey(cfg.id),
+                              config: cfg,
+                              entries: displayed,
+                              onRemove: () => _removeGraph(cfg.id),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(List<TaskEntry> entries) {
+    final total = entries.length;
+    final done = entries.where((e) => e.status == "Done").length;
+    final pending = entries.where((e) => e.status == "Pending").length;
+    final onTime = _deadlinePerformance(entries)["On time"] ?? 0;
+    final late = _deadlinePerformance(entries)["Late"] ?? 0;
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        _summaryCard("Total", total.toString(), Colors.blue),
+        _summaryCard("Done", done.toString(), Colors.green),
+        _summaryCard("Pending", pending.toString(), Colors.orange),
+        _summaryCard("On time", onTime.toString(), Colors.teal),
+        _summaryCard("Late", late.toString(), Colors.redAccent),
+      ],
+    );
+  }
+
+  Widget _summaryCard(String title, String value, Color color) {
+    return SizedBox(
+      width: 140,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              const SizedBox(height: 6),
+              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --------------------- Graph Card Widget ---------------------
+
+class _GraphCard extends StatelessWidget {
+  final GraphConfig config;
+  final List<TaskEntry> entries;
+  final VoidCallback onRemove;
+
+  const _GraphCard({
+    super.key,
+    required this.config,
+    required this.entries,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = _titleFor(config);
+    final child = _buildChartFor(config, entries, context);
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // header
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // chart area
+            SizedBox(
+              height: 240,
+              child: child,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _titleFor(GraphConfig cfg) {
+    final ts = cfg.dataSource.toString().split('.').last;
+    final ct = cfg.chartType.toString().split('.').last;
+    final friendlyDS = _friendlyDataSourceName(cfg.dataSource);
+    final friendlyCT = ct[0].toUpperCase() + ct.substring(1);
+    return "$friendlyDS — $friendlyCT";
+  }
+
+  String _friendlyDataSourceName(DataSource ds) {
+    switch (ds) {
+      case DataSource.work:
+        return "Work distribution";
+      case DataSource.status:
+        return "Status (Pending/Done)";
+      case DataSource.location:
+        return "Location (Home/Office)";
+      case DataSource.employee:
+        return "Employee count";
+      case DataSource.deadlinePerformance:
+        return "Deadline performance";
+      case DataSource.tasksPerDay:
+        return "Tasks per day (14d)";
+      case DataSource.workPerEmployee:
+        return "Work per employee";
+      default:
+        return ds.toString();
+    }
+  }
+
+  Widget _buildChartFor(GraphConfig cfg, List<TaskEntry> allEntries, BuildContext context) {
+    // We might filter later by employee selection on the page; for now config just uses provided entries
+    final entries = allEntries;
+
+    switch (cfg.dataSource) {
+      case DataSource.work:
+        final m = _mapToList(_workCounts(entries));
+        if (cfg.chartType == ChartType.pie) return _pieFromMap(m);
+        return _barFromList(m);
+
+      case DataSource.status:
+        final m = _mapToList(_statusCounts(entries));
+        if (cfg.chartType == ChartType.pie) return _pieFromMap(m);
+        return _barFromList(m);
+
+      case DataSource.location:
+        final m = _mapToList(_locationCounts(entries));
+        if (cfg.chartType == ChartType.pie) return _pieFromMap(m);
+        return _barFromList(m);
+
+      case DataSource.employee:
+        final m = _mapToList(_employeeCounts(entries));
+        if (cfg.chartType == ChartType.pie) return _pieFromMap(m);
+        return _barFromList(m);
+
+      case DataSource.deadlinePerformance:
+        final m = _mapToList(_deadlinePerformance(entries));
+        if (cfg.chartType == ChartType.pie) return _pieFromMap(m);
+        return _barFromList(m);
+
+      case DataSource.tasksPerDay:
+        final list = _tasksPerDay(entries);
+        if (cfg.chartType == ChartType.line) return _lineFromList(list);
+        return _barFromList(list);
+
+      case DataSource.workPerEmployee:
+        final m = _mapToList(_workPerEmployee(entries));
+        return _barFromList(m);
+
+      default:
+        return const Center(child: Text("Not implemented"));
+    }
+  }
+
+  // ----- adapters -----
+
+  Map<String, int> _workCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final w = e.work.trim();
+      if (w.isEmpty) continue;
+      map[w] = (map[w] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, int> _statusCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final s = e.status.trim().isEmpty ? "Unknown" : e.status;
+      map[s] = (map[s] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, int> _locationCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final loc = e.location.trim().isEmpty ? "Unknown" : e.location.trim();
+      map[loc] = (map[loc] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, int> _employeeCounts(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final name = (e.name.trim() + " " + e.surname.trim()).trim();
+      if (name.isEmpty) continue;
+      map[name] = (map[name] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, int> _deadlinePerformance(List<TaskEntry> list) {
+    int onTime = 0;
+    int late = 0;
+    for (final e in list) {
+      if (e.deadline == null || e.completedAt == null) continue;
+      final completed = DateTime(e.completedAt!.year, e.completedAt!.month, e.completedAt!.day);
+      final deadline = DateTime(e.deadline!.year, e.deadline!.month, e.deadline!.day);
+      if (completed.isBefore(deadline) || completed.isAtSameMomentAs(deadline)) {
+        onTime++;
+      } else {
+        late++;
+      }
+    }
+    return {"On time": onTime, "Late": late};
+  }
+
+  Map<String, int> _workPerEmployee(List<TaskEntry> list) {
+    final map = <String, int>{};
+    for (final e in list) {
+      final name = (e.name.trim() + " " + e.surname.trim()).trim();
+      if (name.isEmpty) continue;
+      final key = "$name • ${e.work}";
+      map[key] = (map[key] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  List<MapEntry<String, int>> _tasksPerDay(List<TaskEntry> list) {
+    final now = DateTime.now();
+    final days = List.generate(14, (i) {
+      final d = DateTime(now.year, now.month, now.day).subtract(Duration(days: 13 - i));
+      final label = DateFormat('d MMM').format(d);
+      return MapEntry(label, 0);
+    });
+    final counts = <String, int>{};
+    for (final e in list) {
+      final created = DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day);
+      final label = DateFormat('d MMM').format(created);
+      counts[label] = (counts[label] ?? 0) + 1;
+    }
+    final results = days.map((d) => MapEntry(d.key, counts[d.key] ?? 0)).toList();
+    return results;
+  }
+
+  // ---------- chart widgets ----------
+
+  Widget _pieFromMap(List<MapEntry<String, int>> data) {
+    if (data.isEmpty) return const Center(child: Text("No data"));
+    final sections = <PieChartSectionData>[];
+    final colors = [Colors.indigo, Colors.deepPurple, Colors.teal, Colors.orange, Colors.green, Colors.redAccent];
+    for (var i = 0; i < data.length; i++) {
+      final e = data[i];
+      sections.add(PieChartSectionData(
+        value: e.value.toDouble(),
+        title: "${e.key}\n${e.value}",
+        color: colors[i % colors.length],
+        radius: 52,
+        titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+      ));
+    }
+    return PieChart(PieChartData(sections: sections, sectionsSpace: 2, centerSpaceRadius: 36));
+  }
+
+  Widget _barFromList(dynamic dataList) {
+    // dataList can be List<MapEntry<String,int>> or List of MapEntry
+    final items = dataList is List<MapEntry<String, int>>
+        ? dataList
+        : (dataList as Map<String, int>).entries.toList();
+    if (items.isEmpty) return const Center(child: Text("No data"));
+
+    final top = items.take(8).toList();
+    final maxVal = top.map((e) => e.value).fold<int>(0, (p, n) => max(p, n)).toDouble();
+
+    final groups = List.generate(top.length, (i) {
+      return BarChartGroupData(x: i, barRods: [
+        BarChartRodData(toY: top[i].value.toDouble(), width: 16, color: Colors.blueAccent),
+      ]);
+    });
+
+    return BarChart(BarChartData(
+      barGroups: groups,
+      maxY: maxVal + 1,
+      titlesData: FlTitlesData(
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, meta) {
+            final idx = v.toInt();
+            if (idx < 0 || idx >= top.length) return const SizedBox();
+            final label = top[idx].key;
+            final short = label.length > 8 ? "${label.substring(0, 8)}.." : label;
+            return Padding(padding: const EdgeInsets.only(top: 6), child: Text(short, style: const TextStyle(fontSize: 10)));
+          }),
+        ),
+      ),
+    ));
+  }
+
+  Widget _lineFromList(List<MapEntry<String, int>> list) {
+    if (list.isEmpty) return const Center(child: Text("No data"));
+    final spots = <FlSpot>[];
+    for (var i = 0; i < list.length; i++) {
+      spots.add(FlSpot(i.toDouble(), list[i].value.toDouble()));
+    }
+    return LineChart(LineChartData(
+      lineBarsData: [
+        LineChartBarData(spots: spots, isCurved: true, barWidth: 2, dotData: FlDotData(show: false))
+      ],
+      titlesData: FlTitlesData(
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, meta) {
+          final idx = v.toInt();
+          if (idx < 0 || idx >= list.length) return const SizedBox();
+          return Text(list[idx].key, style: const TextStyle(fontSize: 10));
+        })),
+      ),
+    ));
+  }
+
+  Widget _scatterFromEntries(List<TaskEntry> entries) {
+    // Build spots using deadline gap mapping
+    final rawSpots = <ScatterSpot>[];
+    for (final e in entries) {
+      if (e.deadline == null || e.completedAt == null) continue;
+      final gapX = e.deadline!.difference(e.createdAt).inHours / 24.0;
+      final tookY = e.completedAt!.difference(e.createdAt).inHours / 24.0;
+      if (gapX.isFinite && tookY.isFinite) {
+        rawSpots.add(
+          ScatterSpot(
+            gapX,
+            tookY,
+            radius: 6,
+            color: Colors.blueAccent,
+          ),
+        );
+      }
+
+    }
+
+    if (rawSpots.isEmpty) return const Center(child: Text("Not enough completed tasks with deadlines"));
+
+    // find ranges
+    double maxX = rawSpots.map((s) => s.x).reduce(max);
+    double maxY = rawSpots.map((s) => s.y).reduce(max);
+    maxX = max(1, maxX);
+    maxY = max(1, maxY);
+
+    return ScatterChart(ScatterChartData(
+      scatterSpots: rawSpots,
+      minX: 0,
+      minY: 0,
+      maxX: maxX + 1,
+      maxY: maxY + 1,
+      gridData: FlGridData(show: true),
+      titlesData: FlTitlesData(
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, meta) {
+          return Text(v.toInt().toString());
+        })),
+      ),
+      borderData: FlBorderData(show: true),
+    ));
+  }
+
+  // helpers to convert maps to list
+  List<MapEntry<String, int>> _mapToList(Map<String, int> m) {
+    final entries = m.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return entries;
+  }
+}
