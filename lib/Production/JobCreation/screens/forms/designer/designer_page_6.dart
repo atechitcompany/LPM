@@ -7,6 +7,7 @@ import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/TextInput.dart'; // 🟢 Added your TextInput component!
 import 'package:lightatech/core/session/session_manager.dart';
+import 'package:lightatech/FormComponents/FileUploadBox.dart';
 import 'dart:convert';
 
 class DesignerPage6 extends StatefulWidget {
@@ -19,16 +20,16 @@ class DesignerPage6 extends StatefulWidget {
 class _DesignerPage6State extends State<DesignerPage6> {
   bool isSubmitting = false;
   bool _initialized = false;
-
+  //TO-D2
   List<String> _strippingItems = ["No"];
   bool _loadingStrippings = true;
-
+  //EN-D2
   @override
   void initState() {
     super.initState();
     _fetchStrippings();
   }
-
+  //TO-D2
   Future<void> _fetchStrippings() async {
     try {
       final snap = await FirebaseFirestore.instance
@@ -49,7 +50,7 @@ class _DesignerPage6State extends State<DesignerPage6> {
       setState(() => _loadingStrippings = false);
     }
   }
-
+  //EN-D2
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -181,45 +182,6 @@ class _DesignerPage6State extends State<DesignerPage6> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// ✅ Stripping
-            if (form.canView("StrippingType")) ...[
-              _loadingStrippings
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Stripping",
-                items: _strippingItems,
-                initialValue: form.StrippingType.text.isEmpty
-                    ? "No"
-                    : form.StrippingType.text,
-                firestoreCollection: "Strippings",
-                firestoreField: "Strippings",
-                onChanged: (v) {
-                  setState(() {
-                    form.StrippingType.text = (v ?? "No").trim();
-                  });
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _strippingItems.add(newItem);
-                  });
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-
-            if (form.canView("LaserCuttingStatus")) ...[
-              FlexibleToggle(
-                label: "Laser Cutting Status",
-                inactiveText: "Pending", activeText: "Done",
-                initialValue: laserDone,
-                onChanged: (v) {
-                  setState(() {
-                    form.LaserCuttingStatus.text = v ? "Done" : "Pending";
-                  });
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
 
             if (form.canView("RubberFixingDone")) ...[
               FlexibleToggle(
@@ -240,6 +202,52 @@ class _DesignerPage6State extends State<DesignerPage6> {
               ),
               const SizedBox(height: 30),
             ],
+
+            /// ✅ Drawing Attachment
+            if (form.canView("DrawingAttachment")) ...[
+              const Text(
+                "Drawing Attachment",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              FileUploadBox(
+                onFileSelected: (file) {
+                  debugPrint("Drawing: ${file.name}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Rubber Report (only when designing done)
+            if (isDesigningDone && form.canView("RubberReport")) ...[
+              const Text(
+                "Rubber Report",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              FileUploadBox(
+                onFileSelected: (file) {
+                  debugPrint("Rubber Report: ${file.name}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            /// ✅ Punch Report
+            if (form.canView("PunchReport")) ...[
+              const Text(
+                "Punch Report",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              FileUploadBox(
+                onFileSelected: (file) {
+                  debugPrint("Punch Report: ${file.name}");
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+
 
             /// ✅ Designing Status
             if (form.canView("DesigningStatus")) ...[

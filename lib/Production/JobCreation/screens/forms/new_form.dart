@@ -43,7 +43,7 @@ class NewFormState extends State<NewForm> {
     if (department != "Designer") return false;
 
     final location = GoRouterState.of(context).uri.path;
-    return location == '/jobform/designer-6';
+    return location == '/jobform/designer-4';
   }
 
   bool get _isFirstDesignerPage {
@@ -220,6 +220,7 @@ class NewFormState extends State<NewForm> {
   final ReqRubber = TextEditingController();
   final ReqEmboss = TextEditingController();
   final ReqAccount = TextEditingController();
+  final SendApproval = TextEditingController();
 
   bool AutoCreasing = false;
 
@@ -427,6 +428,7 @@ class NewFormState extends State<NewForm> {
       "ReqRubber": ReqRubber.text,
       "ReqEmboss": ReqEmboss.text,
       "ReqAccount": ReqAccount.text,
+      "SendApproval": SendApproval.text,
 
       "Timestamp": DateTime.now().toIso8601String(),
     };
@@ -589,6 +591,7 @@ class NewFormState extends State<NewForm> {
     ReqRubber.clear();
     ReqEmboss.clear();
     ReqAccount.clear();
+    SendApproval.clear();
 
     // Set defaults
     ReqAutoBending.text = "NO";
@@ -597,8 +600,6 @@ class NewFormState extends State<NewForm> {
     ReqRubber.text = "NO";
     ReqEmboss.text = "NO";
     ReqAccount.text = "NO";
-
-
 
     Remark.text = "NO REMARK";
     Ups.text = "NO";
@@ -927,7 +928,9 @@ class NewFormState extends State<NewForm> {
       set(DeliveryStatus, "DeliveryStatus");
       set(InvoiceStatus, "InvoiceStatus");
       set(LpmAutoIncrement, "LpmAutoIncrement");
-    });
+
+      //NEW
+      set(SendApproval, "SendApproval");    });
   }
 
   //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
@@ -1462,6 +1465,7 @@ class NewFormState extends State<NewForm> {
     ReqRubber.dispose();
     ReqEmboss.dispose();
     ReqAccount.dispose();
+    SendApproval.dispose();
 
     super.dispose();
   }
@@ -1535,8 +1539,6 @@ class NewFormState extends State<NewForm> {
       '/jobform/designer-2',
       '/jobform/designer-3',
       '/jobform/designer-4',
-      '/jobform/designer-5',
-      '/jobform/designer-6',
     ];
 
     final index = designerPages.indexOf(path);

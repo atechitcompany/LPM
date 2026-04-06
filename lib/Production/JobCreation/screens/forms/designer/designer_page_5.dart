@@ -15,19 +15,21 @@ class DesignerPage5 extends StatefulWidget {
 
 class _DesignerPage5State extends State<DesignerPage5> {
   bool _initialized = false;
-
+  //TO-D3
   List<String> _maleEmbossItems = ["No"];
   List<String> _femaleEmbossItems = ["No"];
   bool _loadingMaleEmboss = true;
   bool _loadingFemaleEmboss = true;
-
+ //EN-D3
   @override
   void initState() {
     super.initState();
+    //TO-D3
     _fetchMaleEmboss();
     _fetchFemaleEmboss();
+    //EN-D3
   }
-
+  //TO-D3
   Future<void> _fetchMaleEmboss() async {
     try {
       final snap = await FirebaseFirestore.instance
@@ -78,6 +80,7 @@ class _DesignerPage5State extends State<DesignerPage5> {
       setState(() => _loadingFemaleEmboss = false);
     }
   }
+  //EN-D3
 
   @override
   void didChangeDependencies() {
@@ -102,14 +105,10 @@ class _DesignerPage5State extends State<DesignerPage5> {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
         setState(() {
+          //TO-D3
           form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
-          form.X.text = decodedData["X"] ?? "";
-          form.Y.text = decodedData["Y"] ?? "";
-          form.XYSize.text = decodedData["XYSize"] ?? "";
           form.FemaleEmbossType.text = decodedData["FemaleEmbossType"] ?? "";
-          form.X2.text = decodedData["X2"] ?? "";
-          form.Y2.text = decodedData["Y2"] ?? "";
-          form.XY2Size.text = decodedData["XY2Size"] ?? "";
+          //EN-D3
         });
 
         debugPrint("✅ DesignerPage5 loaded data from route");
@@ -170,125 +169,6 @@ class _DesignerPage5State extends State<DesignerPage5> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// ✅ Male Emboss
-            if (form.canView("MaleEmbossType")) ...[
-              _loadingMaleEmboss
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Male Emboss",
-                items: _maleEmbossItems,
-                initialValue: form.MaleEmbossType.text.isEmpty ? "No" : form.MaleEmbossType.text,
-                firestoreCollection: "Males Embosse",
-                firestoreField: "Males Embosse",
-                onChanged: (v) {
-                  setState(() {
-                    form.MaleEmbossType.text = v ?? "";
-                  });
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _maleEmbossItems.add(newItem);
-                  });
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-
-            /// ✅ X
-            if (form.canView("X")) ...[
-              const Text(
-                "X",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              NumberStepper(
-                step: 0.01,
-                controller: form.X,
-                onChanged: (val) {
-                  form.X.text = val.toString();
-                  form.calculateXY();
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-
-            /// ✅ Y
-            if (form.canView("Y")) ...[
-              const Text(
-                "Y",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              NumberStepper(
-                step: 0.01,
-                controller: form.Y,
-                onChanged: (val) {
-                  form.Y.text = val.toString();
-                  form.calculateXY();
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-
-            /// ✅ Female Emboss
-            if (form.canView("FemaleEmbossType")) ...[
-              _loadingFemaleEmboss
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Female Emboss",
-                items: _femaleEmbossItems,
-                initialValue: form.FemaleEmbossType.text.isEmpty ? "No" : form.FemaleEmbossType.text,
-                firestoreCollection: "Females Emobosse",
-                firestoreField: "Females Emobosse",
-                onChanged: (v) {
-                  setState(() {
-                    form.FemaleEmbossType.text = v ?? "";
-                  });
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _femaleEmbossItems.add(newItem);
-                  });
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-
-            /// ✅ X2
-            if (form.canView("X2")) ...[
-              const Text(
-                "X2",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              NumberStepper(
-                step: 0.01,
-                controller: form.X2,
-                onChanged: (val) {
-                  form.X2.text = val.toString();
-                  form.calculateXY2();
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-
-            /// ✅ Y2
-            if (form.canView("Y2")) ...[
-              const Text(
-                "Y2",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              NumberStepper(
-                step: 0.01,
-                controller: form.Y2,
-                onChanged: (val) {
-                  form.Y2.text = val.toString();
-                  form.calculateXY2();
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
           ],
         ),
       ),
