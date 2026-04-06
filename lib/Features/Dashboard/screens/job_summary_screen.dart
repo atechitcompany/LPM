@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/session/session_manager.dart';
 import 'package:lightatech/FormComponents/FilePreviewCard.dart'; // adjust path as needed
+import 'package:provider/provider.dart';
+import '../../../customer/intro/widgets/order_status_card.dart';
+import '../../../customer/intro/models/order_status.dart';
+import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
 
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
@@ -89,7 +93,7 @@ class JobSummaryScreen extends StatelessWidget {
             .doc(_mainLpm)
             .get(),
         builder: (context, snap) {
-          if (!snap.hasData) {
+          if (!snap.hasData || !snap.data!.exists) {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snap.data!.exists) {
@@ -97,7 +101,13 @@ class JobSummaryScreen extends StatelessWidget {
           }
 
           final data = snap.data!.data() as Map<String, dynamic>;
-          final currentDepartment = data["currentDepartment"] ?? "Designer";
+
+          // 👈 start listening to Firestore for this LPM
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<OrderDetailViewModel>().listenToJob(lpm);
+          });
+
+          final viewModel = context.watch<OrderDetailViewModel>();
 
           // ✅ Extract files map from the document
           final filesMap = Map<String, dynamic>.from(data['files'] ?? {});
@@ -122,7 +132,8 @@ class JobSummaryScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.amber.shade100,
                           borderRadius: BorderRadius.circular(8),
@@ -135,25 +146,41 @@ class JobSummaryScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                /// ── PIPELINE ──
-                _buildPipeline(currentDepartment),
+                // ── DYNAMIC PROGRESS BAR ─────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "LIVE JOB STATUS",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OrderStatusCard(
+                        stepStatus: viewModel.getStepStatus(lpm), // 👈 dynamic
+                      ),
+                    ],
+                  ),
+                ),
 
                 const SizedBox(height: 20),
 
-                /// ── ATTACHMENTS ──
-                if (filesMap.isNotEmpty) ...[
-                  _buildFilesSection(filesMap),
-                  const SizedBox(height: 8),
-                ],
-
-                /// ── ALL FORM DATA ──
+                // ── FORM DATA SECTIONS ───────────────────────────────
                 ...pipeline.map((dept) {
                   final key = departmentFirestoreKey[dept];
                   final sectionData =
                   Map<String, dynamic>.from(data[key]?["data"] ?? {});
-
                   if (sectionData.isEmpty) return const SizedBox();
-
                   return Column(
                     children: [
                       _sectionTitle("$dept Details"),
