@@ -350,6 +350,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
         form.Creasing.text.trim().toLowerCase() != "no";
     final bool isPlySelected =
         form.PlyType.text.trim().toLowerCase() != "no";
+    final lpmParam = GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
     final bool isPerforationSelected =
         form.Perforation.text.trim().toLowerCase() != "no";
     final bool isZigZagBladeSelected =

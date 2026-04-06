@@ -1,61 +1,75 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
+import '../services/drive_upload_service.dart';
 
-// dart:html is NOT imported here directly — it is only used via conditional
-// import below so Android/iOS builds never see it.
-// ignore: avoid_web_libraries_in_flutter
-import 'web_utils_stub.dart'
-if (dart.library.html) 'web_utils.dart' as web_utils;
-
-class FileUploadBox extends StatelessWidget {
+class FileUploadBox extends StatefulWidget {
   final Function(PlatformFile) onFileSelected;
+  final String jobId;      // ✅ NEW
+  final String fieldName;  // ✅ NEW e.g. "DrawingAttachment"
 
   const FileUploadBox({
     super.key,
     required this.onFileSelected,
+    required this.jobId,
+    required this.fieldName,
   });
 
-  Future<void> _pickFile(BuildContext context) async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-        allowMultiple: false,
-      );
+  @override
+  State<FileUploadBox> createState() => _FileUploadBoxState();
+}
 
-      if (result != null && result.files.isNotEmpty) {
-        final pickedFile = result.files.first;
+class _FileUploadBoxState extends State<FileUploadBox> {
+  bool    _isUploading    = false;
+  String? _uploadedFileName;
 
-        if (kIsWeb) {
-          // Web: create blob URL from bytes
-          if (pickedFile.bytes != null) {
-            final blobUrl =
-            web_utils.createBlobUrl(pickedFile.bytes!);
+  Future<void> _pickAndUpload(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+      withData: true,
+    );
 
-            final webFile = PlatformFile(
-              name: pickedFile.name,
-              size: pickedFile.size,
-              path: blobUrl,
-              bytes: pickedFile.bytes,
-            );
+    if (result == null || result.files.isEmpty) return;
+    final pickedFile = result.files.first;
 
-            onFileSelected(webFile);
-          } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Failed to read file')),
-              );
-            }
-          }
-        } else {
-          // Android / iOS: use file path directly
-          onFileSelected(pickedFile);
-        }
-      }
-    } catch (e) {
+    if (pickedFile.bytes == null) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
+          const SnackBar(content: Text('❌ Could not read file')),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    final driveFileId = await DriveUploadService.uploadFile(
+      fileBytes: pickedFile.bytes!,
+      fileName:  pickedFile.name,
+      jobId:     widget.jobId,      // ✅ pass job ID
+      fieldName: widget.fieldName,  // ✅ pass field name
+    );
+
+    if (context.mounted) {
+      if (driveFileId != null) {
+        setState(() {
+          _isUploading     = false;
+          _uploadedFileName = pickedFile.name;
+        });
+        widget.onFileSelected(pickedFile);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ "${pickedFile.name}" uploaded!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Upload failed. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -64,28 +78,52 @@ class FileUploadBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => _pickFile(context),
+      onTap: _isUploading ? null : () => _pickAndUpload(context),
       child: Container(
-        padding:
-        const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           border: Border.all(
-              color: Colors.grey.shade300,
-              style: BorderStyle.solid),
+            color: _uploadedFileName != null
+                ? Colors.green.shade400
+                : Colors.grey.shade300,
+          ),
           borderRadius: BorderRadius.circular(8),
+          color: _uploadedFileName != null
+              ? Colors.green.shade50
+              : Colors.transparent,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.upload_file,
-                color: Colors.grey.shade600, size: 24),
+            if (_isUploading)
+              const SizedBox(
+                width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              Icon(
+                _uploadedFileName != null
+                    ? Icons.check_circle
+                    : Icons.upload_file,
+                color: _uploadedFileName != null
+                    ? Colors.green
+                    : Colors.grey.shade600,
+                size: 24,
+              ),
             const SizedBox(width: 8),
-            Text(
-              'Upload File',
-              style: TextStyle(
-                color: Colors.grey.shade700,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
+            Flexible(
+              child: Text(
+                _isUploading
+                    ? 'Uploading...'
+                    : _uploadedFileName ?? 'Upload File',
+                style: TextStyle(
+                  color: _uploadedFileName != null
+                      ? Colors.green.shade700
+                      : Colors.grey.shade700,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
