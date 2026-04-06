@@ -66,6 +66,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
     final dataJson = uri.queryParameters['data'];
     final lpmParam = uri.queryParameters['lpm'];
 
+
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
@@ -167,6 +168,9 @@ class _DesignerPage4State extends State<DesignerPage4> {
     final bool laserDone = form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
     final bool rubberFixingDone = form.RubberFixingDone.text.trim().toLowerCase() == "yes";
     final bool whiteProfileRubber = form.WhiteProfileRubber.text.trim().toLowerCase() == "yes";
+    final mainJobId = lpmParam.contains('-')
+        ? lpmParam.split('-').take(4).join('-')  // "LPM-00001-04-26"
+        : lpmParam;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -212,7 +216,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
-                jobId:     lpmParam,            // ✅ e.g. "LPM-00001-04-26-01"
+                jobId:     mainJobId,            // ✅ e.g. "LPM-00001-04-26-01"
                 fieldName: 'DrawingAttachment',
                 onFileSelected: (file) {
                   debugPrint("Drawing: ${file.name}");
@@ -229,7 +233,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
-                jobId:     lpmParam,
+                jobId:     mainJobId,
                 fieldName: 'RubberReport',
                 onFileSelected: (file) {
                   debugPrint("Rubber: ${file.name}");
@@ -246,7 +250,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
-                jobId:     lpmParam,
+                jobId:     mainJobId,
                 fieldName: 'PunchReport',
                 onFileSelected: (file) {
                   debugPrint("Punch: ${file.name}");

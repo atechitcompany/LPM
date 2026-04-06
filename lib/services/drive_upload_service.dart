@@ -10,7 +10,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class DriveUploadService {
 
   static const String _folderId = '0ALfDi6AdYMHbUk9PVA';
-  static const String _sharedDriveId = '0ALfDi6AdYMHbUk9PVA';
 
   static Future<Map<String, dynamic>> _loadServiceAccount() async {
     final jsonStr = await rootBundle.loadString('assets/service_account.json');
@@ -60,31 +59,50 @@ class DriveUploadService {
     }
   }
 
-  /// Upload file and save its info to Firestore under the job document
-  /// [jobId]       — the Firestore job document ID (lpm number)
-  /// [fieldName]   — e.g. "DrawingAttachment", "RubberReport", "PunchReport"
+  /// Strips sub-order suffix from LPM
+  /// "LPM-00001-04-26-01" → "LPM-00001-04-26"
+  static String _resolveMainJobId(String jobId) {
+    final parts = jobId.split('-');
+    if (parts.length >= 5) {
+      return parts.take(4).join('-');
+    }
+    return jobId;
+  }
+
+  /// Upload file to Google Drive and save metadata directly
+  /// on the jobs/{mainJobId} document in Firestore.
+  ///
+  /// [jobId]     — full or main LPM (auto-resolved to main)
+  /// [fieldName] — e.g. "DrawingAttachment", "RubberReport", "PunchReport"
   static Future<String?> uploadFile({
     required Uint8List fileBytes,
     required String fileName,
-    required String jobId,        // ✅ NEW
-    required String fieldName,    // ✅ NEW e.g. "DrawingAttachment"
+    required String jobId,
+    required String fieldName,
     String mimeType = 'application/octet-stream',
   }) async {
     final accessToken = await _getAccessToken();
-    if (accessToken == null) return null;
+    if (accessToken == null) {
+      debugPrint('❌ Could not get access token');
+      return null;
+    }
+
+    // ✅ Always resolve to main job ID (strips "-01" suffix if present)
+    final mainJobId = _resolveMainJobId(jobId);
+    debugPrint('📁 Resolved jobId: "$jobId" → "$mainJobId"');
 
     try {
       final uri = Uri.parse(
         'https://www.googleapis.com/upload/drive/v3/files'
             '?uploadType=multipart'
             '&supportsAllDrives=true'
-            '&includeItemsFromAllDrives=true'
-            '&driveId=$_sharedDriveId',
+            '&includeItemsFromAllDrives=true',
       );
 
       final request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $accessToken';
 
+      // ✅ No 'driveId' in metadata — only in query params
       final metadata = jsonEncode({
         'name': fileName,
         'mimeType': mimeType,
@@ -108,43 +126,51 @@ class DriveUploadService {
         ),
       );
 
-      debugPrint('⬆️ Uploading "$fileName"...');
-      final streamed = await request.send();
-      final response = await http.Response.fromStream(streamed);
+      debugPrint('⬆️ Uploading "$fileName" to Drive...');
+      final streamed  = await request.send();
+      final response  = await http.Response.fromStream(streamed);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data   = jsonDecode(response.body);
         final fileId = data['id'] as String;
 
-        // ✅ Save file info to Firestore under the job document
+        debugPrint('✅ Drive upload success! File ID: $fileId');
+
+        // ✅ Save directly onto jobs/{mainJobId} document
+        // Uses dot-notation key so other fields are never overwritten
         await FirebaseFirestore.instance
             .collection('jobs')
-            .doc(jobId)
-            .set({
-          'files': {
-            fieldName: {
-              'fileId':   fileId,
-              'fileName': fileName,
-              'mimeType': mimeType,
-              'viewUrl':  'https://drive.google.com/file/d/$fileId/view',
-              'uploadedAt': FieldValue.serverTimestamp(),
-            }
-          }
-        }, SetOptions(merge: true)); // ✅ merge so other fields aren't overwritten
+            .doc(mainJobId)
+            .set(
+          {
+            'files': {
+              fieldName: {
+                'fileId':     fileId,
+                'fileName':   fileName,
+                'mimeType':   mimeType,
+                'viewUrl':    'https://drive.google.com/file/d/$fileId/view',
+                'uploadedAt': FieldValue.serverTimestamp(),
+              },
+            },
+          },
+          SetOptions(merge: true), // ✅ merge — never overwrites other fields
+        );
 
-        debugPrint('✅ Uploaded & saved to Firestore! File ID: $fileId');
+        debugPrint('✅ Saved to Firestore at jobs/$mainJobId/files/$fieldName');
         return fileId;
+
       } else {
-        debugPrint('❌ Failed [${response.statusCode}]: ${response.body}');
+        debugPrint('❌ Drive upload failed [${response.statusCode}]: ${response.body}');
         return null;
       }
+
     } catch (e) {
       debugPrint('❌ Upload error: $e');
       return null;
     }
   }
 
-  /// Fetch a file's bytes from Drive (for preview)
+  /// Fetch file bytes from Drive (for preview)
   static Future<Uint8List?> downloadFile(String fileId) async {
     final accessToken = await _getAccessToken();
     if (accessToken == null) return null;
@@ -153,7 +179,7 @@ class DriveUploadService {
       final response = await http.get(
         Uri.parse(
           'https://www.googleapis.com/drive/v3/files/$fileId'
-              '?alt=media&supportsAllDrives=true&includeItemsFromAllDrives=true', // ✅
+              '?alt=media&supportsAllDrives=true&includeItemsFromAllDrives=true',
         ),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
@@ -161,7 +187,7 @@ class DriveUploadService {
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        debugPrint('❌ Download failed: ${response.body}');
+        debugPrint('❌ Download failed [${response.statusCode}]: ${response.body}');
         return null;
       }
     } catch (e) {
