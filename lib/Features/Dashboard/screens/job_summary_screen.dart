@@ -3,10 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/session/session_manager.dart';
-import 'package:lightatech/FormComponents/FilePreviewCard.dart'; // adjust path as needed
 import 'package:provider/provider.dart';
 import '../../../customer/intro/widgets/order_status_card.dart';
-import '../../../customer/intro/models/order_status.dart';
 import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
 
 class JobSummaryScreen extends StatelessWidget {
@@ -49,7 +47,6 @@ class JobSummaryScreen extends StatelessWidget {
     "Emboss": "Emboss",
   };
 
-  // ✅ Resolves to main job ID — strips "-01" if present
   String get _mainLpm {
     final parts = lpm.split('-');
     if (parts.length >= 5) return parts.take(4).join('-');
@@ -87,13 +84,12 @@ class JobSummaryScreen extends StatelessWidget {
       ),
 
       body: FutureBuilder<DocumentSnapshot>(
-        // ✅ Always fetch using main LPM (no "-01")
         future: FirebaseFirestore.instance
             .collection("jobs")
             .doc(_mainLpm)
             .get(),
         builder: (context, snap) {
-          if (!snap.hasData || !snap.data!.exists) {
+          if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snap.data!.exists) {
@@ -102,22 +98,20 @@ class JobSummaryScreen extends StatelessWidget {
 
           final data = snap.data!.data() as Map<String, dynamic>;
 
-          // 👈 start listening to Firestore for this LPM
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<OrderDetailViewModel>().listenToJob(lpm);
           });
 
-          final viewModel = context.watch<OrderDetailViewModel>();
-
-          // ✅ Extract files map from the document
-          final filesMap = Map<String, dynamic>.from(data['files'] ?? {});
+          final viewModel  = context.watch<OrderDetailViewModel>();
+          final filesMap   = Map<String, dynamic>.from(data['files'] ?? {});
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                /// ── HEADER ──
+                /// ── HEADER ──────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -129,7 +123,8 @@ class JobSummaryScreen extends StatelessWidget {
                     children: [
                       const Text(
                         "Job Details",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -144,9 +139,15 @@ class JobSummaryScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // ── DYNAMIC PROGRESS BAR ─────────────────────────────
+                /// ── ATTACHMENTS (horizontal chips row) ──────────────
+                if (filesMap.isNotEmpty) ...[
+                  _buildAttachmentsRow(context, filesMap),
+                  const SizedBox(height: 16),
+                ],
+
+                /// ── LIVE STATUS ──────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -167,7 +168,7 @@ class JobSummaryScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       OrderStatusCard(
-                        stepStatus: viewModel.getStepStatus(lpm), // 👈 dynamic
+                        stepStatus: viewModel.getStepStatus(lpm),
                       ),
                     ],
                   ),
@@ -175,7 +176,7 @@ class JobSummaryScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // ── FORM DATA SECTIONS ───────────────────────────────
+                /// ── FORM DATA SECTIONS ───────────────────────────────
                 ...pipeline.map((dept) {
                   final key = departmentFirestoreKey[dept];
                   final sectionData =
@@ -189,6 +190,7 @@ class JobSummaryScreen extends StatelessWidget {
                     ],
                   );
                 }).toList(),
+
               ],
             ),
           );
@@ -197,154 +199,80 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
-  // ======================================================
-  // ✅ FILES / ATTACHMENTS SECTION
-  // ======================================================
-  Widget _buildFilesSection(Map<String, dynamic> filesMap) {
-    // Map field names to friendly display labels
+  // ====================================================================
+  // ✅ ATTACHMENTS ROW — horizontal scrollable chips with file icons
+  // ====================================================================
+  Widget _buildAttachmentsRow(
+      BuildContext context, Map<String, dynamic> filesMap) {
+
     const fieldLabels = {
       'DrawingAttachment': 'Drawing',
       'RubberReport':      'Rubber Report',
       'PunchReport':       'Punch Report',
     };
 
+    final validEntries = filesMap.entries.where((e) {
+      final info = e.value as Map<String, dynamic>?;
+      return info != null && (info['fileId'] ?? '').toString().isNotEmpty;
+    }).toList();
+
+    if (validEntries.isEmpty) return const SizedBox();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
+
+        // ── section label ──
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Row(
             children: [
-              Icon(Icons.attach_file, size: 16, color: Colors.grey.shade600),
-              const SizedBox(width: 6),
-              const Text(
-                "ATTACHMENTS",
+              Icon(Icons.attach_file, size: 15, color: Colors.grey.shade500),
+              const SizedBox(width: 5),
+              Text(
+                "ATTACHMENTS  •  ${validEntries.length} file${validEntries.length > 1 ? 's' : ''}",
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey,
-                  letterSpacing: 1,
+                  color: Colors.grey.shade500,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
           ),
         ),
 
-        // One tile per uploaded file
-        ...filesMap.entries.map((entry) {
-          final fieldName = entry.key;
-          final fileInfo  = Map<String, dynamic>.from(entry.value ?? {});
+        // ── horizontal scroll row ──
+        SizedBox(
+          height: 88,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: validEntries.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) {
+              final entry     = validEntries[i];
+              final fieldName = entry.key;
+              final fileInfo  = Map<String, dynamic>.from(entry.value);
+              final fileId    = fileInfo['fileId']   as String? ?? '';
+              final fileName  = fileInfo['fileName'] as String? ?? fieldName;
+              final mimeType  = fileInfo['mimeType'] as String? ?? '';
+              final viewUrl   = fileInfo['viewUrl']  as String? ?? '';
+              final label     = fieldLabels[fieldName] ?? fieldName;
 
-          final fileId   = fileInfo['fileId']   as String? ?? '';
-          final fileName = fileInfo['fileName'] as String? ?? fieldName;
-          final mimeType = fileInfo['mimeType'] as String? ?? 'application/octet-stream';
-          final viewUrl  = fileInfo['viewUrl']  as String? ?? '';
-          final label    = fieldLabels[fieldName] ?? fieldName;
-
-          if (fileId.isEmpty) return const SizedBox();
-
-          return _FileAttachmentTile(
-            label:    label,
-            fileName: fileName,
-            mimeType: mimeType,
-            fileId:   fileId,
-            viewUrl:  viewUrl,
-          );
-        }),
+              return _AttachmentChip(
+                label:    label,
+                fileName: fileName,
+                mimeType: mimeType,
+                viewUrl:  viewUrl,
+              );
+            },
+          ),
+        ),
       ],
     );
   }
 
-  // ── rest of your existing helpers unchanged ──
-
-  Widget _buildPipeline(String currentDept) {
-    int currentIndex = pipeline.indexOf(currentDept);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "LIVE JOB STATUS",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(pipeline.length, (index) {
-              final step = pipeline[index];
-              final isDone    = index < currentIndex;
-              final isCurrent = index == currentIndex;
-
-              Color    color = Colors.grey.shade400;
-              IconData icon  = Icons.circle;
-              if (isDone)    { color = Colors.green;  icon = Icons.check; }
-              if (isCurrent) { color = Colors.orange; icon = Icons.sync;  }
-
-              return Expanded(
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        if (index != 0)
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: index <= currentIndex
-                                  ? Colors.green
-                                  : Colors.grey.shade300,
-                            ),
-                          ),
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: color,
-                          child: Icon(icon, color: Colors.white, size: 16),
-                        ),
-                        if (index != pipeline.length - 1)
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: index < currentIndex
-                                  ? Colors.green
-                                  : Colors.grey.shade300,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      pipelineLabels[step] ?? step,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isCurrent
-                            ? Colors.orange
-                            : isDone
-                            ? Colors.green
-                            : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
+  // ── rest of helpers ──────────────────────────────────────────────────
 
   Widget _sectionTitle(String t) {
     return Align(
@@ -354,10 +282,9 @@ class JobSummaryScreen extends StatelessWidget {
         child: Text(
           t,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.black54,
-          ),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54),
         ),
       ),
     );
@@ -365,18 +292,16 @@ class JobSummaryScreen extends StatelessWidget {
 
   Widget _infoSection(Map<String, dynamic> data) {
     if (data.isEmpty) return const SizedBox();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "INFORMATION",
           style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
-            letterSpacing: 1,
-          ),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+              letterSpacing: 1),
         ),
         const SizedBox(height: 12),
         ...data.entries.map((e) {
@@ -388,10 +313,9 @@ class JobSummaryScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 4,
-                      child: Text(
-                        e.key,
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
-                      ),
+                      child: Text(e.key,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 13)),
                     ),
                     Expanded(
                       flex: 6,
@@ -418,34 +342,38 @@ class JobSummaryScreen extends StatelessWidget {
   }
 }
 
-// ======================================================
-// ✅ PRIVATE TILE WIDGET — one row per attachment
-// ======================================================
-class _FileAttachmentTile extends StatelessWidget {
+// ======================================================================
+// ✅ ATTACHMENT CHIP — compact tappable card for each file
+// ======================================================================
+class _AttachmentChip extends StatelessWidget {
   final String label;
   final String fileName;
   final String mimeType;
-  final String fileId;
   final String viewUrl;
 
-  const _FileAttachmentTile({
+  const _AttachmentChip({
     required this.label,
     required this.fileName,
     required this.mimeType,
-    required this.fileId,
     required this.viewUrl,
   });
 
   IconData get _icon {
-    if (mimeType.startsWith('image/'))       return Icons.image;
-    if (mimeType == 'application/pdf')       return Icons.picture_as_pdf;
-    return Icons.insert_drive_file;
+    if (mimeType.startsWith('image/'))     return Icons.image_outlined;
+    if (mimeType == 'application/pdf')     return Icons.picture_as_pdf_outlined;
+    return Icons.insert_drive_file_outlined;
   }
 
   Color get _iconColor {
-    if (mimeType.startsWith('image/'))       return Colors.blue;
-    if (mimeType == 'application/pdf')       return Colors.red;
+    if (mimeType.startsWith('image/'))     return Colors.blue.shade600;
+    if (mimeType == 'application/pdf')     return Colors.red.shade600;
     return Colors.grey.shade600;
+  }
+
+  Color get _bgColor {
+    if (mimeType.startsWith('image/'))     return Colors.blue.shade50;
+    if (mimeType == 'application/pdf')     return Colors.red.shade50;
+    return Colors.grey.shade100;
   }
 
   Future<void> _open() async {
@@ -458,32 +386,50 @@ class _FileAttachmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(10),
-        color: Colors.white,
-      ),
-      child: ListTile(
-        onTap: _open,                              // ✅ tap anywhere to open
-        leading: CircleAvatar(
-          backgroundColor: _iconColor.withOpacity(0.1),
-          child: Icon(_icon, color: _iconColor, size: 22),
+    return GestureDetector(
+      onTap: _open,
+      child: Container(
+        width: 110,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: _bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _iconColor.withOpacity(0.25)),
         ),
-        title: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
-        subtitle: Text(
-          fileName,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: IconButton(
-          icon: Icon(Icons.open_in_new, color: Colors.blue.shade400, size: 20),
-          onPressed: _open,                        // ✅ icon button also opens
-          tooltip: 'Open in browser',
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+
+            // ── big file icon ──
+            Icon(_icon, color: _iconColor, size: 28),
+
+            const SizedBox(height: 6),
+
+            // ── field label (e.g. "Drawing") ──
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _iconColor,
+              ),
+            ),
+
+            const SizedBox(height: 2),
+
+            // ── actual file name ──
+            Text(
+              fileName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 9,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
         ),
       ),
     );
