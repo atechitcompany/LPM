@@ -119,6 +119,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
     final form = NewFormScope.of(context);
     final bool isPlySelected =
         form.PlyType.text.trim().toLowerCase() != "no";
+    final lpmParam = GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -169,6 +170,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
+                jobId:     lpmParam,                // ✅
+                fieldName: 'DrawingAttachment',     // ✅ unique name per field
                 onFileSelected: (file) {
                   debugPrint("Drawing: ${file.name}");
                 },
@@ -184,8 +187,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
+                jobId:     lpmParam,
+                fieldName: 'RubberReport',          // ✅ different name
                 onFileSelected: (file) {
-                  debugPrint("Rubber Report: ${file.name}");
+                  debugPrint("Rubber: ${file.name}");
                 },
               ),
               const SizedBox(height: 30),
@@ -199,8 +204,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
+                jobId:     lpmParam,
+                fieldName: 'PunchReport',           // ✅ different name
                 onFileSelected: (file) {
-                  debugPrint("Punch Report: ${file.name}");
+                  debugPrint("Punch: ${file.name}");
                 },
               ),
               const SizedBox(height: 30),
