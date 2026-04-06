@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/session/session_manager.dart';
-import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../../../customer/intro/widgets/order_status_card.dart';
+import '../../../customer/intro/models/order_status.dart';
+import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
 
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
@@ -44,8 +47,6 @@ class JobSummaryScreen extends StatelessWidget {
     "Emboss": "Emboss",
   };
 
-
-
   String _prettyValue(dynamic value) {
     if (value == null) return "-";
     if (value is bool) return value ? "Yes" : "No";
@@ -66,41 +67,41 @@ class JobSummaryScreen extends StatelessWidget {
         child: const Icon(Icons.edit, color: Colors.black),
         onPressed: () {
           final route = departmentEditRoute[currentDept];
-
           if (route == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("No form for $currentDept")),
             );
             return;
           }
-
           context.push("$route?lpm=$lpm&mode=edit");
         },
       ),
 
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
             .collection("jobs")
             .doc(lpm)
-            .get(),
+            .snapshots(),
         builder: (context, snap) {
-          if (!snap.hasData) {
+          if (!snap.hasData || !snap.data!.exists) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snap.data!.exists) {
-            return const Center(child: Text("Job not found"));
-          }
-
           final data = snap.data!.data() as Map<String, dynamic>;
-          final currentDepartment = data["currentDepartment"] ?? "Designer";
+
+          // 👈 start listening to Firestore for this LPM
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<OrderDetailViewModel>().listenToJob(lpm);
+          });
+
+          final viewModel = context.watch<OrderDetailViewModel>();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
 
-                /// ================= HEADER =================
+                // ── HEADER ──────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -118,7 +119,8 @@ class JobSummaryScreen extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.amber.shade100,
                           borderRadius: BorderRadius.circular(8),
@@ -131,19 +133,41 @@ class JobSummaryScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                /// ================= PIPELINE =================
-                _buildPipeline(currentDepartment),
+                // ── DYNAMIC PROGRESS BAR ─────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "LIVE JOB STATUS",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OrderStatusCard(
+                        stepStatus: viewModel.getStepStatus(lpm), // 👈 dynamic
+                      ),
+                    ],
+                  ),
+                ),
 
                 const SizedBox(height: 20),
 
-                /// ================= ALL FORM DATA =================
+                // ── FORM DATA SECTIONS ───────────────────────────────
                 ...pipeline.map((dept) {
                   final key = departmentFirestoreKey[dept];
                   final sectionData =
                   Map<String, dynamic>.from(data[key]?["data"] ?? {});
-
                   if (sectionData.isEmpty) return const SizedBox();
-
                   return Column(
                     children: [
                       _sectionTitle("$dept Details"),
@@ -159,106 +183,6 @@ class JobSummaryScreen extends StatelessWidget {
       ),
     );
   }
-
-  /// ================= PIPELINE UI =================
-  // ================= PIPELINE =================
-  Widget _buildPipeline(String currentDept) {
-    int currentIndex = pipeline.indexOf(currentDept);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "LIVE JOB STATUS",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(pipeline.length, (index) {
-              final step = pipeline[index];
-
-              bool isDone = index < currentIndex;
-              bool isCurrent = index == currentIndex;
-
-              Color color = Colors.grey.shade400;
-              IconData icon = Icons.circle;
-
-              if (isDone) {
-                color = Colors.green;
-                icon = Icons.check;
-              } else if (isCurrent) {
-                color = Colors.orange;
-                icon = Icons.sync;
-              }
-
-              return Expanded(
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        if (index != 0)
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: index <= currentIndex
-                                  ? Colors.green
-                                  : Colors.grey.shade300,
-                            ),
-                          ),
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: color,
-                          child: Icon(icon, color: Colors.white, size: 16),
-                        ),
-                        if (index != pipeline.length - 1)
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: index < currentIndex
-                                  ? Colors.green
-                                  : Colors.grey.shade300,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      pipelineLabels[step] ?? step,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isCurrent
-                            ? Colors.orange
-                            : isDone
-                            ? Colors.green
-                            : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// ================= UI HELPERS =================
 
   Widget _sectionTitle(String t) {
     return Align(
@@ -293,7 +217,6 @@ class JobSummaryScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
         ...data.entries.map((e) {
           return Column(
             children: [

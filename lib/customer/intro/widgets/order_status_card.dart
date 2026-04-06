@@ -9,34 +9,37 @@ class OrderStatusCard extends StatelessWidget {
     required this.stepStatus,
   });
 
-  static const List<OrderStatus> _steps = [
-    OrderStatus.designing,
-    OrderStatus.laserCutting,
-    OrderStatus.autoBending,
-    OrderStatus.manualBending,
-    OrderStatus.delivered,
-  ];
-
   @override
   Widget build(BuildContext context) {
+    // 👈 split into done and pending
+    final doneSteps = stepStatus.entries
+        .where((e) => e.value == true)
+        .map((e) => e.key)
+        .toList();
+
+    final pendingSteps = stepStatus.entries
+        .where((e) => e.value == false)
+        .map((e) => e.key)
+        .toList();
+
+    // 👈 done steps first, then pending
+    final orderedSteps = [...doneSteps, ...pendingSteps];
+
     return Column(
       children: [
-        /// 🔹 LINE + DOTS
+        // 🔹 LINE + DOTS
         SizedBox(
           height: 40,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              /// ✅ ONE CONTINUOUS LINE
-              /// 🔹 PROGRESS LINE (blue till current, grey after)
+              // 👈 progress line
               Positioned(
                 left: 0,
                 right: 0,
                 child: Row(
-                  children: List.generate(_steps.length - 1, (index) {
-                    final isLineActive =
-                        stepStatus[_steps[index]] == true; // completed till here
-
+                  children: List.generate(orderedSteps.length - 1, (index) {
+                    final isLineActive = stepStatus[orderedSteps[index]] == true;
                     return Expanded(
                       child: Container(
                         height: 5,
@@ -47,18 +50,17 @@ class OrderStatusCard extends StatelessWidget {
                 ),
               ),
 
-              /// ✅ DOTS ON TOP OF LINE
+              // 👈 dots on top
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: _steps.map((step) {
+                children: orderedSteps.map((step) {
                   final isCompleted = stepStatus[step] == true;
-                  final isCurrent = _isCurrentStep(step);
-                  final isLast = step == OrderStatus.delivered;
+                  final isLast = step == orderedSteps.last;
+                  final isLastCompleted = isLast && isCompleted;
 
                   return _buildDot(
                     isCompleted: isCompleted,
-                    isCurrent: isCurrent,
-                    isLastStep: isLast,
+                    isLastCompleted: isLastCompleted,
                   );
                 }).toList(),
               ),
@@ -68,10 +70,10 @@ class OrderStatusCard extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        /// 🔹 LABELS
+        // 🔹 LABELS
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: _steps.map((step) {
+          children: orderedSteps.map((step) {
             return SizedBox(
               width: 60,
               child: Text(
@@ -86,25 +88,19 @@ class OrderStatusCard extends StatelessWidget {
     );
   }
 
-  /// 🔵 DOT LOGIC (exactly as you wanted)
   Widget _buildDot({
     required bool isCompleted,
-    required bool isCurrent,
-    required bool isLastStep,
+    required bool isLastCompleted,
   }) {
     double size = 20;
-    Color color = Colors.grey;
+    Color color = Colors.grey.shade300;
 
-    if (isCurrent) {
-      size = 28; // 👈 bigger current step
-      color = Colors.blue;
+    if (isLastCompleted) {
+      size = 30;
+      color = Colors.green;
     } else if (isCompleted) {
-      color = isLastStep ? Colors.green : Colors.blue;
-      if(color==Colors.green){
-        size=30;
-      }
+      color = Colors.blue;
     }
-
 
     return Container(
       width: size,
@@ -114,25 +110,12 @@ class OrderStatusCard extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: isCompleted && !isCurrent
-          ? const Icon(
-        Icons.check,
-        size: 18,
-        color: Colors.white,
-      )
+      child: isCompleted
+          ? const Icon(Icons.check, size: 14, color: Colors.white)
           : null,
     );
   }
 
-  /// 🔍 CURRENT STEP = first false after a true
-  bool _isCurrentStep(OrderStatus step) {
-    final index = _steps.indexOf(step);
-    if (index == 0) return stepStatus[step] == false;
-    return stepStatus[_steps[index - 1]] == true &&
-        stepStatus[step] == false;
-  }
-
-  /// 🏷️ LABELS
   String _label(OrderStatus status) {
     switch (status) {
       case OrderStatus.designing:
