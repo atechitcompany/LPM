@@ -191,7 +191,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                 initialValue: rubberFixingDone,
                 onChanged: (val) => setState(() => form.RubberFixingDone.text = val ? "Yes" : "No"),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             if (form.canView("WhiteProfileRubber")) ...[
@@ -201,7 +201,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                 initialValue: whiteProfileRubber,
                 onChanged: (val) => setState(() => form.WhiteProfileRubber.text = val ? "Yes" : "No"),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             /// ✅ Drawing Attachment
@@ -216,7 +216,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   debugPrint("Drawing: ${file.name}");
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             /// ✅ Rubber Report (only when designing done)
@@ -231,7 +231,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   debugPrint("Rubber Report: ${file.name}");
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             /// ✅ Punch Report
@@ -246,7 +246,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   debugPrint("Punch Report: ${file.name}");
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
 
@@ -276,7 +276,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   }
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             /// 🟢 REPLACED BULKY TEXTFIELDS WITH CUSTOM COMPONENT 🟢
@@ -319,7 +319,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                 ),
                 style: const TextStyle(color: Colors.black87, fontSize: 12),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             // 🟢 DISPATCHER UI 🟢
@@ -339,7 +339,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   });
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             /// ✅ Submit Button
@@ -373,7 +373,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                 ),
               ),
             ],
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
           ],
         ),
       ),
