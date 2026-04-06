@@ -380,27 +380,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            if (form.canView("CapsuleType")) ...[
-              _loadingCapsules
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Capsule",
-                items: _capsuleItems,
-                initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
-                firestoreCollection: "Capsules",  // ✅ NEW
-                firestoreField: "Capsules",       // ✅ NEW
-                onChanged: (v) {
-                  form.CapsuleType.text = v ?? "";
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _capsuleItems.add(newItem);
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-            ],
-
           /// ✅ Ply
             if (form.canView("PlyType")) ...[
               _loadingPlys
@@ -771,6 +750,27 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 onAdd: (newItem) {
                   setState(() {
                     _strippingItems.add(newItem);
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            if (form.canView("CapsuleType")) ...[
+              _loadingCapsules
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
+                label: "Capsule",
+                items: _capsuleItems,
+                initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
+                firestoreCollection: "Capsules",  // ✅ NEW
+                firestoreField: "Capsules",       // ✅ NEW
+                onChanged: (v) {
+                  form.CapsuleType.text = v ?? "";
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _capsuleItems.add(newItem);
                   });
                 },
               ),
