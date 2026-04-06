@@ -178,13 +178,27 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 60),
               Center(
-                child: CircleAvatar(
-                  radius: 45,
-                  backgroundColor: const Color(0xFFF8D94B),
-                  child: const Icon(
-                    Icons.lock_outline,
-                    size: 48,
-                    color: Color(0xff46000A),
+                child: Container(
+                  height: 150,
+                  width: 150,
+                  padding: const EdgeInsets.all(8), // smaller padding
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/LPM.jpg',
+                      fit: BoxFit.cover, // important: fills space
+                    ),
                   ),
                 ),
               ),
