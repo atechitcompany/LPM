@@ -40,8 +40,7 @@ import 'package:lightatech/Production/JobCreation/screens/forms/designer/designe
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_2.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_3.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_4.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_5.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_6.dart';
+
 import 'package:lightatech/Production/JobCreation/screens/forms/auto_bending/auto_bending_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/manual_bending/manual_bending_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/laser_cut/laser_page.dart';
@@ -313,8 +312,7 @@ class AppRoutes {
           GoRoute(path: '/jobform/designer-2', builder: (_, __) => const DesignerPage2()),
           GoRoute(path: '/jobform/designer-3', builder: (_, __) => const DesignerPage3()),
           GoRoute(path: '/jobform/designer-4', builder: (_, __) => const DesignerPage4()),
-          GoRoute(path: '/jobform/designer-5', builder: (_, __) => const DesignerPage5()),
-          GoRoute(path: '/jobform/designer-6', builder: (_, __) => const DesignerPage6()),
+
 
           GoRoute(path: '/jobform/autobending', builder: (_, __) => const AutoBendingPage()),
           GoRoute(path: '/jobform/manualbending', builder: (_, __) => const ManualBendingPage()),
