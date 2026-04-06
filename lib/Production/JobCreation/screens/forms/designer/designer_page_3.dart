@@ -17,22 +17,31 @@ class DesignerPage3 extends StatefulWidget {
 
 class _DesignerPage3State extends State<DesignerPage3> {
   bool _initialized = false;
-
+  //TO-D2
   List<String> _bladeItems = ["No"];
   List<String> _creasingItems = ["No"];
   List<String> _capsuleItems = ["No"];
   bool _loadingBlades = true;
   bool _loadingCreasings = true;
   bool _loadingCapsules = true;
+  //EN-D2
+  List<String> _maleEmbossItems = ["No"];
+  List<String> _femaleEmbossItems = ["No"];
+  bool _loadingMaleEmboss = true;
+  bool _loadingFemaleEmboss = true;
 
   @override
   void initState() {
     super.initState();
+    //TO-D2
     _fetchBlades();
     _fetchCreasings();
     _fetchCapsules();
+    //EN-D2
+    _fetchMaleEmboss();
+    _fetchFemaleEmboss();
   }
-
+  //TO-D2
   Future<void> _fetchBlades() async {
     try {
       final snap = await FirebaseFirestore.instance
@@ -107,6 +116,58 @@ class _DesignerPage3State extends State<DesignerPage3> {
       setState(() => _loadingCapsules = false);
     }
   }
+  //EN-D2
+
+  Future<void> _fetchMaleEmboss() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Males Embosse")
+          .get();
+
+      final items = snap.docs
+          .map((doc) {
+        // Try both with and without trailing space
+        final data = doc.data();
+        final val = (data['Males Embosse '] ?? data['Males Embosse'] ?? '').toString().trim();
+        return val;
+      })
+          .where((val) => val.isNotEmpty && val != "No")
+          .toList();
+
+      setState(() {
+        _maleEmbossItems = ["No", ...items];
+        _loadingMaleEmboss = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Males Embosse: $e");
+      setState(() => _loadingMaleEmboss = false);
+    }
+  }
+
+  Future<void> _fetchFemaleEmboss() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("Females Emobosse")
+          .get();
+
+      final items = snap.docs
+          .map((doc) {
+        final data = doc.data();
+        final val = (data['Females Emobosse '] ?? data['Females Emobosse'] ?? '').toString().trim();
+        return val;
+      })
+          .where((val) => val.isNotEmpty && val != "No")
+          .toList();
+
+      setState(() {
+        _femaleEmbossItems = ["No", ...items];
+        _loadingFemaleEmboss = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetching Females Emobosse: $e");
+      setState(() => _loadingFemaleEmboss = false);
+    }
+  }
 
   Future<void> _loadDesignerData() async {
     final form = NewFormScope.of(context);
@@ -119,12 +180,18 @@ class _DesignerPage3State extends State<DesignerPage3> {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
 
         setState(() {
+          //TO-D2
           form.Blade.text = decodedData["Blade"] ?? "No";
           form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
           form.Creasing.text = decodedData["Creasing"] ?? "No";
           form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
           form.Unknown.text = decodedData["Unknown"] ?? "";
           form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
+          //EN-D2
+          form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
+          form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
+          form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
+          form.FemaleEmbossType.text = decodedData["FemaleEmbossType"] ?? "";
         });
 
         debugPrint("✅ DesignerPage3 loaded data from route");
@@ -148,12 +215,18 @@ class _DesignerPage3State extends State<DesignerPage3> {
         Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
+          //TO-D2
           form.Blade.text = decodedData["Blade"] ?? "No";
           form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
           form.Creasing.text = decodedData["Creasing"] ?? "No";
           form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
           form.Unknown.text = decodedData["Unknown"] ?? "";
           form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
+          //EN-D2
+          form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
+          form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
+          form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
+          form.FemaleEmbossType.text = decodedData["FemaleEmbossType"] ?? "";
         });
 
         debugPrint("✅ DesignerPage3 loaded data from Firestore");
@@ -166,16 +239,6 @@ class _DesignerPage3State extends State<DesignerPage3> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
-
-    final bool isBladeSelected =
-        form.Blade.text.trim().toLowerCase() != "no";
-    final bool isCreasingSelected =
-        form.Creasing.text.trim().toLowerCase() != "no";
-
-    String selectedByText() {
-      return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
-          "at ${TimeOfDay.now().format(context)}";
-    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -193,95 +256,75 @@ class _DesignerPage3State extends State<DesignerPage3> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// ✅ Blade
-            if (form.canView("Blade")) ...[
-              _loadingBlades
-                  ? const Center(child: CircularProgressIndicator())
-                  : SearchableDropdownWithInitial(
-                label: "Blade",
-                items: _bladeItems,
-                initialValue:
-                form.Blade.text.isEmpty ? "No" : form.Blade.text,
+            if (form.canView("EmbossStatus")) ...[
+              FlexibleToggle(
+                label: "Emboss",
+                inactiveText: "No",
+                activeText: "Yes",
+                initialValue: form.EmbossStatus.text.toLowerCase() == "yes",
                 onChanged: (v) {
-                  setState(() {
-                    form.Blade.text = (v ?? "No").trim();
-                  });
-
-                  if (form.Blade.text.toLowerCase() == "no") {
-                    form.BladeSelectedBy.clear();
-                  } else {
-                    form.BladeSelectedBy.text = selectedByText();
-                  }
+                  form.EmbossStatus.text = v ? "Yes" : "No";
                 },
               ),
-            ],
-
-            /// ✅ Blade Selected By
-            if (isBladeSelected && form.canView("BladeSelectedBy")) ...[
               const SizedBox(height: 20),
-              const Text(
-                "Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.BladeSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
             ],
 
-            if (form.canView("Blade")) const SizedBox(height: 30),
+            /// ✅ Emboss Pcs
+            if (form.canView("EmbossPcs")) ...[
+              TextInput(
+                label: "Emboss Pcs",
+                hint: "No of Pcs",
+                controller: form.EmbossPcs,
+              ),
+              const SizedBox(height: 20),
+            ],
 
-            /// ✅ Creasing
-            if (form.canView("Creasing")) ...[
-              _loadingCreasings
+            if (form.canView("MaleEmbossType")) ...[
+              _loadingMaleEmboss
                   ? const Center(child: CircularProgressIndicator())
-                  : SearchableDropdownWithInitial(
-                label: "Creasing",
-                items: _creasingItems,
-                initialValue:
-                form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
+                  : AddableSearchDropdown(
+                label: "Male Emboss",
+                items: _maleEmbossItems,
+                initialValue: form.MaleEmbossType.text.isEmpty ? "No" : form.MaleEmbossType.text,
+                firestoreCollection: "Males Embosse",
+                firestoreField: "Males Embosse",
                 onChanged: (v) {
                   setState(() {
-                    form.Creasing.text = (v ?? "No").trim();
+                    form.MaleEmbossType.text = v ?? "";
                   });
-
-                  if (form.Creasing.text.toLowerCase() == "no") {
-                    form.CreasingSelectedBy.clear();
-                  } else {
-                    form.CreasingSelectedBy.text = selectedByText();
-                  }
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _maleEmbossItems.add(newItem);
+                  });
                 },
               ),
+              const SizedBox(height: 30),
             ],
 
-            /// ✅ Creasing Selected By
-            if (isCreasingSelected && form.canView("CreasingSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Creasing Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            /// ✅ Female Emboss
+            if (form.canView("FemaleEmbossType")) ...[
+              _loadingFemaleEmboss
+                  ? const Center(child: CircularProgressIndicator())
+                  : AddableSearchDropdown(
+                label: "Female Emboss",
+                items: _femaleEmbossItems,
+                initialValue: form.FemaleEmbossType.text.isEmpty ? "No" : form.FemaleEmbossType.text,
+                firestoreCollection: "Females Emobosse",
+                firestoreField: "Females Emobosse",
+                onChanged: (v) {
+                  setState(() {
+                    form.FemaleEmbossType.text = v ?? "";
+                  });
+                },
+                onAdd: (newItem) {
+                  setState(() {
+                    _femaleEmbossItems.add(newItem);
+                  });
+                },
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.CreasingSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
+              const SizedBox(height: 30),
             ],
-
-            if (form.canView("Creasing")) const SizedBox(height: 30),
 
             /// ✅ Micro Serration – Half Cut
             if (form.canView("MicroSerrationHalfCut")) ...[
@@ -292,7 +335,7 @@ class _DesignerPage3State extends State<DesignerPage3> {
                 initialValue: false,
                 onChanged: (val) {},
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
             /// ✅ Micro Serration – Creasing
@@ -304,41 +347,9 @@ class _DesignerPage3State extends State<DesignerPage3> {
                 initialValue: false,
                 onChanged: (val) {},
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
 
-            /// ✅ Unknown
-            if (form.canView("Unknown")) ...[
-              TextInput(
-                label: "Unknown",
-                hint: "Unknown",
-                controller: form.Unknown,
-              ),
-              const SizedBox(height: 26),
-            ],
-
-
-            /// ✅ Capsule
-            if (form.canView("CapsuleType")) ...[
-              _loadingCapsules
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Capsule",
-                items: _capsuleItems,
-                initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
-                firestoreCollection: "Capsules",  // ✅ NEW
-                firestoreField: "Capsules",       // ✅ NEW
-                onChanged: (v) {
-                  form.CapsuleType.text = v ?? "";
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _capsuleItems.add(newItem);
-                  });
-                },
-              ),
-              const SizedBox(height: 26),
-            ],
           ],
         ),
       ),

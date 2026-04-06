@@ -72,15 +72,11 @@ class DepartmentFieldAccess {
     "HoleSelectedBy": "edit",
     "EmbossStatus": "edit",
     "EmbossPcs": "edit",
+    "SendApproval": "edit",
 
     // ===== PAGE 5 =====
     "MaleEmbossType": "edit",
-    "X": "edit",
-    "Y": "edit",
     "FemaleEmbossType": "edit",
-    "X2": "edit",
-    "Y2": "edit",
-
     // ===== PAGE 6 =====
     "StrippingType": "edit",
     "LaserCuttingStatus": "edit",

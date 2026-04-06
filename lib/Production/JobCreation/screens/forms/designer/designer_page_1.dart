@@ -5,6 +5,7 @@ import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import '../../../../../FormComponents/AddableSearchDropdown.dart';
 import '../../../../../FormComponents/AutoIncrementField.dart';
 import '../../../../../FormComponents/TextInput.dart';
+import 'package:lightatech/FormComponents/PrioritySelector.dart';
 import '../new_form_scope.dart';
 import 'dart:convert';
 
@@ -83,8 +84,6 @@ class _DesignerPage1State extends State<DesignerPage1> {
           selectedJob = decodedData["particularJobName"] ?? decodedData["ParticularJobName"];
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "";
-
-
         });
 
         debugPrint("✅ DesignerPage1 loaded data from route parameters");
@@ -192,30 +191,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
               },
             ),
 
-
-
-
-            const SizedBox(height: 30),
-
-
-
-            /// ✅ Delivery At
-            TextInput(
-              controller: form.DeliveryAt,
-              label: "Delivery At",
-              hint: "Address",
-            ),
-
-            const SizedBox(height: 30),
-
-            /// ✅ Order By
-            TextInput(
-              controller: form.OrderBy,
-              label: "Order By",
-              hint: "Name",
-            ),
-
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
             /// ✅ Particular Job Name *
             AddableSearchDropdown(
@@ -237,8 +213,51 @@ class _DesignerPage1State extends State<DesignerPage1> {
               },
             ),
 
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 30),
+            /// ✅ Priority
+            if (form.canView("Priority")) ...[
+              const Text(
+                "Priority",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 5),
+              PrioritySelector(
+                initialValue: form.Priority.text,
+                onChanged: (v) {
+                  form.Priority.text = v ?? "";
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            /// ✅ Remark
+            if (form.canView("Remark")) ...[
+              TextInput(
+                label: "Remark",
+                hint: "Remark",
+                controller: form.Remark,
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            /// ✅ Delivery At
+            TextInput(
+              controller: form.DeliveryAt,
+              label: "Delivery At",
+              hint: "Address",
+            ),
+
+            const SizedBox(height: 20),
+
+            /// ✅ Order By
+            TextInput(
+              controller: form.OrderBy,
+              label: "Order By",
+              hint: "Name",
+            ),
+
+            const SizedBox(height: 20),
 
             /// ✅ LPM Auto Increment
             ValueListenableBuilder(
@@ -254,7 +273,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
               },
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
           ],
         ),
       ),
