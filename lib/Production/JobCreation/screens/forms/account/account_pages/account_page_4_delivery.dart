@@ -16,6 +16,7 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+    final lpmParam = form.LpmAutoIncrement.text;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -75,10 +76,10 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
           const SizedBox(height: 8),
 
           FileUploadBox(
+            jobId:     lpmParam,      // ✅ ADD
+            fieldName: 'DiePunchImage', // ✅ ADD
             onFileSelected: (file) {
               debugPrint("Selected File: ${file.name}");
-              debugPrint("Size: ${file.size}");
-              debugPrint("Path: ${file.path}");
             },
           ),
 
@@ -91,10 +92,10 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
           const SizedBox(height: 8),
 
           FileUploadBox(
+            jobId:     lpmParam,       // ✅ ADD
+            fieldName: 'InvoiceImage',  // ✅ ADD
             onFileSelected: (file) {
               debugPrint("Selected File: ${file.name}");
-              debugPrint("Size: ${file.size}");
-              debugPrint("Path: ${file.path}");
             },
           ),
 

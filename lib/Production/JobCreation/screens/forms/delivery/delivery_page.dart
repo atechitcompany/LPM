@@ -82,7 +82,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
-
+    final lpmParam = form.LpmAutoIncrement.text;
     if (loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -220,11 +220,10 @@ class _DeliveryPageState extends State<DeliveryPage> {
                 child: Opacity(
                   opacity: form.canEdit("DrawingAttachment") ? 1 : 0.6,
                   child: FileUploadBox(
-                    // ✅ We removed label, hint, and controller.
-                    // ✅ We added the required onFileSelected callback.
+                    jobId:     lpmParam,           // ✅ ADD
+                    fieldName: 'DrawingAttachment', // ✅ ADD
                     onFileSelected: (uploadedData) {
                       setState(() {
-                        // This saves the uploaded file URL/path into your controller!
                         form.DrawingAttachment.text = uploadedData.toString();
                       });
                     },

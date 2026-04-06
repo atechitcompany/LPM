@@ -1261,24 +1261,24 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
 
                     // ── Upload button ────────────────────────────────
-                    _borderedTile(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8.0),
-                        child: FileUploadBox(
-                          onFileSelected: (PlatformFile file) {
-                            setState(() {
-                              task.files.add(TaskFile(
-                                name: file.name,
-                                size: file.size,
-                                path: file.path,
-                              ));
-                            });
-                            widget.onChanged();
-                          },
-                        ),
-                      ),
-                    ),
+                    // _borderedTile(
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.symmetric(
+                    //         horizontal: 8.0),
+                    //     child: FileUploadBox(
+                    //       onFileSelected: (PlatformFile file) {
+                    //         setState(() {
+                    //           task.files.add(TaskFile(
+                    //             name: file.name,
+                    //             size: file.size,
+                    //             path: file.path,
+                    //           ));
+                    //         });
+                    //         widget.onChanged();
+                    //       },
+                    //     ),
+                    //   ),
+                    // ),
 
                     const SizedBox(height: 15),
 
