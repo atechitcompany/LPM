@@ -191,9 +191,9 @@ class NewFormState extends State<NewForm> {
   final TextEditingController DesignedBy = TextEditingController();
   final TextEditingController DesignedByTimestamp = TextEditingController();
   final TextEditingController AutoBendingCreatedByName =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController AutoBendingCreatedByTimestamp =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController ManualBendingCreatedByName =
   TextEditingController();
   final TextEditingController ManualBendingCreatedByTimestamp =
@@ -829,57 +829,57 @@ class NewFormState extends State<NewForm> {
       set(ZigZagBladeType, "ZigZagBladeType");
       set(ZigZagBladeSize, "ZigZagBladeSize");
       set(ZigZagBladeSelectedBy, "ZigZagBladeSelectedBy");
-      set(RubberType,            "RubberType");
-      set(RubberSize,            "RubberSize");
-      set(RubberDoneBy,          "RubberDoneBy");
-      set(RubberSelectedBy,      "RubberSelectedBy");
-      set(HoleType,              "HoleType");
-      set(HoleSelectedBy,        "HoleSelectedBy");
-      set(EmbossStatus,          "EmbossStatus");
-      set(EmbossPcs,             "EmbossPcs");
-      set(MaleEmbossType,        "MaleEmbossType");
-      set(MaleRate,              "MaleRate");
-      set(X,                     "X");
-      set(Y,                     "Y");
-      set(XYSize,                "XYSize");
-      set(FemaleEmbossType,      "FemaleEmbossType");
-      set(FemaleRate,            "FemaleRate");
-      set(X2,                    "X2");
-      set(Y2,                    "Y2");
-      set(XY2Size,               "XY2Size");
-      set(StrippingType,         "StrippingType");
-      set(StrippingSize,         "StrippingSize");
-      set(Extra,                 "Extra");
-      set(LaserPunchNew,         "LaserPunchNew");
-      set(LaserRate,             "LaserRate");
-      set(LaserDoneBy,           "LaserDoneBy");
-      set(LaserCuttingStatus,    "LaserCuttingStatus");
-      set(CourierCharges,        "CourierCharges");
-      set(AddressOutput,         "FullAddress");
-      set(DeliveryURL,           "DeliveryURL");
-      set(ReceiverName,          "ReceiverName");
-      set(TransportName,         "TransportName");
-      set(DesignSendBy,          "DesignSendBy");
-      set(DesignedBy,            "DesignedBy");
-      set(DesignedByTimestamp,   "DesignedByTimestamp");
-      set(RubberFixingDone,      "RubberFixingDone");
-      set(WhiteProfileRubber,    "WhiteProfileRubber");
-      set(GSTType,               "GSTType");
-      set(Amounts3,              "Amounts3");
-      set(ParticularSlider,      "ParticularSlider");
-      set(AutoBendingStatus,     "AutobendingStatus");
-      set(ManualBendingStatus,   "ManualBendingStatus");
-      set(DeliveryStatus,        "DeliveryStatus");
-      set(InvoiceStatus,         "InvoiceStatus");
-      set(LpmAutoIncrement,      "LpmAutoIncrement");
+      set(RubberType, "RubberType");
+      set(RubberSize, "RubberSize");
+      set(RubberDoneBy, "RubberDoneBy");
+      set(RubberSelectedBy, "RubberSelectedBy");
+      set(HoleType, "HoleType");
+      set(HoleSelectedBy, "HoleSelectedBy");
+      set(EmbossStatus, "EmbossStatus");
+      set(EmbossPcs, "EmbossPcs");
+      set(MaleEmbossType, "MaleEmbossType");
+      set(MaleRate, "MaleRate");
+      set(X, "X");
+      set(Y, "Y");
+      set(XYSize, "XYSize");
+      set(FemaleEmbossType, "FemaleEmbossType");
+      set(FemaleRate, "FemaleRate");
+      set(X2, "X2");
+      set(Y2, "Y2");
+      set(XY2Size, "XY2Size");
+      set(StrippingType, "StrippingType");
+      set(StrippingSize, "StrippingSize");
+      set(Extra, "Extra");
+      set(LaserPunchNew, "LaserPunchNew");
+      set(LaserRate, "LaserRate");
+      set(LaserDoneBy, "LaserDoneBy");
+      set(LaserCuttingStatus, "LaserCuttingStatus");
+      set(CourierCharges, "CourierCharges");
+      set(AddressOutput, "FullAddress");
+      set(DeliveryURL, "DeliveryURL");
+      set(ReceiverName, "ReceiverName");
+      set(TransportName, "TransportName");
+      set(DesignSendBy, "DesignSendBy");
+      set(DesignedBy, "DesignedBy");
+      set(DesignedByTimestamp, "DesignedByTimestamp");
+      set(RubberFixingDone, "RubberFixingDone");
+      set(WhiteProfileRubber, "WhiteProfileRubber");
+      set(GSTType, "GSTType");
+      set(Amounts3, "Amounts3");
+      set(ParticularSlider, "ParticularSlider");
+      set(AutoBendingStatus, "AutobendingStatus");
+      set(ManualBendingStatus, "ManualBendingStatus");
+      set(DeliveryStatus, "DeliveryStatus");
+      set(InvoiceStatus, "InvoiceStatus");
+      set(LpmAutoIncrement, "LpmAutoIncrement");
 
       //New Form Flow
-      set(ReqAutoBending,        "ReqAutoBending");
-      set(ReqManualBending,      "ReqManualBending");
-      set(ReqLaserCutting,       "ReqLaserCutting");
-      set(ReqRubber,             "ReqRubber");
-      set(ReqEmboss,             "ReqEmboss");
-      set(ReqAccount,            "ReqAccount");
+      set(ReqAutoBending, "ReqAutoBending");
+      set(ReqManualBending, "ReqManualBending");
+      set(ReqLaserCutting, "ReqLaserCutting");
+      set(ReqRubber, "ReqRubber");
+      set(ReqEmboss, "ReqEmboss");
+      set(ReqAccount, "ReqAccount");
       set(RubberType, "RubberType");
       set(RubberSize, "RubberSize");
       set(RubberDoneBy, "RubberDoneBy");
@@ -915,9 +915,9 @@ class NewFormState extends State<NewForm> {
       set(DesignedByTimestamp, "DesignedByTimestamp");
       set(AutoBendingCreatedByName, "AutoBendingCreatedByName");
       set(AutoBendingCreatedByTimestamp, "AutoBendingCreatedByTimestamp");
-      set(ManualBendingCreatedByName,      "ManualBendingCreatedByName");
+      set(ManualBendingCreatedByName, "ManualBendingCreatedByName");
       set(ManualBendingCreatedByTimestamp, "ManualBendingCreatedByTimestamp");
-      set(ManualBendingCreatedByName,      "ManualBendingCreatedByName");
+      set(ManualBendingCreatedByName, "ManualBendingCreatedByName");
       set(RubberFixingDone, "RubberFixingDone");
       set(WhiteProfileRubber, "WhiteProfileRubber");
       set(GSTType, "GSTType");
@@ -930,7 +930,8 @@ class NewFormState extends State<NewForm> {
       set(LpmAutoIncrement, "LpmAutoIncrement");
 
       //NEW
-      set(SendApproval, "SendApproval");    });
+      set(SendApproval, "SendApproval");
+    });
   }
 
   //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
@@ -986,7 +987,7 @@ class NewFormState extends State<NewForm> {
       if (parts.length < 5) {
         throw Exception(
           "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
-          "Got: $resolvedLpm (${parts.length} parts instead of 5)",
+              "Got: $resolvedLpm (${parts.length} parts instead of 5)",
         );
       }
 
@@ -1031,7 +1032,7 @@ class NewFormState extends State<NewForm> {
       final isDesigningDone =
           DesigningStatus.text.trim().toLowerCase() == "done";
 
-// ✅ Build visibleTo based on Req* toggles — only if designing is done
+      // ✅ Build visibleTo based on Req* toggles — only if designing is done
       final List<String> visibleTo = ["Designer"];
       if (isDesigningDone) {
         if (ReqAutoBending.text.toUpperCase() == "YES") visibleTo.add("AutoBending");
@@ -1041,7 +1042,15 @@ class NewFormState extends State<NewForm> {
         if (ReqEmboss.text.toUpperCase() == "YES") visibleTo.add("Emboss");
       }
 
-      await mainOrderRef.set({
+      // ✅ CHECK: SendApproval toggle for customer approval notification
+      final sendApprovalValue = SendApproval.text.trim().toUpperCase();
+      final needsCustomerApproval = sendApprovalValue == "YES";
+      debugPrint(
+        "🔔 SendApproval: $sendApprovalValue → needsCustomerApproval: $needsCustomerApproval",
+      );
+
+      // ✅ BUILD: Main order document with approval fields
+      final mainOrderData = {
         "orderNo": orderNo,
         "month": month,
         "year": year,
@@ -1057,13 +1066,24 @@ class NewFormState extends State<NewForm> {
         },
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+
+      // ✅ ADD: Approval status fields only if SendApproval === YES
+      if (needsCustomerApproval) {
+        mainOrderData["customerApprovalStatus"] =
+        "pending"; // pending, approved, changes
+        debugPrint("✅ Approval status fields added to jobs document");
+      } else {
+        debugPrint("⏭️  SendApproval is NO — skipping approval notification");
+      }
+
+      await mainOrderRef.set(mainOrderData, SetOptions(merge: true));
 
       debugPrint("✅ Main order document written");
 
       // ✅ SAVE: Sub-order item document
       debugPrint("💾 Writing sub-order item document...");
-      await itemRef.set({
+      final itemData = {
         "fullLpm": resolvedLpm,
         "subOrderNo": subOrderNo,
         "currentDepartment": isDesigningDone ? "InProgress" : "Designer",
@@ -1079,7 +1099,14 @@ class NewFormState extends State<NewForm> {
         },
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
-      });
+      };
+
+      // ✅ ADD: Approval fields to item document too
+      if (needsCustomerApproval) {
+        itemData["customerApprovalStatus"] = "pending";
+      }
+
+      await itemRef.set(itemData);
 
       debugPrint("✅ Sub-order item document written");
 
@@ -1095,8 +1122,6 @@ class NewFormState extends State<NewForm> {
       rethrow; // Re-throw to be caught by submitForm()
     }
   }
-  // 🔧 FIXED submitForm() Method
-  // Replace the existing submitForm() in new_form.dart with this version
 
   // 🔧 FIXED submitDepartmentForm() Method (Parallel Routing Logic)
   Future<void> submitDepartmentForm(String currentDept) async {
@@ -1474,10 +1499,10 @@ class NewFormState extends State<NewForm> {
   Widget build(BuildContext context) {
     debugPrint(
       'NEWFORM BUILD → '
-      'dept=${widget.department}, '
-      'lpm=${widget.lpm}, '
-      'mode=${widget.mode}, '
-      'uri=${GoRouterState.of(context).uri}',
+          'dept=${widget.department}, '
+          'lpm=${widget.lpm}, '
+          'mode=${widget.mode}, '
+          'uri=${GoRouterState.of(context).uri}',
     );
     return NewFormScope(
       form: this,
