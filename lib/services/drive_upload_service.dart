@@ -9,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DriveUploadService {
 
-  static const String _folderId = 'YOUR_SHARED_DRIVE_ID';
+  static const String _folderId = '0ALfDi6AdYMHbUk9PVA';
 
   static Future<Map<String, dynamic>> _loadServiceAccount() async {
     final jsonStr = await rootBundle.loadString('assets/service_account.json');
@@ -27,7 +27,7 @@ class DriveUploadService {
         'iss': clientEmail,
         'sub': clientEmail,
         'aud': 'https://oauth2.googleapis.com/token',
-        'scope': 'https://www.googleapis.com/auth/drive.file',
+        'scope': 'https://www.googleapis.com/auth/drive',
         'iat': now,
         'exp': now + 3600,
       });
@@ -74,7 +74,10 @@ class DriveUploadService {
 
     try {
       final uri = Uri.parse(
-        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',
+        'https://www.googleapis.com/upload/drive/v3/files'
+            '?uploadType=multipart'
+            '&supportsAllDrives=true'
+            '&includeItemsFromAllDrives=true',  // ✅ Add this
       );
 
       final request = http.MultipartRequest('POST', uri);
@@ -84,6 +87,7 @@ class DriveUploadService {
         'name': fileName,
         'mimeType': mimeType,
         'parents': [_folderId],
+        'driveId': _folderId,
       });
 
       request.files.add(
@@ -147,7 +151,8 @@ class DriveUploadService {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://www.googleapis.com/drive/v3/files/$fileId?alt=media&supportsAllDrives=true',
+          'https://www.googleapis.com/drive/v3/files/$fileId'
+              '?alt=media&supportsAllDrives=true&includeItemsFromAllDrives=true', // ✅
         ),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
