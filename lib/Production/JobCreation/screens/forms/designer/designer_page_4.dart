@@ -162,7 +162,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
-
+    final lpmParam = form.LpmAutoIncrement.text;
     final bool isDesigningDone = form.DesigningStatus.text.trim().toLowerCase() == "done";
     final bool laserDone = form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
     final bool rubberFixingDone = form.RubberFixingDone.text.trim().toLowerCase() == "yes";
@@ -212,6 +212,8 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
+                jobId:     lpmParam,            // ✅ e.g. "LPM-00001-04-26-01"
+                fieldName: 'DrawingAttachment',
                 onFileSelected: (file) {
                   debugPrint("Drawing: ${file.name}");
                 },
@@ -227,8 +229,10 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
+                jobId:     lpmParam,
+                fieldName: 'RubberReport',
                 onFileSelected: (file) {
-                  debugPrint("Rubber Report: ${file.name}");
+                  debugPrint("Rubber: ${file.name}");
                 },
               ),
               const SizedBox(height: 20),
@@ -242,8 +246,10 @@ class _DesignerPage4State extends State<DesignerPage4> {
               ),
               const SizedBox(height: 8),
               FileUploadBox(
+                jobId:     lpmParam,
+                fieldName: 'PunchReport',
                 onFileSelected: (file) {
-                  debugPrint("Punch Report: ${file.name}");
+                  debugPrint("Punch: ${file.name}");
                 },
               ),
               const SizedBox(height: 20),
