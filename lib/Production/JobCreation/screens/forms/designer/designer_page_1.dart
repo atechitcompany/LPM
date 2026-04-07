@@ -155,7 +155,6 @@ class _DesignerPage1State extends State<DesignerPage1> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
