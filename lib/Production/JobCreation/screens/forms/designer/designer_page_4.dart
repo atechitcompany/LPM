@@ -163,6 +163,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
+    final approvalStatus = form.SendApproval.text; // temp fallback
     final lpmParam = form.LpmAutoIncrement.text;
     final bool isDesigningDone = form.DesigningStatus.text.trim().toLowerCase() == "done";
     final bool laserDone = form.LaserCuttingStatus.text.trim().toLowerCase() == "done";
@@ -336,7 +337,8 @@ class _DesignerPage4State extends State<DesignerPage4> {
 
 
             /// ✅ Send Approval
-            if (form.canView("SendApproval")) ...[
+
+            if (form.canView("SendApproval") && approvalStatus != "changes") ...[
               SearchableDropdownWithInitial(
                 label: "Send Approval",
                 items: const ["YES", "NO"],

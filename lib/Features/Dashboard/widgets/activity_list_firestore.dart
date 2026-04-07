@@ -195,11 +195,9 @@ class _FirestoreTabState extends State<_FirestoreTab> {
 
   void _setupStream() {
     if (widget.department == "Designer" && widget.isPending) {
-      // Pending tab → Designing not yet done
       _stream = FirebaseFirestore.instance
           .collection("jobs")
           .where("visibleTo", arrayContains: "Designer")
-          .where("designer.data.DesigningStatus", isEqualTo: "Pending")
           .orderBy("updatedAt", descending: true)
           .snapshots();
     } else if (widget.department == "Designer" && !widget.isPending) {
@@ -243,19 +241,43 @@ class _FirestoreTabState extends State<_FirestoreTab> {
         // Search filter
         final query = widget.searchText.trim().toLowerCase();
         final filtered = docs.where((doc) {
-          final d = ((doc.data() as Map<String, dynamic>)["designer"]
-          ?["data"]) ??
-              {};
-          final party =
-          (d["partyName"] ?? d["PartyName"] ?? "")
-              .toString()
-              .toLowerCase();
-          final job =
-          (d["particularJobName"] ?? d["ParticularJobName"] ?? "")
-              .toString()
-              .toLowerCase();
-          if (query.isEmpty) return true;
-          return party.contains(query) || job.contains(query);
+          final data = doc.data() as Map<String, dynamic>;
+
+          final designer =
+          (data["designer"]?["data"] ?? {}) as Map<String, dynamic>;
+
+          final designingStatus =
+          (designer["DesigningStatus"] ?? "").toString().toLowerCase();
+
+          final approvalStatus =
+          (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
+
+          // ================= PENDING TAB =================
+          if (widget.isPending) {
+            // ✅ Show if:
+            // 1. Designing not done
+            // OR
+            // 2. Waiting for customer approval
+            // OR
+            // 3. Customer sent changes
+
+            if (designingStatus != "done") return true;
+            if (approvalStatus == "pending") return true;
+            if (approvalStatus == "changes") return true;
+
+            return false;
+          }
+
+          // ================= JOBS TAB =================
+          if (!widget.isPending) {
+            // ❌ Hide approval pending
+            if (approvalStatus == "pending") return false;
+
+            // ✅ Only show completed
+            return designingStatus == "done";
+          }
+
+          return true;
         }).toList();
 
         return ActivityList(
