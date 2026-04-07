@@ -1031,15 +1031,31 @@ class NewFormState extends State<NewForm> {
       debugPrint("💾 Writing main order document...");
       final isDesigningDone =
           DesigningStatus.text.trim().toLowerCase() == "done";
+      final sendApproval = SendApproval.text.trim().toUpperCase();
+      final isDone = DesigningStatus.text.trim().toLowerCase() == "done";
 
-      // ✅ Build visibleTo based on Req* toggles — only if designing is done
-      final List<String> visibleTo = ["Designer"];
-      if (isDesigningDone) {
-        if (ReqAutoBending.text.toUpperCase() == "YES") visibleTo.add("AutoBending");
-        if (ReqManualBending.text.toUpperCase() == "YES") visibleTo.add("ManualBending");
-        if (ReqLaserCutting.text.toUpperCase() == "YES") visibleTo.add("LaserCutting");
-        if (ReqRubber.text.toUpperCase() == "YES") visibleTo.add("Rubber");
-        if (ReqEmboss.text.toUpperCase() == "YES") visibleTo.add("Emboss");
+      List<String> visibleTo = ["Designer"];
+      String currentDepartment = "Designer";
+      String? customerApprovalStatus;
+
+      if (isDone) {
+        if (sendApproval == "YES") {
+          // 🔴 WAITING FOR CUSTOMER
+          visibleTo = ["Designer"];
+          currentDepartment = "Designer";
+          customerApprovalStatus = "pending";
+        } else {
+          // 🟢 DIRECT FLOW (NO APPROVAL)
+          visibleTo = [
+            "Designer",
+            "AutoBending",
+            "ManualBending",
+            "LaserCutting",
+            "Rubber",
+            "Emboss"
+          ];
+          currentDepartment = "InProgress";
+        }
       }
 
       // ✅ CHECK: SendApproval toggle for customer approval notification
@@ -1054,8 +1070,10 @@ class NewFormState extends State<NewForm> {
         "orderNo": orderNo,
         "month": month,
         "year": year,
-        "currentDepartment": isDesigningDone ? "InProgress" : "Designer",
+        "currentDepartment": currentDepartment,
         "visibleTo": visibleTo,
+        if (customerApprovalStatus != null)
+          "customerApprovalStatus": customerApprovalStatus,
         "designer": {
           "submitted": true,
           "submittedAt": FieldValue.serverTimestamp(),
@@ -1227,17 +1245,51 @@ class NewFormState extends State<NewForm> {
 
       List<dynamic> visibleTo = List.from(snap.data()?['visibleTo'] ?? []);
 
-      // Remove the dept that just finished
-      visibleTo.remove(currentDept);
+      // ✅ DO NOT REMOVE ANY DEPARTMENT
 
-      // Check if any production depts are still active
-      final productionDepts = ["AutoBending", "ManualBending", "LaserCutting", "Rubber", "Emboss"];
-      final remainingProduction = visibleTo
-          .where((dept) => productionDepts.contains(dept))
-          .toList();
+      final productionDepts = [
+        "AutoBending",
+        "ManualBending",
+        "LaserCutting",
+        "Rubber",
+        "Emboss"
+      ];
 
-      if (remainingProduction.isEmpty) {
-        // All production depts done → add Account
+      bool allDone = true;
+
+      for (final dept in productionDepts) {
+        final key = _deptKey(dept);
+        final deptData = Map<String, dynamic>.from(
+          snap.data()?[key]?["data"] ?? {},
+        );
+
+        String status = "";
+
+        switch (dept) {
+          case "AutoBending":
+            status = deptData["AutoBendingStatus"] ?? "";
+            break;
+          case "ManualBending":
+            status = deptData["ManualBendingStatus"] ?? "";
+            break;
+          case "LaserCutting":
+            status = deptData["LaserCuttingStatus"] ?? "";
+            break;
+          case "Rubber":
+            status = deptData["RubberStatus"] ?? "";
+            break;
+          case "Emboss":
+            status = deptData["EmbossStatus"] ?? "";
+            break;
+        }
+
+        if (status.toLowerCase() != "done") {
+          allDone = false;
+          break;
+        }
+      }
+
+      if (allDone) {
         if (!visibleTo.contains("Account")) {
           visibleTo.add("Account");
         }
@@ -1247,6 +1299,7 @@ class NewFormState extends State<NewForm> {
       }
 
       updateMap["visibleTo"] = visibleTo;
+
       transaction.update(docRef, updateMap);
     });
 

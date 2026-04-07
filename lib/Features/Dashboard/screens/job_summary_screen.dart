@@ -97,6 +97,8 @@ class JobSummaryScreen extends StatelessWidget {
           }
 
           final data = snap.data!.data() as Map<String, dynamic>;
+          final approvalStatus = data["customerApprovalStatus"];
+          final changesNote = data["customerChangesNote"];
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<OrderDetailViewModel>().listenToJob(lpm);
@@ -110,6 +112,31 @@ class JobSummaryScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
+                if (approvalStatus == "changes") ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Customer Changes",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(changesNote ?? "-"),
+                      ],
+                    ),
+                  ),
+                ],
 
                 /// ── HEADER ──────────────────────────────────────────
                 Container(
