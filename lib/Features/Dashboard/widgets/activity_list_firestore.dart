@@ -172,6 +172,33 @@ class _FirestoreTabState extends State<_FirestoreTab> {
   Stream<QuerySnapshot>? _stream;
   final ScrollController _scrollController = ScrollController();
 
+  Future<void> _handleCustomerApproval(QueryDocumentSnapshot doc) async {
+    final data = doc.data() as Map<String, dynamic>;
+
+    final approvalStatus =
+    (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
+
+    final visibleTo = List<String>.from(data["visibleTo"] ?? []);
+
+    if (approvalStatus == "approved" && visibleTo.length == 1) {
+      await FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(doc.id)
+          .update({
+        "visibleTo": [
+          "Designer",
+          "AutoBending",
+          "ManualBending",
+          "LaserCutting",
+          "Rubber",
+          "Emboss"
+        ],
+        "currentDepartment": "InProgress",
+        "status": "approved",
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -240,6 +267,9 @@ class _FirestoreTabState extends State<_FirestoreTab> {
 
         // Search filter
         final query = widget.searchText.trim().toLowerCase();
+        for (final doc in docs) {
+          _handleCustomerApproval(doc);
+        }
         final filtered = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
 
@@ -261,20 +291,37 @@ class _FirestoreTabState extends State<_FirestoreTab> {
             // OR
             // 3. Customer sent changes
 
-            if (designingStatus != "done") return true;
-            if (approvalStatus == "pending") return true;
-            if (approvalStatus == "changes") return true;
+            final sendApproval =
+            (designer["SendApproval"] ?? "").toString().toLowerCase();
+
+            if (widget.isPending) {
+              // 🟡 Designing still in progress
+              if (designingStatus != "done") return true;
+
+              // 🔵 Waiting for customer approval
+              if (approvalStatus == "pending") return true;
+
+              // 🔴 Changes NOT fixed yet
+              if (approvalStatus == "changes" && designingStatus != "done") {
+                return true;
+              }
+
+              return false;
+            }
 
             return false;
           }
 
           // ================= JOBS TAB =================
           if (!widget.isPending) {
-            // ❌ Hide approval pending
+            // ❌ Hide waiting approval
             if (approvalStatus == "pending") return false;
 
-            // ✅ Only show completed
-            return designingStatus == "done";
+            // ❌ Hide incomplete work
+            if (designingStatus != "done") return false;
+
+            // ✅ Everything completed OR changes fixed
+            return true;
           }
 
           return true;
