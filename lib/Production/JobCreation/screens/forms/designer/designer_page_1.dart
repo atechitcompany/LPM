@@ -21,12 +21,13 @@ class _DesignerPage1State extends State<DesignerPage1> {
   bool isLoading = true;
   bool _initialized = false;
   String? selectedJob;
+  Map<String, String> clientAddresses = {};
 
 
   @override
   void initState() {
     super.initState();
-    fetchUserNames();
+    fetchClientData();
   }
 
   @override
@@ -130,24 +131,35 @@ class _DesignerPage1State extends State<DesignerPage1> {
   }
 
 
-  Future<void> fetchUserNames() async {
+  Future<void> fetchClientData() async {
     try {
-      final query =
-      await FirebaseFirestore.instance.collection('Onboarding').get();
+      final query = await FirebaseFirestore.instance.collection('clients').get();
 
-      final names = query.docs
-          .map((doc) => doc['Username']?.toString() ?? '')
-          .where((name) => name.isNotEmpty)
-          .toList();
+      final Map<String, String> addresses = {};
+      final List<String> names = [];
+
+      for (final doc in query.docs) {
+        final basicInfo = doc.data()['basic_info'] as Map<String, dynamic>?;
+        if (basicInfo == null) continue;
+
+        final partyName = basicInfo['Party Names']?.toString() ?? '';
+        final address = basicInfo['Address']?.toString() ?? '';
+
+        if (partyName.isNotEmpty) {
+          names.add(partyName);
+          addresses[partyName] = address;
+        }
+      }
 
       names.sort();
 
       setState(() {
-        userNames = names; // ✅ NO "Select Party"
+        userNames = names;
+        clientAddresses = addresses;
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("❌ Error fetching usernames: $e");
+      debugPrint("❌ Error fetching clients: $e");
       setState(() {
         userNames = [];
         isLoading = false;
@@ -180,12 +192,16 @@ class _DesignerPage1State extends State<DesignerPage1> {
                 : SearchableDropdownWithInitial(
               label: "Party Name *",
               items: userNames,
-              initialValue: form.PartyName.text.isEmpty
-                  ? null
-                  : form.PartyName.text,
+              initialValue: form.PartyName.text.isEmpty ? null : form.PartyName.text,
               onChanged: (v) {
                 setState(() {
                   form.PartyName.text = (v ?? "").trim();
+
+                  // ✅ Auto-fill Delivery At from clientAddresses map
+                  final address = clientAddresses[v?.trim() ?? ''] ?? '';
+                  if (address.isNotEmpty) {
+                    form.DeliveryAt.text = address;
+                  }
                 });
               },
             ),
