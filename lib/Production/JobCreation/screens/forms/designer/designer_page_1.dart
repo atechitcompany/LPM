@@ -133,7 +133,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
   Future<void> fetchClientData() async {
     try {
-      final query = await FirebaseFirestore.instance.collection('clients').get();
+      final query = await FirebaseFirestore.instance.collection('customers').get();
 
       final Map<String, String> addresses = {};
       final List<String> names = [];
@@ -159,7 +159,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("❌ Error fetching clients: $e");
+      debugPrint("❌ Error fetching customers: $e");
       setState(() {
         userNames = [];
         isLoading = false;
