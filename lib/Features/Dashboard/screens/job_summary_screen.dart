@@ -6,6 +6,7 @@ import '../../../core/session/session_manager.dart';
 import 'package:provider/provider.dart';
 import '../../../customer/intro/widgets/order_status_card.dart';
 import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
+import 'job_summary_field_config.dart'; // ← add this import
 
 class JobSummaryScreen extends StatelessWidget {
   final String lpm;
@@ -20,6 +21,7 @@ class JobSummaryScreen extends StatelessWidget {
     "Emboss": "/jobform/emboss",
   };
 
+  /// Maps the pipeline display-name → Firestore document key.
   static const Map<String, String> departmentFirestoreKey = {
     "Designer": "designer",
     "AutoBending": "autoBending",
@@ -38,15 +40,6 @@ class JobSummaryScreen extends StatelessWidget {
     "Emboss",
   ];
 
-  static const Map<String, String> pipelineLabels = {
-    "Designer": "Design",
-    "AutoBending": "Auto",
-    "ManualBending": "Manual",
-    "LaserCutting": "Laser",
-    "Rubber": "Rubber",
-    "Emboss": "Emboss",
-  };
-
   String get _mainLpm {
     final parts = lpm.split('-');
     if (parts.length >= 5) return parts.take(4).join('-');
@@ -59,6 +52,67 @@ class JobSummaryScreen extends StatelessWidget {
     if (value is List) return value.isEmpty ? "-" : value.join(", ");
     final str = value.toString().trim();
     return str.isEmpty ? "-" : str;
+  }
+
+  /// Returns a human-friendly label for a raw Firestore field key.
+  /// Falls back to inserting spaces before capital letters if no
+  /// explicit override exists.
+  String _fieldLabel(String key) {
+    const overrides = <String, String>{
+      // Designer
+      "PartyName":                 "Party Name",
+      "ParticularJobName":         "Particular Job Name",
+      "Orderby":                   "Order By",
+      "DeliveryAt":                "Delivery At",
+      "PlyType":                   "Ply",
+      "PlySelectedBy":             "Ply Selected By",
+      "BladeSelectedBy":           "Blade Selected By",
+      "CreasingSelectedBy":        "Creasing Selected By",
+      "PerforationSelectedBy":     "Perforation Done By",
+      "ZigZagBlade":               "Zig Zag Blade",
+      "ZigZagBladeSelectedBy":     "Zig Zag Blade Selected By",
+      "RubberType":                "Rubber",
+      "RubberSelectedBy":          "Rubber Selected By",
+      "HoleType":                  "Hole",
+      "HoleSelectedBy":            "Hole Selected By",
+      "StrippingType":             "Stripping",
+      "CapsuleType":               "Capsule",
+      "EmbossStatus":              "Emboss",
+      "EmbossPcs":                 "Emboss Pcs",
+      "MaleEmbossType":            "Male Emboss",
+      "FemaleEmbossType":          "Female Emboss",
+      "RubberFixingDone":          "Rubber Fixing Done",
+      "WhiteProfileRubber":        "White Profile Rubber",
+      "DesigningStatus":           "Designing Status",
+      "DesignedBy":                "Designed By",
+      "DesignedByTimestamp":       "Designed At",
+      "SendApproval":              "Send Approval",
+      // AutoBending
+      "AutoBendingStatus":              "AutoBending Status",
+      "AutoBendingCreatedByName":       "Done By",
+      "AutoBendingCreatedByTimestamp":  "Done At",
+      "AutoCreasing":                   "Auto Creasing",
+      "AutoCreasingStatus":             "Auto Creasing Status",
+      // ManualBending
+      "ManualBendingStatus":             "ManualBending Status",
+      "ManualBendingCreatedByName":      "Done By",
+      "ManualBendingCreatedByTimestamp": "Done At",
+      // LaserCutting
+      "LaserCuttingStatus":              "Laser Cutting Status",
+      "LaserCuttingCreatedByName":       "Done By",
+      "LaserCuttingCreatedByTimestamp":  "Done At",
+      // Rubber
+      "RubberStatus":    "Rubber Status",
+      "RubberCreatedBy": "Created By",
+    };
+
+    if (overrides.containsKey(key)) return overrides[key]!;
+
+    // Auto-split camelCase → "Camel Case"
+    return key.replaceAllMapped(
+      RegExp(r'([A-Z])'),
+          (m) => ' ${m[0]}',
+    ).trim();
   }
 
   @override
@@ -98,14 +152,14 @@ class JobSummaryScreen extends StatelessWidget {
 
           final data = snap.data!.data() as Map<String, dynamic>;
           final approvalStatus = data["customerApprovalStatus"];
-          final changesNote = data["customerChangesNote"];
+          final changesNote    = data["customerChangesNote"];
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<OrderDetailViewModel>().listenToJob(lpm);
           });
 
-          final viewModel  = context.watch<OrderDetailViewModel>();
-          final filesMap   = Map<String, dynamic>.from(data['files'] ?? {});
+          final viewModel = context.watch<OrderDetailViewModel>();
+          final filesMap  = Map<String, dynamic>.from(data['files'] ?? {});
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -113,6 +167,7 @@ class JobSummaryScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
+                // ── CUSTOMER CHANGES BANNER ──────────────────────────
                 if (approvalStatus == "changes") ...[
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -138,7 +193,7 @@ class JobSummaryScreen extends StatelessWidget {
                   ),
                 ],
 
-                /// ── HEADER ──────────────────────────────────────────
+                // ── HEADER ───────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -168,13 +223,13 @@ class JobSummaryScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                /// ── ATTACHMENTS (horizontal chips row) ──────────────
+                // ── ATTACHMENTS ──────────────────────────────────────
                 if (filesMap.isNotEmpty) ...[
                   _buildAttachmentsRow(context, filesMap),
                   const SizedBox(height: 16),
                 ],
 
-                /// ── LIVE STATUS ──────────────────────────────────────
+                // ── LIVE STATUS ──────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -203,20 +258,35 @@ class JobSummaryScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                /// ── FORM DATA SECTIONS ───────────────────────────────
-                ...pipeline.map((dept) {
-                  final key = departmentFirestoreKey[dept];
-                  final sectionData =
-                  Map<String, dynamic>.from(data[key]?["data"] ?? {});
-                  if (sectionData.isEmpty) return const SizedBox();
-                  return Column(
-                    children: [
-                      _sectionTitle("$dept Details"),
-                      _infoSection(sectionData),
-                      const SizedBox(height: 16),
-                    ],
-                  );
-                }).toList(),
+                // ── FORM DATA SECTIONS ───────────────────────────────
+                // For each department, read its raw Firestore data then
+                // filter it through JobSummaryFieldConfig so only the
+                // fields that are actually in the form are shown.
+                if (departmentFirestoreKey[currentDept] != null) ...[
+                  Builder(
+                    builder: (context) {
+                      final firestoreKey = departmentFirestoreKey[currentDept]!;
+
+                      final rawData = Map<String, dynamic>.from(
+                        data[firestoreKey]?["data"] ?? {},
+                      );
+
+                      final filteredData =
+                      JobSummaryFieldConfig.filter(firestoreKey, rawData);
+
+                      if (filteredData.isEmpty) return const SizedBox.shrink();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionTitle("$currentDept Details"),
+                          _infoSection(filteredData),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    },
+                  ),
+                ],
 
               ],
             ),
@@ -226,12 +296,11 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
-  // ====================================================================
-  // ✅ ATTACHMENTS ROW — horizontal scrollable chips with file icons
-  // ====================================================================
+  // ──────────────────────────────────────────────────────────────────────────
+  // ATTACHMENTS ROW
+  // ──────────────────────────────────────────────────────────────────────────
   Widget _buildAttachmentsRow(
       BuildContext context, Map<String, dynamic> filesMap) {
-
     const fieldLabels = {
       'DrawingAttachment': 'Drawing',
       'RubberReport':      'Rubber Report',
@@ -243,13 +312,11 @@ class JobSummaryScreen extends StatelessWidget {
       return info != null && (info['fileId'] ?? '').toString().isNotEmpty;
     }).toList();
 
-    if (validEntries.isEmpty) return const SizedBox();
+    if (validEntries.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
-        // ── section label ──
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Row(
@@ -268,8 +335,6 @@ class JobSummaryScreen extends StatelessWidget {
             ],
           ),
         ),
-
-        // ── horizontal scroll row ──
         SizedBox(
           height: 88,
           child: ListView.separated(
@@ -280,7 +345,6 @@ class JobSummaryScreen extends StatelessWidget {
               final entry     = validEntries[i];
               final fieldName = entry.key;
               final fileInfo  = Map<String, dynamic>.from(entry.value);
-              final fileId    = fileInfo['fileId']   as String? ?? '';
               final fileName  = fileInfo['fileName'] as String? ?? fieldName;
               final mimeType  = fileInfo['mimeType'] as String? ?? '';
               final viewUrl   = fileInfo['viewUrl']  as String? ?? '';
@@ -299,7 +363,9 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
-  // ── rest of helpers ──────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
+  // HELPERS
+  // ──────────────────────────────────────────────────────────────────────────
 
   Widget _sectionTitle(String t) {
     return Align(
@@ -317,8 +383,10 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
+  /// Renders a list of key→value rows using human-friendly labels.
   Widget _infoSection(Map<String, dynamic> data) {
-    if (data.isEmpty) return const SizedBox();
+    if (data.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -332,6 +400,9 @@ class JobSummaryScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...data.entries.map((e) {
+          final label       = _fieldLabel(e.key);
+          final displayValue = _prettyValue(e.value);
+
           return Column(
             children: [
               Padding(
@@ -340,18 +411,20 @@ class JobSummaryScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 4,
-                      child: Text(e.key,
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 13)),
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                            color: Colors.grey, fontSize: 13),
+                      ),
                     ),
                     Expanded(
                       flex: 6,
                       child: Text(
-                        _prettyValue(e.value),
+                        displayValue,
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           fontSize: 13,
-                          color: _prettyValue(e.value) == "-"
+                          color: displayValue == "-"
                               ? Colors.grey
                               : Colors.black,
                         ),
@@ -369,9 +442,9 @@ class JobSummaryScreen extends StatelessWidget {
   }
 }
 
-// ======================================================================
-// ✅ ATTACHMENT CHIP — compact tappable card for each file
-// ======================================================================
+// ============================================================================
+// ATTACHMENT CHIP
+// ============================================================================
 class _AttachmentChip extends StatelessWidget {
   final String label;
   final String fileName;
@@ -386,20 +459,20 @@ class _AttachmentChip extends StatelessWidget {
   });
 
   IconData get _icon {
-    if (mimeType.startsWith('image/'))     return Icons.image_outlined;
-    if (mimeType == 'application/pdf')     return Icons.picture_as_pdf_outlined;
+    if (mimeType.startsWith('image/'))   return Icons.image_outlined;
+    if (mimeType == 'application/pdf')   return Icons.picture_as_pdf_outlined;
     return Icons.insert_drive_file_outlined;
   }
 
   Color get _iconColor {
-    if (mimeType.startsWith('image/'))     return Colors.blue.shade600;
-    if (mimeType == 'application/pdf')     return Colors.red.shade600;
+    if (mimeType.startsWith('image/'))   return Colors.blue.shade600;
+    if (mimeType == 'application/pdf')   return Colors.red.shade600;
     return Colors.grey.shade600;
   }
 
   Color get _bgColor {
-    if (mimeType.startsWith('image/'))     return Colors.blue.shade50;
-    if (mimeType == 'application/pdf')     return Colors.red.shade50;
+    if (mimeType.startsWith('image/'))   return Colors.blue.shade50;
+    if (mimeType == 'application/pdf')   return Colors.red.shade50;
     return Colors.grey.shade100;
   }
 
@@ -426,13 +499,8 @@ class _AttachmentChip extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
-            // ── big file icon ──
             Icon(_icon, color: _iconColor, size: 28),
-
             const SizedBox(height: 6),
-
-            // ── field label (e.g. "Drawing") ──
             Text(
               label,
               maxLines: 1,
@@ -443,18 +511,12 @@ class _AttachmentChip extends StatelessWidget {
                 color: _iconColor,
               ),
             ),
-
             const SizedBox(height: 2),
-
-            // ── actual file name ──
             Text(
               fileName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 9,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
             ),
           ],
         ),
