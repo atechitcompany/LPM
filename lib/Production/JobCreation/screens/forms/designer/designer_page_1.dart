@@ -23,11 +23,15 @@ class _DesignerPage1State extends State<DesignerPage1> {
   String? selectedJob;
   Map<String, String> clientAddresses = {};
 
-
   @override
   void initState() {
     super.initState();
-    fetchClientData();
+    fetchClientData().then((_) {
+      final form = NewFormScope.of(context);
+      if (form.mode == "edit") {
+        _loadDesignerData(form);
+      }
+    });
   }
 
   @override
@@ -43,15 +47,11 @@ class _DesignerPage1State extends State<DesignerPage1> {
     if (form.mode != "edit") {
       form.clearDesignerData();
     }
-    // ✏️ EDIT MODE → LOAD DATA FROM ROUTE PARAMETERS
-    else {
-      _loadDesignerData(form);
-    }
+    // ✏️ EDIT MODE → handled in initState after fetchClientData() completes
+    // so clientAddresses is guaranteed to be populated before _loadDesignerData runs
   }
 
-
   Future<void> _loadDesignerData(dynamic form) async {
-    // ✅ NEW: Get data from route parameters instead of Firestore
     final uri = GoRouterState.of(context).uri;
     final dataJson = uri.queryParameters['data'];
     final lpmParam = uri.queryParameters['lpm'];
@@ -64,30 +64,37 @@ class _DesignerPage1State extends State<DesignerPage1> {
       form.LpmAutoIncrement.text = lpmParam;
       debugPrint("✅ Set LPM to: $lpmParam");
     } else {
-      // If no LPM in route, this shouldn't happen in edit mode
       debugPrint("⚠️ No LPM found in route parameter");
     }
 
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
-        // Decode JSON data
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
-
         debugPrint("✅ Decoded data: ${decodedData.keys.toList()}");
 
-        // ✅ Populate form fields from decoded data (using camelCase keys)
+        final party = (decodedData["PartyName"] ?? "").trim();
+        final routeDelivery = (decodedData["DeliveryAt"] ?? "").trim();
+
         setState(() {
-          form.PartyName.text = decodedData["PartyName"] ?? "";
+          form.PartyName.text = party;
           form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
-          form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
+
+          // ✅ Priority 1: Use route DeliveryAt if non-empty
+          // ✅ Priority 2: Fall back to clientAddresses using PartyName
+          form.DeliveryAt.text = routeDelivery.isNotEmpty
+              ? routeDelivery
+              : (clientAddresses[party] ?? "");
+
           form.OrderBy.text = decodedData["Orderby"] ?? "";
-          form.ParticularJobName.text = decodedData["particularJobName"] ?? decodedData["ParticularJobName"] ?? "";
-          selectedJob = decodedData["particularJobName"] ?? decodedData["ParticularJobName"];
+          form.ParticularJobName.text =
+              decodedData["particularJobName"] ?? decodedData["ParticularJobName"] ?? "";
+          selectedJob = form.ParticularJobName.text;
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "";
         });
 
         debugPrint("✅ DesignerPage1 loaded data from route parameters");
+        debugPrint("✅ DeliveryAt resolved to: ${form.DeliveryAt.text}");
       } catch (e) {
         debugPrint("❌ Error decoding data: $e");
       }
@@ -105,23 +112,31 @@ class _DesignerPage1State extends State<DesignerPage1> {
         }
 
         final decodedData =
-            Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+
+        final party = (decodedData["PartyName"] ?? "").trim();
+        final firestoreDelivery = (decodedData["DeliveryAt"] ?? "").trim();
 
         setState(() {
-          form.PartyName.text = decodedData["PartyName"] ?? "";
+          form.PartyName.text = party;
           form.DesignerCreatedBy.text = decodedData["DesignerCreatedBy"] ?? "";
-          form.DeliveryAt.text = decodedData["DeliveryAt"] ?? "";
-          // CORRECT
+
+          // ✅ Priority 1: Use Firestore DeliveryAt if non-empty
+          // ✅ Priority 2: Fall back to clientAddresses using PartyName
+          form.DeliveryAt.text = firestoreDelivery.isNotEmpty
+              ? firestoreDelivery
+              : (clientAddresses[party] ?? "");
+
           form.OrderBy.text = decodedData["Orderby"] ?? "";
-          form.ParticularJobName.text = decodedData["particularJobName"] ?? decodedData["ParticularJobName"] ?? "";
-          selectedJob = decodedData["particularJobName"] ?? decodedData["ParticularJobName"];
+          form.ParticularJobName.text =
+              decodedData["particularJobName"] ?? decodedData["ParticularJobName"] ?? "";
+          selectedJob = form.ParticularJobName.text;
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "";
-
-
         });
 
         debugPrint("✅ DesignerPage1 loaded data from Firestore");
+        debugPrint("✅ DeliveryAt resolved to: ${form.DeliveryAt.text}");
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
       }
@@ -129,7 +144,6 @@ class _DesignerPage1State extends State<DesignerPage1> {
       debugPrint("❌ No data in route parameters and no LPM, skipping load");
     }
   }
-
 
   Future<void> fetchClientData() async {
     try {
@@ -139,11 +153,9 @@ class _DesignerPage1State extends State<DesignerPage1> {
       final List<String> names = [];
 
       for (final doc in query.docs) {
-        final basicInfo = doc.data()['basic_info'] as Map<String, dynamic>?;
-        if (basicInfo == null) continue;
-
-        final partyName = basicInfo['Party Names']?.toString() ?? '';
-        final address = basicInfo['Address']?.toString() ?? '';
+        final data = doc.data();
+        final partyName = data['Party Names']?.toString() ?? '';
+        final address = data['Address']?.toString() ?? '';
 
         if (partyName.isNotEmpty) {
           names.add(partyName);
@@ -208,24 +220,11 @@ class _DesignerPage1State extends State<DesignerPage1> {
 
             const SizedBox(height: 20),
 
-            /// ✅ Particular Job Name *
-            AddableSearchDropdown(
-              label: "Particular Job Name *",
-              items: form.jobs,
-              initialValue: selectedJob,
-              onChanged: (v) {
-                setState(() {
-                  selectedJob = v;
-                  form.ParticularJobName.text = (v ?? "").trim();
-                });
-              },
-              onAdd: (newJob) {
-                setState(() {
-                  form.jobs.add(newJob);
-                  selectedJob = newJob;
-                  form.ParticularJobName.text = newJob;
-                });
-              },
+            /// ✅ Job Name
+            TextInput(
+              label: "Job Name",
+              hint: "Job Name",
+              controller: form.ParticularJobName,
             ),
 
             const SizedBox(height: 20),
@@ -284,7 +283,7 @@ class _DesignerPage1State extends State<DesignerPage1> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                return AutoIncrementField(value: lpmText); // ← pass the string directly
+                return AutoIncrementField(value: lpmText);
               },
             ),
 
