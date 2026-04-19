@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SearchableDropdownWithInitial extends StatefulWidget {
   final String label;
-  final List<String> items;
+  final List<String>? items;
   final String? initialValue;
   final Function(String) onChanged;
+  final String? firestoreCollection;
+  final String? firestoreField;
 
   const SearchableDropdownWithInitial({
     super.key,
     required this.label,
-    required this.items,
+    this.items,
     required this.onChanged,
     this.initialValue,
+    this.firestoreCollection,
+    this.firestoreField,
   });
 
   @override
@@ -22,41 +27,95 @@ class SearchableDropdownWithInitial extends StatefulWidget {
 class _SearchableDropdownWithInitialState
     extends State<SearchableDropdownWithInitial> {
   final TextEditingController controller = TextEditingController();
+  List<String> _fetchedItems = [];
   List<String> filtered = [];
   bool expanded = false;
+  bool _isFetching = false;
 
   @override
   void initState() {
     super.initState();
-    filtered = widget.items;
-
-    // ✅ Set initial value on first build
-    if (widget.initialValue != null && widget.initialValue!.isNotEmpty) {
-      controller.text = widget.initialValue!;
-      filterItems(widget.initialValue!);
-    }
+    _fetchFromFirestore().then((_) {
+      _applyInitialValue(widget.initialValue);
+    });
   }
 
-  // ✅ THIS IS THE KEY FIX — responds when parent rebuilds with new value
   @override
   void didUpdateWidget(SearchableDropdownWithInitial oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // ✅ Only apply if parent pushed a genuinely new value
+    // AND it differs from what the user currently has typed
     if (widget.initialValue != oldWidget.initialValue &&
-        widget.initialValue != null &&
-        widget.initialValue!.isNotEmpty) {
-      controller.text = widget.initialValue!;
-      filterItems(widget.initialValue!);
+        widget.initialValue != controller.text) {
+      _applyInitialValue(widget.initialValue);
     }
   }
 
-  void filterItems(String query) {
-    setState(() {
-      filtered = widget.items
-          .where((item) =>
-          item.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
+  void _applyInitialValue(String? value) {
+    if (value == null || value.isEmpty || value.trim() == "No") {
+      controller.clear();
+      _filterItems("");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onChanged("No");
+      });
+    } else {
+      controller.text = value.trim();
+      _filterItems(value.trim());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onChanged(value.trim());
+      });
+    }
+  }
+
+  Future<void> _fetchFromFirestore() async {
+    if (widget.firestoreCollection == null || widget.firestoreField == null) return;
+
+    if (mounted) setState(() => _isFetching = true);
+
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection(widget.firestoreCollection!)
+          .get();
+
+      final List<String> fetched = [];
+      for (final doc in query.docs) {
+        final value = doc.data()[widget.firestoreField!]?.toString() ?? '';
+        if (value.isNotEmpty) fetched.add(value);
+      }
+      fetched.sort();
+
+      if (mounted) {
+        setState(() {
+          _fetchedItems = fetched;
+          _isFetching = false;
+          filtered = _mergedItems;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching from Firestore: $e");
+      if (mounted) setState(() => _isFetching = false);
+    }
+  }
+
+  List<String> get _mergedItems {
+    return {
+      ...?widget.items,
+      ..._fetchedItems,
+    }.toList()..sort();
+  }
+
+  String get effectiveValue {
+    final text = controller.text.trim();
+    return text.isEmpty ? "No" : text;
+  }
+
+  // ✅ No setState inside — just compute and assign, caller does setState
+  void _filterItems(String query) {
+    final results = _mergedItems
+        .where((item) => item.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    if (mounted) setState(() => filtered = results);
   }
 
   @override
@@ -70,21 +129,57 @@ class _SearchableDropdownWithInitialState
         ),
         const SizedBox(height: 8),
 
-        // TextField
         TextField(
           controller: controller,
           onTap: () => setState(() => expanded = true),
-          onChanged: (value) => filterItems(value),
+          onChanged: (value) {
+            // ✅ Only filter + notify, do NOT call widget.onChanged with
+            // a parent setState that would trigger didUpdateWidget mid-typing
+            _filterItems(value);
+            widget.onChanged(value.trim().isEmpty ? "No" : value.trim());
+          },
           decoration: InputDecoration(
             hintText: "Field text goes here",
-            suffixIcon: const Icon(Icons.arrow_drop_down),
+            helperStyle: const TextStyle(color: Colors.grey, fontSize: 11),
+            suffixIcon: _isFetching
+                ? const Padding(
+              padding: EdgeInsets.all(12),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+                : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ✅ Clear button — only when text is present
+                if (controller.text.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () {
+                      controller.clear();
+                      widget.onChanged("No");
+                      setState(() {});
+                    },
+                  ),
+                // ✅ Arrow toggle button — always visible
+                IconButton(
+                  icon: AnimatedRotation(
+                    turns: expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.keyboard_arrow_down),
+                  ),
+                  onPressed: () => setState(() => expanded = !expanded),
+                ),
+              ],
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
             ),
           ),
         ),
 
-        // Dropdown List
         if (expanded)
           Container(
             margin: const EdgeInsets.only(top: 4),
@@ -94,7 +189,12 @@ class _SearchableDropdownWithInitialState
               color: Colors.white,
             ),
             constraints: const BoxConstraints(maxHeight: 180),
-            child: filtered.isEmpty
+            child: _isFetching
+                ? const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(child: CircularProgressIndicator()),
+            )
+                : filtered.isEmpty
                 ? const Padding(
               padding: EdgeInsets.all(12.0),
               child: Text("No results"),
@@ -119,21 +219,3 @@ class _SearchableDropdownWithInitialState
     );
   }
 }
-//```
-//
-//---
-//
-//### Why this works
-//```
-//Edit pressed → _populateControllers() → PlyType.text = "18mm CHW Ply"
-//│
-//▼
-//setState() → parent rebuilds
-//│
-//▼
-//SearchableDropdownWithInitial rebuilds
-//with new initialValue="18mm CHW Ply"
-//│
-//▼
-//didUpdateWidget() fires ✅
-//controller.text = "18mm CHW Ply" ✅
