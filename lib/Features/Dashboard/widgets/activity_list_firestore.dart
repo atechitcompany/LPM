@@ -143,7 +143,7 @@ class _KeepAliveTab extends StatefulWidget {
 class _KeepAliveTabState extends State<_KeepAliveTab>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => false;
 
   @override
   Widget build(BuildContext context) {
@@ -171,14 +171,48 @@ class _FirestoreTab extends StatefulWidget {
 class _FirestoreTabState extends State<_FirestoreTab> {
   Stream<QuerySnapshot>? _stream;
   final ScrollController _scrollController = ScrollController();
+  final Set<String> _processedDocs = {};
+
+  List<QueryDocumentSnapshot> _olderDocs = [];
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDoc;
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore || _lastDoc == null) return;
+
+    setState(() => _isLoadingMore = true);
+
+    Query query = FirebaseFirestore.instance
+        .collection("jobs")
+        .where("visibleTo", arrayContains: widget.department)
+        .orderBy("updatedAt", descending: true)
+        .startAfterDocument(_lastDoc!)
+        .limit(20);
+
+    final snap = await query.get();
+
+    if (snap.docs.isNotEmpty) {
+      _olderDocs.addAll(snap.docs);
+      _lastDoc = snap.docs.last;
+    } else {
+      _hasMore = false;
+    }
+
+    setState(() => _isLoadingMore = false);
+  }
 
   Future<void> _handleCustomerApproval(QueryDocumentSnapshot doc) async {
+    debugPrint("✏️ WRITE TRIGGERED");
     final data = doc.data() as Map<String, dynamic>;
 
     final approvalStatus =
     (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
 
     final visibleTo = List<String>.from(data["visibleTo"] ?? []);
+
+    // ✅ ADD THIS LINE
+    if (visibleTo.length > 1) return; // already processed
 
     if (approvalStatus == "approved" && visibleTo.length == 1) {
       await FirebaseFirestore.instance
@@ -203,6 +237,13 @@ class _FirestoreTabState extends State<_FirestoreTab> {
   void initState() {
     super.initState();
     _setupStream();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        _loadMore();
+      }
+    });
   }
 
   @override
@@ -221,12 +262,19 @@ class _FirestoreTabState extends State<_FirestoreTab> {
   }
 
   void _setupStream() {
+    _processedDocs.clear();
+
+    // ✅ ADD THESE 3 LINES
+    _olderDocs.clear();
+    _lastDoc = null;
+    _hasMore = true;
+
     if (widget.department == "Designer" && widget.isPending) {
       _stream = FirebaseFirestore.instance
           .collection("jobs")
           .where("visibleTo", arrayContains: "Designer")
           .orderBy("updatedAt", descending: true)
-          .snapshots();
+          .limit(20).snapshots();
     } else if (widget.department == "Designer" && !widget.isPending) {
       // Jobs tab → Designing is done
       _stream = FirebaseFirestore.instance
@@ -234,15 +282,15 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           .where("visibleTo", arrayContains: "Designer")
           .where("designer.data.DesigningStatus", isEqualTo: "Done")
           .orderBy("updatedAt", descending: true)
-          .snapshots();
+          .limit(20).snapshots();
     } else {
       // All other departments
       _stream = FirebaseFirestore.instance
           .collection("jobs")
           .where("visibleTo", arrayContains: widget.department)
           .orderBy("updatedAt", descending: true)
-          .snapshots();
-    }
+          .limit(20).snapshots();
+      }
   }
 
   @override
@@ -252,6 +300,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
     return StreamBuilder<QuerySnapshot>(
       stream: _stream,
       builder: (context, snapshot) {
+        debugPrint("📡 STREAM TRIGGERED");
         if (snapshot.hasError) {
           debugPrint("❌ Stream error: ${snapshot.error}");
           return Center(child: Text("Error: ${snapshot.error}"));
@@ -262,13 +311,46 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = List<QueryDocumentSnapshot>.from(
-            snapshot.data?.docs ?? []);
+        final latestDocs = List<QueryDocumentSnapshot>.from(snapshot.data?.docs ?? []);
+
+// Set lastDoc for pagination
+        if (latestDocs.isNotEmpty) {
+          _lastDoc = latestDocs.last;
+        }
+
+// Merge latest + older
+        final Map<String, QueryDocumentSnapshot> uniqueDocs = {};
+
+        for (var d in latestDocs) {
+          uniqueDocs[d.id] = d;
+        }
+        for (var d in _olderDocs) {
+          uniqueDocs[d.id] = d;
+        }
+
+        final docs = uniqueDocs.values.toList();
 
         // Search filter
         final query = widget.searchText.trim().toLowerCase();
-        for (final doc in docs) {
-          _handleCustomerApproval(doc);
+
+        for (final doc in latestDocs) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          final approvalStatus =
+          (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
+
+          final visibleTo = List<String>.from(data["visibleTo"] ?? []);
+
+          // ✅ CALL ONLY WHEN NEEDED
+          if (approvalStatus == "approved" && visibleTo.length == 1) {
+            if (!_processedDocs.contains(doc.id)) {
+              _processedDocs.add(doc.id);
+
+              Future.microtask(() {
+                _handleCustomerApproval(doc);
+              });
+            }
+          }
         }
         final filtered = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
@@ -276,38 +358,29 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           final designer =
           (data["designer"]?["data"] ?? {}) as Map<String, dynamic>;
 
+          final matchesSearch =
+              doc.id.toLowerCase().contains(query) ||
+                  (designer["PartyName"] ?? "").toString().toLowerCase().contains(query) ||
+                  (designer["ParticularJobName"] ?? "").toString().toLowerCase().contains(query);
+
+          if (query.isNotEmpty && !matchesSearch) return false;
+
           final designingStatus =
           (designer["DesigningStatus"] ?? "").toString().toLowerCase();
 
           final approvalStatus =
           (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
 
+
           // ================= PENDING TAB =================
           if (widget.isPending) {
-            // ✅ Show if:
-            // 1. Designing not done
-            // OR
-            // 2. Waiting for customer approval
-            // OR
-            // 3. Customer sent changes
+            // Show anything NOT fully completed
 
-            final sendApproval =
-            (designer["SendApproval"] ?? "").toString().toLowerCase();
+            if (designingStatus != "done") return true;
 
-            if (widget.isPending) {
-              // 🟡 Designing still in progress
-              if (designingStatus != "done") return true;
+            if (approvalStatus == "pending") return true;
 
-              // 🔵 Waiting for customer approval
-              if (approvalStatus == "pending") return true;
-
-              // 🔴 Changes NOT fixed yet
-              if (approvalStatus == "changes" && designingStatus != "done") {
-                return true;
-              }
-
-              return false;
-            }
+            if (approvalStatus == "changes") return true;
 
             return false;
           }
@@ -331,8 +404,8 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           docs: filtered,
           isPending: widget.isPending,
           isQuotation: false,
-          hasMore: false,
-          isLoadingMore: false,
+          hasMore: _hasMore,
+          isLoadingMore: _isLoadingMore,
           scrollController: _scrollController,
         );
       },
