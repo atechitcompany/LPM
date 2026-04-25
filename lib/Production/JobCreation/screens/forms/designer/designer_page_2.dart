@@ -14,6 +14,9 @@ import 'dart:convert';
 import 'designer_page_1.dart';
 import 'designer_widgets.dart';
 
+// Import shared widgets from page1
+// import './designer_page_1.dart';
+
 class DesignerPage2 extends StatefulWidget {
   const DesignerPage2({super.key});
 
@@ -78,6 +81,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
     }
@@ -102,8 +107,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCreasings() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Creasings").get();
+      final snap = await FirebaseFirestore.instance.collection("Creasings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Creasings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -120,8 +124,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCapsules() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Capsules").get();
+      final snap = await FirebaseFirestore.instance.collection("Capsules").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Capsules'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -138,8 +141,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchPerforations() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Perforations").get();
+      final snap = await FirebaseFirestore.instance.collection("Perforations").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Perforations'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -156,9 +158,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchZigZagBlades() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Zig Zags Blades")
-          .get();
+      final snap = await FirebaseFirestore.instance.collection("Zig Zags Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Zig Zags Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -175,8 +175,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchRubbers() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Rubbers").get();
+      final snap = await FirebaseFirestore.instance.collection("Rubbers").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Rubbers'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -210,8 +209,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchStrippings() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Strippings").get();
+      final snap = await FirebaseFirestore.instance.collection("Strippings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Strippings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -307,8 +305,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
           debugPrint("❌ Firestore: document $lpmParam not found");
           return;
         }
-        final decodedData = Map<String, dynamic>.from(
-            snap.data()?["designer"]?["data"] ?? {});
+        final decodedData =
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -376,20 +374,13 @@ class _DesignerPage2State extends State<DesignerPage2> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    final bool isBladeSelected =
-        form.Blade.text.trim().toLowerCase() != "no";
-    final bool isCreasingSelected =
-        form.Creasing.text.trim().toLowerCase() != "no";
-    final bool isPlySelected =
-        form.PlyType.text.trim().toLowerCase() != "no";
-    final bool isPerforationSelected =
-        form.Perforation.text.trim().toLowerCase() != "no";
-    final bool isZigZagBladeSelected =
-        form.ZigZagBlade.text.trim().toLowerCase() != "no";
-    final bool isRubberSelected =
-        form.RubberType.text.trim().toLowerCase() != "no";
-    final bool isHoleSelected =
-        form.HoleType.text.trim().toLowerCase() != "no";
+    final bool isBladeSelected = form.Blade.text.trim().toLowerCase() != "no";
+    final bool isCreasingSelected = form.Creasing.text.trim().toLowerCase() != "no";
+    final bool isPlySelected = form.PlyType.text.trim().toLowerCase() != "no";
+    final bool isPerforationSelected = form.Perforation.text.trim().toLowerCase() != "no";
+    final bool isZigZagBladeSelected = form.ZigZagBlade.text.trim().toLowerCase() != "no";
+    final bool isRubberSelected = form.RubberType.text.trim().toLowerCase() != "no";
+    final bool isHoleSelected = form.HoleType.text.trim().toLowerCase() != "no";
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
@@ -403,10 +394,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
         ),
         title: const Text(
           "Add Designer Job",
-          style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: Colors.black),
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(56),
@@ -451,7 +439,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   setState(() => _plyItems.add(newItem));
                 },
               ),
-            ],
 
             /// ── Ply Selected By ──
             if (isPlySelected && form.canView("PlySelectedBy")) ...[
@@ -854,6 +841,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
           ], // end children
         ),
       ),
+
     );
   }
 }

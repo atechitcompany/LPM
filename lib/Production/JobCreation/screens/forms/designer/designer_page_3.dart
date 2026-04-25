@@ -8,6 +8,10 @@ import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'dart:convert';
 
+// Import shared widgets from page1
+import 'designer_page_1.dart';
+import 'designer_widgets.dart';
+
 class DesignerPage3 extends StatefulWidget {
   const DesignerPage3({super.key});
 
@@ -17,14 +21,14 @@ class DesignerPage3 extends StatefulWidget {
 
 class _DesignerPage3State extends State<DesignerPage3> {
   bool _initialized = false;
-  //TO-D2
+
   List<String> _bladeItems = ["No"];
   List<String> _creasingItems = ["No"];
   List<String> _capsuleItems = ["No"];
   bool _loadingBlades = true;
   bool _loadingCreasings = true;
   bool _loadingCapsules = true;
-  //EN-D2
+
   List<String> _maleEmbossItems = ["No"];
   List<String> _femaleEmbossItems = ["No"];
   bool _loadingMaleEmboss = true;
@@ -33,26 +37,20 @@ class _DesignerPage3State extends State<DesignerPage3> {
   @override
   void initState() {
     super.initState();
-    //TO-D2
     _fetchBlades();
     _fetchCreasings();
     _fetchCapsules();
-    //EN-D2
     _fetchMaleEmboss();
     _fetchFemaleEmboss();
   }
-  //TO-D2
+
   Future<void> _fetchBlades() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Blades")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _bladeItems = ["No", ...items];
         _loadingBlades = false;
@@ -65,15 +63,11 @@ class _DesignerPage3State extends State<DesignerPage3> {
 
   Future<void> _fetchCreasings() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Creasings")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Creasings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Creasings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _creasingItems = ["No", ...items];
         _loadingCreasings = false;
@@ -87,10 +81,8 @@ class _DesignerPage3State extends State<DesignerPage3> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (_initialized) return;
     _initialized = true;
-
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
     }
@@ -98,15 +90,11 @@ class _DesignerPage3State extends State<DesignerPage3> {
 
   Future<void> _fetchCapsules() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Capsules")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Capsules").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Capsules'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _capsuleItems = ["No", ...items];
         _loadingCapsules = false;
@@ -116,24 +104,22 @@ class _DesignerPage3State extends State<DesignerPage3> {
       setState(() => _loadingCapsules = false);
     }
   }
-  //EN-D2
 
   Future<void> _fetchMaleEmboss() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Males Embosse")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Males Embosse").get();
       final items = snap.docs
           .map((doc) {
-        // Try both with and without trailing space
         final data = doc.data();
-        final val = (data['Males Embosse '] ?? data['Males Embosse'] ?? '').toString().trim();
+        final val =
+        (data['Males Embosse '] ?? data['Males Embosse'] ?? '')
+            .toString()
+            .trim();
         return val;
       })
           .where((val) => val.isNotEmpty && val != "No")
           .toList();
-
       setState(() {
         _maleEmbossItems = ["No", ...items];
         _loadingMaleEmboss = false;
@@ -149,16 +135,17 @@ class _DesignerPage3State extends State<DesignerPage3> {
       final snap = await FirebaseFirestore.instance
           .collection("Females Emobosse")
           .get();
-
       final items = snap.docs
           .map((doc) {
         final data = doc.data();
-        final val = (data['Females Emobosse '] ?? data['Females Emobosse'] ?? '').toString().trim();
+        final val =
+        (data['Females Emobosse '] ?? data['Females Emobosse'] ?? '')
+            .toString()
+            .trim();
         return val;
       })
           .where((val) => val.isNotEmpty && val != "No")
           .toList();
-
       setState(() {
         _femaleEmbossItems = ["No", ...items];
         _loadingFemaleEmboss = false;
@@ -178,22 +165,18 @@ class _DesignerPage3State extends State<DesignerPage3> {
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
-
         setState(() {
-          //TO-D2
           form.Blade.text = decodedData["Blade"] ?? "No";
           form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
           form.Creasing.text = decodedData["Creasing"] ?? "No";
           form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
           form.Unknown.text = decodedData["Unknown"] ?? "";
           form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
-          //EN-D2
           form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
           form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
           form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
           form.FemaleEmbossType.text = decodedData["FemaleEmbossType"] ?? "";
         });
-
         debugPrint("✅ DesignerPage3 loaded data from route");
       } catch (e) {
         debugPrint("❌ Error decoding data: $e");
@@ -205,30 +188,24 @@ class _DesignerPage3State extends State<DesignerPage3> {
             .collection("jobs")
             .doc(lpmParam)
             .get();
-
         if (!snap.exists) {
           debugPrint("❌ Firestore: document $lpmParam not found");
           return;
         }
-
         final decodedData =
         Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
-
         setState(() {
-          //TO-D2
           form.Blade.text = decodedData["Blade"] ?? "No";
           form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
           form.Creasing.text = decodedData["Creasing"] ?? "No";
           form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
           form.Unknown.text = decodedData["Unknown"] ?? "";
           form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
-          //EN-D2
           form.EmbossStatus.text = decodedData["EmbossStatus"] ?? "No";
           form.EmbossPcs.text = decodedData["EmbossPcs"] ?? "";
           form.MaleEmbossType.text = decodedData["MaleEmbossType"] ?? "";
           form.FemaleEmbossType.text = decodedData["FemaleEmbossType"] ?? "";
         });
-
         debugPrint("✅ DesignerPage3 loaded data from Firestore");
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
@@ -241,118 +218,157 @@ class _DesignerPage3State extends State<DesignerPage3> {
     final form = NewFormScope.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, size: 22),
           onPressed: () => context.go('/dashboard'),
         ),
-        title: const Text("Designer 3"),
-        backgroundColor: Colors.yellow,
+        title: const Text(
+          "Add Designer Job",
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: DesignerStepHeader(currentStep: 3),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            if (form.canView("EmbossStatus")) ...[
-              FlexibleToggle(
-                label: "Emboss",
-                inactiveText: "No",
-                activeText: "Yes",
-                initialValue: form.EmbossStatus.text.toLowerCase() == "yes",
-                onChanged: (v) {
-                  form.EmbossStatus.text = v ? "Yes" : "No";
-                },
+            // ── Emboss Toggle ────────────────────────────────────────────────
+            if (form.canView("EmbossStatus"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Emboss"),
+                    FlexibleToggle(
+                      label: "",
+                      inactiveText: "No",
+                      activeText: "Yes",
+                      initialValue:
+                      form.EmbossStatus.text.toLowerCase() == "yes",
+                      onChanged: (v) {
+                        form.EmbossStatus.text = v ? "Yes" : "No";
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
 
-            /// ✅ Emboss Pcs
-            if (form.canView("EmbossPcs")) ...[
-              TextInput(
-                label: "Emboss Pcs",
-                hint: "No of Pcs",
-                controller: form.EmbossPcs,
+            // ── Emboss Pcs ───────────────────────────────────────────────────
+            if (form.canView("EmbossPcs"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Emboss Pcs"),
+                    TextInput(
+                      label: "",
+                      hint: "No of Pcs",
+                      controller: form.EmbossPcs,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
 
-            if (form.canView("MaleEmbossType")) ...[
-              _loadingMaleEmboss
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Male Emboss",
-                items: _maleEmbossItems,
-                initialValue: form.MaleEmbossType.text.isEmpty ? "No" : form.MaleEmbossType.text,
-                firestoreCollection: "Males Embosse",
-                firestoreField: "Males Embosse",
-                onChanged: (v) {
-                  setState(() {
-                    form.MaleEmbossType.text = v ?? "";
-                  });
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _maleEmbossItems.add(newItem);
-                  });
-                },
+            // ── Male Emboss ──────────────────────────────────────────────────
+            if (form.canView("MaleEmbossType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Male Emboss"),
+                    _loadingMaleEmboss
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _maleEmbossItems,
+                      initialValue: form.MaleEmbossType.text.isEmpty
+                          ? "No"
+                          : form.MaleEmbossType.text,
+                      firestoreCollection: "Males Embosse",
+                      firestoreField: "Males Embosse",
+                      onChanged: (v) =>
+                          setState(() => form.MaleEmbossType.text = v ?? ""),
+                      onAdd: (newItem) =>
+                          setState(() => _maleEmbossItems.add(newItem)),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 30),
-            ],
 
-            /// ✅ Female Emboss
-            if (form.canView("FemaleEmbossType")) ...[
-              _loadingFemaleEmboss
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Female Emboss",
-                items: _femaleEmbossItems,
-                initialValue: form.FemaleEmbossType.text.isEmpty ? "No" : form.FemaleEmbossType.text,
-                firestoreCollection: "Females Emobosse",
-                firestoreField: "Females Emobosse",
-                onChanged: (v) {
-                  setState(() {
-                    form.FemaleEmbossType.text = v ?? "";
-                  });
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _femaleEmbossItems.add(newItem);
-                  });
-                },
+            // ── Female Emboss ────────────────────────────────────────────────
+            if (form.canView("FemaleEmbossType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Female Emboss"),
+                    _loadingFemaleEmboss
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _femaleEmbossItems,
+                      initialValue: form.FemaleEmbossType.text.isEmpty
+                          ? "No"
+                          : form.FemaleEmbossType.text,
+                      firestoreCollection: "Females Emobosse",
+                      firestoreField: "Females Emobosse",
+                      onChanged: (v) =>
+                          setState(() => form.FemaleEmbossType.text = v ?? ""),
+                      onAdd: (newItem) =>
+                          setState(() => _femaleEmbossItems.add(newItem)),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 30),
-            ],
 
-            /// ✅ Micro Serration – Half Cut
-            if (form.canView("MicroSerrationHalfCut")) ...[
-              FlexibleToggle(
-                label: "Micro serration Half cut 23.60",
-                inactiveText: "No",
-                activeText: "Yes",
-                initialValue: false,
-                onChanged: (val) {},
+            // ── Micro Serration – Half Cut ───────────────────────────────────
+            if (form.canView("MicroSerrationHalfCut"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Micro Serration Half Cut 23.60"),
+                    FlexibleToggle(
+                      label: "",
+                      inactiveText: "No",
+                      activeText: "Yes",
+                      initialValue: false,
+                      onChanged: (val) {},
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
 
-            /// ✅ Micro Serration – Creasing
-            if (form.canView("MicroSerrationCreasing")) ...[
-              FlexibleToggle(
-                label: "Micro serration Creasing 23.60",
-                inactiveText: "No",
-                activeText: "Yes",
-                initialValue: false,
-                onChanged: (val) {},
+            // ── Micro Serration – Creasing ───────────────────────────────────
+            if (form.canView("MicroSerrationCreasing"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Micro Serration Creasing 23.60"),
+                    FlexibleToggle(
+                      label: "",
+                      inactiveText: "No",
+                      activeText: "Yes",
+                      initialValue: false,
+                      onChanged: (val) {},
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
-
           ],
         ),
       ),
+
     );
   }
 }
