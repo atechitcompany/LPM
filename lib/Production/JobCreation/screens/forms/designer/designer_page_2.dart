@@ -11,6 +11,12 @@ import 'package:lightatech/FormComponents/FileUploadBox.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'dart:convert';
 
+import 'designer_page_1.dart';
+import 'designer_widgets.dart';
+
+// Import shared widgets from page1
+// import './designer_page_1.dart';
+
 class DesignerPage2 extends StatefulWidget {
   const DesignerPage2({super.key});
 
@@ -57,8 +63,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchPlys() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Plys").get();
+      final snap = await FirebaseFirestore.instance.collection("Plys").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Plys'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -76,6 +81,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
     }
@@ -83,8 +90,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchBlades() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Blades").get();
+      final snap = await FirebaseFirestore.instance.collection("Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -101,8 +107,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCreasings() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Creasings").get();
+      final snap = await FirebaseFirestore.instance.collection("Creasings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Creasings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -119,8 +124,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCapsules() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Capsules").get();
+      final snap = await FirebaseFirestore.instance.collection("Capsules").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Capsules'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -137,8 +141,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchPerforations() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Perforations").get();
+      final snap = await FirebaseFirestore.instance.collection("Perforations").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Perforations'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -155,9 +158,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchZigZagBlades() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Zig Zags Blades")
-          .get();
+      final snap = await FirebaseFirestore.instance.collection("Zig Zags Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Zig Zags Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -174,8 +175,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchRubbers() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Rubbers").get();
+      final snap = await FirebaseFirestore.instance.collection("Rubbers").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Rubbers'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -192,8 +192,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchHoles() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Holes").get();
+      final snap = await FirebaseFirestore.instance.collection("Holes").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Holes'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -210,8 +209,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchStrippings() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Strippings").get();
+      final snap = await FirebaseFirestore.instance.collection("Strippings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Strippings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -254,7 +252,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
-
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -293,7 +290,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               decodedData["HoleSelectedByTimestamp"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
-
         debugPrint("✅ DesignerPage2 loaded data from route");
       } catch (e) {
         debugPrint("❌ Error decoding data: $e");
@@ -305,15 +301,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
             .collection("jobs")
             .doc(lpmParam)
             .get();
-
         if (!snap.exists) {
           debugPrint("❌ Firestore: document $lpmParam not found");
           return;
         }
-
-        final decodedData = Map<String, dynamic>.from(
-            snap.data()?["designer"]?["data"] ?? {});
-
+        final decodedData =
+        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -352,7 +345,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               decodedData["HoleSelectedByTimestamp"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
-
         debugPrint("✅ DesignerPage2 loaded data from Firestore");
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
@@ -388,35 +380,35 @@ class _DesignerPage2State extends State<DesignerPage2> {
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    final bool isBladeSelected =
-        form.Blade.text.trim().toLowerCase() != "no";
-    final bool isCreasingSelected =
-        form.Creasing.text.trim().toLowerCase() != "no";
-    final bool isPlySelected =
-        form.PlyType.text.trim().toLowerCase() != "no";
-    final lpmParam =
-        GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
-    final bool isPerforationSelected =
-        form.Perforation.text.trim().toLowerCase() != "no";
-    final bool isZigZagBladeSelected =
-        form.ZigZagBlade.text.trim().toLowerCase() != "no";
-    final bool isRubberSelected =
-        form.RubberType.text.trim().toLowerCase() != "no";
-    final bool isHoleSelected =
-        form.HoleType.text.trim().toLowerCase() != "no";
+    final bool isBladeSelected = form.Blade.text.trim().toLowerCase() != "no";
+    final bool isCreasingSelected = form.Creasing.text.trim().toLowerCase() != "no";
+    final bool isPlySelected = form.PlyType.text.trim().toLowerCase() != "no";
+    final bool isPerforationSelected = form.Perforation.text.trim().toLowerCase() != "no";
+    final bool isZigZagBladeSelected = form.ZigZagBlade.text.trim().toLowerCase() != "no";
+    final bool isRubberSelected = form.RubberType.text.trim().toLowerCase() != "no";
+    final bool isHoleSelected = form.HoleType.text.trim().toLowerCase() != "no";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, size: 22),
           onPressed: () => context.go('/dashboard'),
         ),
-        title: const Text("Designer 2"),
-        backgroundColor: Colors.yellow,
+        title: const Text(
+          "Add Designer Job",
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: DesignerStepHeader(currentStep: 2),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -456,7 +448,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   setState(() => _plyItems.add(newItem));
                 },
               ),
-            ],
 
             /// ── Ply Selected By ──
             if (isPlySelected && form.canView("PlySelectedBy")) ...[
@@ -851,11 +842,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   setState(() => _capsuleItems.add(newItem));
                 },
               ),
-              const SizedBox(height: 20),
-            ],
           ],
         ),
       ),
+
     );
   }
 }
