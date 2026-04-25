@@ -8,7 +8,8 @@ import '../../../customer/intro/widgets/order_status_card.dart';
 import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
 import 'job_summary_field_config.dart'; // ← add this import
 
-class JobSummaryScreen extends StatelessWidget {
+class JobSummaryScreen extends StatefulWidget {
+
   final String lpm;
   const JobSummaryScreen({super.key, required this.lpm});
 
@@ -31,6 +32,34 @@ class JobSummaryScreen extends StatelessWidget {
     "Emboss": "emboss",
   };
 
+  @override
+  State<JobSummaryScreen> createState() => _JobSummaryScreenState();
+}
+
+class _JobSummaryScreenState extends State<JobSummaryScreen> {
+  late Future<DocumentSnapshot> _jobFuture; // ✅ HERW
+  @override
+  void initState() {
+    super.initState();
+
+    // Listener
+    Future.microtask(() {
+      context.read<OrderDetailViewModel>().listenToJob(widget.lpm);
+    });
+
+    // ✅ ADD THIS
+    _jobFuture = FirebaseFirestore.instance
+        .collection("jobs")
+        .doc(widget.lpm)
+        .get(const GetOptions(source: Source.cache))
+        .then((snap) {
+      if (snap.exists) return snap;
+      return FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(widget.lpm)
+          .get(const GetOptions(source: Source.server));
+    });
+  }
   final List<String> pipeline = const [
     "Designer",
     "AutoBending",
@@ -41,9 +70,9 @@ class JobSummaryScreen extends StatelessWidget {
   ];
 
   String get _mainLpm {
-    final parts = lpm.split('-');
+    final parts = widget.lpm.split('-');
     if (parts.length >= 5) return parts.take(4).join('-');
-    return lpm;
+    return widget.lpm;
   }
 
   String _prettyValue(dynamic value) {
@@ -126,7 +155,7 @@ class JobSummaryScreen extends StatelessWidget {
         backgroundColor: Colors.yellow,
         child: const Icon(Icons.edit, color: Colors.black),
         onPressed: () {
-          final route = departmentEditRoute[currentDept];
+          final route = JobSummaryScreen.departmentEditRoute[currentDept];
           if (route == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("No form for $currentDept")),
@@ -138,10 +167,7 @@ class JobSummaryScreen extends StatelessWidget {
       ),
 
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection("jobs")
-            .doc(_mainLpm)
-            .get(),
+        future: _jobFuture,
         builder: (context, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -153,10 +179,6 @@ class JobSummaryScreen extends StatelessWidget {
           final data = snap.data!.data() as Map<String, dynamic>;
           final approvalStatus = data["customerApprovalStatus"];
           final changesNote    = data["customerChangesNote"];
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<OrderDetailViewModel>().listenToJob(lpm);
-          });
 
           final viewModel = context.watch<OrderDetailViewModel>();
           final filesMap  = Map<String, dynamic>.from(data['files'] ?? {});
@@ -250,7 +272,7 @@ class JobSummaryScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       OrderStatusCard(
-                        stepStatus: viewModel.getStepStatus(lpm),
+                        stepStatus: viewModel.getStepStatus(widget.lpm),
                       ),
                     ],
                   ),
@@ -262,10 +284,10 @@ class JobSummaryScreen extends StatelessWidget {
                 // For each department, read its raw Firestore data then
                 // filter it through JobSummaryFieldConfig so only the
                 // fields that are actually in the form are shown.
-                if (departmentFirestoreKey[currentDept] != null) ...[
+                if (JobSummaryScreen.departmentFirestoreKey[currentDept] != null) ...[
                   Builder(
                     builder: (context) {
-                      final firestoreKey = departmentFirestoreKey[currentDept]!;
+                      final firestoreKey = JobSummaryScreen.departmentFirestoreKey[currentDept]!;
 
                       final rawData = Map<String, dynamic>.from(
                         data[firestoreKey]?["data"] ?? {},
@@ -296,8 +318,6 @@ class JobSummaryScreen extends StatelessWidget {
     );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // ATTACHMENTS ROW
   // ──────────────────────────────────────────────────────────────────────────
   Widget _buildAttachmentsRow(
       BuildContext context, Map<String, dynamic> filesMap) {
@@ -364,9 +384,6 @@ class JobSummaryScreen extends StatelessWidget {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // HELPERS
-  // ──────────────────────────────────────────────────────────────────────────
-
   Widget _sectionTitle(String t) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -439,6 +456,13 @@ class JobSummaryScreen extends StatelessWidget {
         }).toList(),
       ],
     );
+
+  }
+  @override
+  @override
+  void dispose() {
+    context.read<OrderDetailViewModel>().disposeListener(widget.lpm);
+    super.dispose();
   }
 }
 
@@ -479,8 +503,8 @@ class _AttachmentChip extends StatelessWidget {
   Future<void> _open() async {
     if (viewUrl.isEmpty) return;
     final uri = Uri.parse(viewUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      debugPrint("Could not open file");
     }
   }
 
