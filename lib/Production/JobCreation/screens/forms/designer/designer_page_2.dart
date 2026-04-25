@@ -10,6 +10,12 @@ import 'package:lightatech/FormComponents/FileUploadBox.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'dart:convert';
 
+import 'designer_page_1.dart';
+import 'designer_widgets.dart';
+
+// Import shared widgets from page1
+// import './designer_page_1.dart';
+
 class DesignerPage2 extends StatefulWidget {
   const DesignerPage2({super.key});
 
@@ -21,7 +27,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
   bool isDesigningDone = false;
   bool _initialized = false;
 
-  // ✅ NEW
   List<String> _plyItems = [];
   bool _loadingPlys = true;
   List<String> _bladeItems = ["No"];
@@ -42,8 +47,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
   bool _loadingHoles = true;
   bool _loadingStrippings = true;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -60,15 +63,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchPlys() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Plys")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Plys").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Plys'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _plyItems = ["No", ...items];
         _loadingPlys = false;
@@ -82,10 +81,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (_initialized) return;
     _initialized = true;
-
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
     }
@@ -93,15 +90,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchBlades() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Blades")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _bladeItems = ["No", ...items];
         _loadingBlades = false;
@@ -114,15 +107,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCreasings() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Creasings")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Creasings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Creasings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _creasingItems = ["No", ...items];
         _loadingCreasings = false;
@@ -135,15 +124,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCapsules() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Capsules")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Capsules").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Capsules'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _capsuleItems = ["No", ...items];
         _loadingCapsules = false;
@@ -153,18 +138,14 @@ class _DesignerPage2State extends State<DesignerPage2> {
       setState(() => _loadingCapsules = false);
     }
   }
-  //EN-D2
+
   Future<void> _fetchPerforations() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Perforations")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Perforations").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Perforations'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _perforationItems = ["No", ...items];
         _loadingPerforations = false;
@@ -177,15 +158,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchZigZagBlades() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Zig Zags Blades")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Zig Zags Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Zig Zags Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _zigZagBladeItems = ["No", ...items];
         _loadingZigZagBlades = false;
@@ -198,15 +175,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchRubbers() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Rubbers")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Rubbers").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Rubbers'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _rubberItems = ["No", ...items];
         _loadingRubbers = false;
@@ -219,15 +192,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchHoles() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Holes")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Holes").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Holes'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _holeItems = ["No", ...items];
         _loadingHoles = false;
@@ -240,15 +209,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchStrippings() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Strippings")
-          .get();
-
+      final snap = await FirebaseFirestore.instance.collection("Strippings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Strippings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _strippingItems = ["No", ...items];
         _loadingStrippings = false;
@@ -268,7 +233,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
-
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -290,7 +254,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
           form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
-
         debugPrint("✅ DesignerPage2 loaded data from route");
       } catch (e) {
         debugPrint("❌ Error decoding data: $e");
@@ -302,15 +265,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
             .collection("jobs")
             .doc(lpmParam)
             .get();
-
         if (!snap.exists) {
           debugPrint("❌ Firestore: document $lpmParam not found");
           return;
         }
-
         final decodedData =
         Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
-
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -332,7 +292,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
           form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
-
         debugPrint("✅ DesignerPage2 loaded data from Firestore");
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
@@ -340,446 +299,384 @@ class _DesignerPage2State extends State<DesignerPage2> {
     }
   }
 
+  // ── helper ──────────────────────────────────────────────────────────────────
+  String _selectedByText(BuildContext context) =>
+      "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
+          "at ${TimeOfDay.now().format(context)}";
+
+  Widget _disabledField(TextEditingController controller, String label) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            enabled: false,
+            decoration: InputDecoration(
+              hintText: "Auto-filled",
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+        ],
+      );
+
   @override
   Widget build(BuildContext context) {
     final form = NewFormScope.of(context);
 
-    final bool isBladeSelected =
-        form.Blade.text.trim().toLowerCase() != "no";
-    final bool isCreasingSelected =
-        form.Creasing.text.trim().toLowerCase() != "no";
-    final bool isPlySelected =
-        form.PlyType.text.trim().toLowerCase() != "no";
-    final lpmParam = GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
-    final bool isPerforationSelected =
-        form.Perforation.text.trim().toLowerCase() != "no";
-    final bool isZigZagBladeSelected =
-        form.ZigZagBlade.text.trim().toLowerCase() != "no";
-    final bool isRubberSelected =
-        form.RubberType.text.trim().toLowerCase() != "no";
-    final bool isHoleSelected =
-        form.HoleType.text.trim().toLowerCase() != "no";
-
-    String selectedByText() {
-      return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
-          "at ${TimeOfDay.now().format(context)}";
-    }
+    final bool isBladeSelected = form.Blade.text.trim().toLowerCase() != "no";
+    final bool isCreasingSelected = form.Creasing.text.trim().toLowerCase() != "no";
+    final bool isPlySelected = form.PlyType.text.trim().toLowerCase() != "no";
+    final bool isPerforationSelected = form.Perforation.text.trim().toLowerCase() != "no";
+    final bool isZigZagBladeSelected = form.ZigZagBlade.text.trim().toLowerCase() != "no";
+    final bool isRubberSelected = form.RubberType.text.trim().toLowerCase() != "no";
+    final bool isHoleSelected = form.HoleType.text.trim().toLowerCase() != "no";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, size: 22),
           onPressed: () => context.go('/dashboard'),
         ),
-        title: const Text("Designer 2"),
-        backgroundColor: Colors.yellow,
+        title: const Text(
+          "Add Designer Job",
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: DesignerStepHeader(currentStep: 2),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-          /// ✅ Ply
-            if (form.canView("PlyType")) ...[
-              _loadingPlys
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Ply",
-                items: _plyItems,
-                initialValue:
-                form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
-                firestoreCollection: "Plys",  // ✅ saves new entries
-                firestoreField: "Plys",       // ✅ field name in Firestore
-                onChanged: (v) {
-                  setState(() {
-                    form.PlyType.text = v ?? "";
-                  });
-
-                  final selected = (v ?? "").trim().toLowerCase();
-                  if (selected == "no") {
-                    form.PlySelectedBy.clear();
-                    return;
-                  }
-
-                  form.PlySelectedBy.text =
-                  "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
-                      "at ${TimeOfDay.now().format(context)}";
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _plyItems.add(newItem);
-                  });
-                },
-              ),
-            ],
-
-            const SizedBox(height: 20),
-
-            /// ✅ Ply Selected By
-            if (isPlySelected && form.canView("PlySelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Ply Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.PlySelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Ply ─────────────────────────────────────────────────────────
+            if (form.canView("PlyType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Ply"),
+                    _loadingPlys
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _plyItems,
+                      initialValue: form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
+                      firestoreCollection: "Plys",
+                      firestoreField: "Plys",
+                      onChanged: (v) {
+                        setState(() => form.PlyType.text = v ?? "");
+                        final selected = (v ?? "").trim().toLowerCase();
+                        if (selected == "no") {
+                          form.PlySelectedBy.clear();
+                          return;
+                        }
+                        form.PlySelectedBy.text =
+                        "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
+                            "at ${TimeOfDay.now().format(context)}";
+                      },
+                      onAdd: (newItem) =>
+                          setState(() => _plyItems.add(newItem)),
+                    ),
+                    if (isPlySelected && form.canView("PlySelectedBy"))
+                      _disabledField(form.PlySelectedBy, "Ply Selected By"),
+                  ],
                 ),
               ),
-            ],
 
-            /// ✅ Blade
-            if (form.canView("Blade")) ...[
-              _loadingBlades
-                  ? const Center(child: CircularProgressIndicator())
-                  : SearchableDropdownWithInitial(
-                label: "Blade",
-                items: _bladeItems,
-                initialValue:
-                form.Blade.text.isEmpty ? "No" : form.Blade.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.Blade.text = (v ?? "No").trim();
-                  });
-
-                  if (form.Blade.text.toLowerCase() == "no") {
-                    form.BladeSelectedBy.clear();
-                  } else {
-                    form.BladeSelectedBy.text = selectedByText();
-                  }
-                },
-              ),
-            ],
-
-            /// ✅ Blade Selected By
-            if (isBladeSelected && form.canView("BladeSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.BladeSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Blade ────────────────────────────────────────────────────────
+            if (form.canView("Blade"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Blade"),
+                    _loadingBlades
+                        ? const Center(child: CircularProgressIndicator())
+                        : SearchableDropdownWithInitial(
+                      label: "",
+                      items: _bladeItems,
+                      initialValue:
+                      form.Blade.text.isEmpty ? "No" : form.Blade.text,
+                      onChanged: (v) {
+                        setState(() => form.Blade.text = (v ?? "No").trim());
+                        if (form.Blade.text.toLowerCase() == "no") {
+                          form.BladeSelectedBy.clear();
+                        } else {
+                          form.BladeSelectedBy.text = _selectedByText(context);
+                        }
+                      },
+                    ),
+                    if (isBladeSelected && form.canView("BladeSelectedBy"))
+                      _disabledField(form.BladeSelectedBy, "Blade Selected By"),
+                  ],
                 ),
               ),
-            ],
 
-            if (form.canView("Blade")) const SizedBox(height: 20),
-
-            /// ✅ Creasing
-            if (form.canView("Creasing")) ...[
-              _loadingCreasings
-                  ? const Center(child: CircularProgressIndicator())
-                  : SearchableDropdownWithInitial(
-                label: "Creasing",
-                items: _creasingItems,
-                initialValue:
-                form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
-                onChanged: (v) {
-                  setState(() {
-                    form.Creasing.text = (v ?? "No").trim();
-                  });
-
-                  if (form.Creasing.text.toLowerCase() == "no") {
-                    form.CreasingSelectedBy.clear();
-                  } else {
-                    form.CreasingSelectedBy.text = selectedByText();
-                  }
-                },
-              ),
-            ],
-
-            /// ✅ Creasing Selected By
-            if (isCreasingSelected && form.canView("CreasingSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Creasing Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.CreasingSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Creasing ─────────────────────────────────────────────────────
+            if (form.canView("Creasing"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Creasing"),
+                    _loadingCreasings
+                        ? const Center(child: CircularProgressIndicator())
+                        : SearchableDropdownWithInitial(
+                      label: "",
+                      items: _creasingItems,
+                      initialValue: form.Creasing.text.isEmpty
+                          ? "No"
+                          : form.Creasing.text,
+                      onChanged: (v) {
+                        setState(
+                                () => form.Creasing.text = (v ?? "No").trim());
+                        if (form.Creasing.text.toLowerCase() == "no") {
+                          form.CreasingSelectedBy.clear();
+                        } else {
+                          form.CreasingSelectedBy.text =
+                              _selectedByText(context);
+                        }
+                      },
+                    ),
+                    if (isCreasingSelected && form.canView("CreasingSelectedBy"))
+                      _disabledField(
+                          form.CreasingSelectedBy, "Creasing Selected By"),
+                  ],
                 ),
               ),
-            ],
 
-            if (form.canView("Creasing")) const SizedBox(height: 20),
-
-            /// ✅ Perforation
-            if (form.canView("Perforation")) ...[
-              _loadingPerforations
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Perforation",
-                items: _perforationItems,
-                initialValue: form.Perforation.text.isEmpty ? "No" : form.Perforation.text,
-                firestoreCollection: "Perforations",
-                firestoreField: "Perforations",
-                onChanged: (v) {
-                  setState(() {
-                    form.Perforation.text = (v ?? "No").trim();
-                  });
-
-                  if (form.Perforation.text.toLowerCase() == "no") {
-                    form.PerforationSelectedBy.clear();
-                  } else {
-                    form.PerforationSelectedBy.text = selectedByText();
-                  }
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _perforationItems.add(newItem);
-                  });
-                },
-              ),
-            ],
-
-            /// ✅ Perforation Selected By
-            if (isPerforationSelected && form.canView("PerforationSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Perforation Done By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.PerforationSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Perforation ──────────────────────────────────────────────────
+            if (form.canView("Perforation"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Perforation"),
+                    _loadingPerforations
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _perforationItems,
+                      initialValue: form.Perforation.text.isEmpty
+                          ? "No"
+                          : form.Perforation.text,
+                      firestoreCollection: "Perforations",
+                      firestoreField: "Perforations",
+                      onChanged: (v) {
+                        setState(() =>
+                        form.Perforation.text = (v ?? "No").trim());
+                        if (form.Perforation.text.toLowerCase() == "no") {
+                          form.PerforationSelectedBy.clear();
+                        } else {
+                          form.PerforationSelectedBy.text =
+                              _selectedByText(context);
+                        }
+                      },
+                      onAdd: (newItem) =>
+                          setState(() => _perforationItems.add(newItem)),
+                    ),
+                    if (isPerforationSelected &&
+                        form.canView("PerforationSelectedBy"))
+                      _disabledField(
+                          form.PerforationSelectedBy, "Perforation Done By"),
+                  ],
                 ),
               ),
-            ],
 
-            if (form.canView("Perforation")) const SizedBox(height: 20),
-
-            /// ✅ Zig Zag Blade
-            if (form.canView("ZigZagBlade")) ...[
-              _loadingZigZagBlades
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Zig Zag Blade",
-                items: _zigZagBladeItems,
-                initialValue: form.ZigZagBlade.text.isEmpty ? "No" : form.ZigZagBlade.text,
-                firestoreCollection: "Zig Zags Blades",
-                firestoreField: "Zig Zags Blades",
-                onChanged: (v) {
-                  setState(() {
-                    form.ZigZagBlade.text = (v ?? "No").trim();
-                  });
-
-                  if (form.ZigZagBlade.text.toLowerCase() == "no") {
-                    form.ZigZagBladeSelectedBy.clear();
-                  } else {
-                    form.ZigZagBladeSelectedBy.text = selectedByText();
-                  }
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _zigZagBladeItems.add(newItem);
-                  });
-                },
-              ),
-            ],
-
-            /// ✅ Zig Zag Blade Selected By
-            if (isZigZagBladeSelected && form.canView("ZigZagBladeSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Zig Zag Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.ZigZagBladeSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Zig Zag Blade ────────────────────────────────────────────────
+            if (form.canView("ZigZagBlade"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Zig Zag Blade"),
+                    _loadingZigZagBlades
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _zigZagBladeItems,
+                      initialValue: form.ZigZagBlade.text.isEmpty
+                          ? "No"
+                          : form.ZigZagBlade.text,
+                      firestoreCollection: "Zig Zags Blades",
+                      firestoreField: "Zig Zags Blades",
+                      onChanged: (v) {
+                        setState(() =>
+                        form.ZigZagBlade.text = (v ?? "No").trim());
+                        if (form.ZigZagBlade.text.toLowerCase() == "no") {
+                          form.ZigZagBladeSelectedBy.clear();
+                        } else {
+                          form.ZigZagBladeSelectedBy.text =
+                              _selectedByText(context);
+                        }
+                      },
+                      onAdd: (newItem) =>
+                          setState(() => _zigZagBladeItems.add(newItem)),
+                    ),
+                    if (isZigZagBladeSelected &&
+                        form.canView("ZigZagBladeSelectedBy"))
+                      _disabledField(form.ZigZagBladeSelectedBy,
+                          "Zig Zag Blade Selected By"),
+                  ],
                 ),
               ),
-            ],
 
-            if (form.canView("ZigZagBlade")) const SizedBox(height: 20),
-
-            /// ✅ Rubber
-            if (form.canView("RubberType")) ...[
-              _loadingRubbers
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Rubber",
-                items: _rubberItems,
-                initialValue: form.RubberType.text.isEmpty ? "No" : form.RubberType.text,
-                firestoreCollection: "Rubbers",
-                firestoreField: "Rubbers",
-                onChanged: (v) {
-                  setState(() {
-                    form.RubberType.text = (v ?? "No").trim();
-                  });
-
-                  if (form.RubberType.text.toLowerCase() == "no") {
-                    form.RubberSelectedBy.clear();
-                  } else {
-                    form.RubberSelectedBy.text = selectedByText();
-                  }
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _rubberItems.add(newItem);
-                  });
-                },
-              ),
-            ],
-
-            /// ✅ Rubber Selected By
-            if (isRubberSelected && form.canView("RubberSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Rubber Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.RubberSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Rubber ───────────────────────────────────────────────────────
+            if (form.canView("RubberType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Rubber"),
+                    _loadingRubbers
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _rubberItems,
+                      initialValue: form.RubberType.text.isEmpty
+                          ? "No"
+                          : form.RubberType.text,
+                      firestoreCollection: "Rubbers",
+                      firestoreField: "Rubbers",
+                      onChanged: (v) {
+                        setState(() =>
+                        form.RubberType.text = (v ?? "No").trim());
+                        if (form.RubberType.text.toLowerCase() == "no") {
+                          form.RubberSelectedBy.clear();
+                        } else {
+                          form.RubberSelectedBy.text =
+                              _selectedByText(context);
+                        }
+                      },
+                      onAdd: (newItem) =>
+                          setState(() => _rubberItems.add(newItem)),
+                    ),
+                    if (isRubberSelected && form.canView("RubberSelectedBy"))
+                      _disabledField(
+                          form.RubberSelectedBy, "Rubber Selected By"),
+                  ],
                 ),
               ),
-            ],
 
-            if (form.canView("RubberType")) const SizedBox(height: 20),
-
-            /// ✅ Hole
-            if (form.canView("HoleType")) ...[
-              _loadingHoles
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Hole",
-                items: _holeItems,
-                initialValue: form.HoleType.text.isEmpty ? "No" : form.HoleType.text,
-                firestoreCollection: "Holes",
-                firestoreField: "Holes",
-                onChanged: (v) {
-                  setState(() {
-                    form.HoleType.text = (v ?? "No").trim();
-                  });
-
-                  if (form.HoleType.text.toLowerCase() == "no") {
-                    form.HoleSelectedBy.clear();
-                  } else {
-                    form.HoleSelectedBy.text = selectedByText();
-                  }
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _holeItems.add(newItem);
-                  });
-                },
-              ),
-            ],
-
-            /// ✅ Hole Selected By
-            if (isHoleSelected && form.canView("HoleSelectedBy")) ...[
-              const SizedBox(height: 20),
-              const Text(
-                "Hole Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: form.HoleSelectedBy,
-                enabled: false,
-                decoration: InputDecoration(
-                  hintText: "Will be filled automatically",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            // ── Hole ─────────────────────────────────────────────────────────
+            if (form.canView("HoleType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Hole"),
+                    _loadingHoles
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _holeItems,
+                      initialValue: form.HoleType.text.isEmpty
+                          ? "No"
+                          : form.HoleType.text,
+                      firestoreCollection: "Holes",
+                      firestoreField: "Holes",
+                      onChanged: (v) {
+                        setState(
+                                () => form.HoleType.text = (v ?? "No").trim());
+                        if (form.HoleType.text.toLowerCase() == "no") {
+                          form.HoleSelectedBy.clear();
+                        } else {
+                          form.HoleSelectedBy.text =
+                              _selectedByText(context);
+                        }
+                      },
+                      onAdd: (newItem) =>
+                          setState(() => _holeItems.add(newItem)),
+                    ),
+                    if (isHoleSelected && form.canView("HoleSelectedBy"))
+                      _disabledField(form.HoleSelectedBy, "Hole Selected By"),
+                  ],
                 ),
               ),
-            ],
 
-            if (form.canView("HoleType")) const SizedBox(height: 20),
-
-            /// ✅ Stripping
-            if (form.canView("StrippingType")) ...[
-              _loadingStrippings
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Stripping",
-                items: _strippingItems,
-                initialValue: form.StrippingType.text.isEmpty
-                    ? "No"
-                    : form.StrippingType.text,
-                firestoreCollection: "Strippings",
-                firestoreField: "Strippings",
-                onChanged: (v) {
-                  setState(() {
-                    form.StrippingType.text = (v ?? "No").trim();
-                  });
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _strippingItems.add(newItem);
-                  });
-                },
+            // ── Stripping ────────────────────────────────────────────────────
+            if (form.canView("StrippingType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Stripping"),
+                    _loadingStrippings
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _strippingItems,
+                      initialValue: form.StrippingType.text.isEmpty
+                          ? "No"
+                          : form.StrippingType.text,
+                      firestoreCollection: "Strippings",
+                      firestoreField: "Strippings",
+                      onChanged: (v) => setState(
+                              () => form.StrippingType.text = (v ?? "No").trim()),
+                      onAdd: (newItem) =>
+                          setState(() => _strippingItems.add(newItem)),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
 
-            if (form.canView("CapsuleType")) ...[
-              _loadingCapsules
-                  ? const Center(child: CircularProgressIndicator())
-                  : AddableSearchDropdown(
-                label: "Capsule",
-                items: _capsuleItems,
-                initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
-                firestoreCollection: "Capsules",  // ✅ NEW
-                firestoreField: "Capsules",       // ✅ NEW
-                onChanged: (v) {
-                  form.CapsuleType.text = v ?? "";
-                },
-                onAdd: (newItem) {
-                  setState(() {
-                    _capsuleItems.add(newItem);
-                  });
-                },
+            // ── Capsule ──────────────────────────────────────────────────────
+            if (form.canView("CapsuleType"))
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Capsule"),
+                    _loadingCapsules
+                        ? const Center(child: CircularProgressIndicator())
+                        : AddableSearchDropdown(
+                      label: "",
+                      items: _capsuleItems,
+                      initialValue: form.CapsuleType.text.isEmpty
+                          ? "No"
+                          : form.CapsuleType.text,
+                      firestoreCollection: "Capsules",
+                      firestoreField: "Capsules",
+                      onChanged: (v) => form.CapsuleType.text = v ?? "",
+                      onAdd: (newItem) =>
+                          setState(() => _capsuleItems.add(newItem)),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
           ],
         ),
       ),
+
     );
   }
 }
