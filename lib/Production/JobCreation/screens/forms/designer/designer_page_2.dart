@@ -11,6 +11,9 @@ import 'package:lightatech/FormComponents/FileUploadBox.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'dart:convert';
 
+import 'designer_page_1.dart';
+import 'designer_widgets.dart';
+
 class DesignerPage2 extends StatefulWidget {
   const DesignerPage2({super.key});
 
@@ -57,8 +60,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchPlys() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Plys").get();
+      final snap = await FirebaseFirestore.instance.collection("Plys").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Plys'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -83,8 +85,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchBlades() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Blades").get();
+      final snap = await FirebaseFirestore.instance.collection("Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -192,8 +193,7 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchHoles() async {
     try {
-      final snap =
-      await FirebaseFirestore.instance.collection("Holes").get();
+      final snap = await FirebaseFirestore.instance.collection("Holes").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Holes'] ?? '').toString())
           .where((val) => val.isNotEmpty)
@@ -254,7 +254,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
     if (dataJson != null && dataJson.isNotEmpty) {
       try {
         final decodedData = jsonDecode(dataJson) as Map<String, dynamic>;
-
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -293,7 +292,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               decodedData["HoleSelectedByTimestamp"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
-
         debugPrint("✅ DesignerPage2 loaded data from route");
       } catch (e) {
         debugPrint("❌ Error decoding data: $e");
@@ -305,15 +303,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
             .collection("jobs")
             .doc(lpmParam)
             .get();
-
         if (!snap.exists) {
           debugPrint("❌ Firestore: document $lpmParam not found");
           return;
         }
-
         final decodedData = Map<String, dynamic>.from(
             snap.data()?["designer"]?["data"] ?? {});
-
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
@@ -352,7 +347,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
               decodedData["HoleSelectedByTimestamp"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
-
         debugPrint("✅ DesignerPage2 loaded data from Firestore");
       } catch (e) {
         debugPrint("❌ Error fetching from Firestore: $e");
@@ -360,16 +354,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // ✅ KEY FIX: Only sets timestamp if it is currently empty.
-  //    If a saved timestamp already exists (loaded from Firestore/URL),
-  //    this does nothing — preserving the original selection time forever.
-  // ─────────────────────────────────────────────────────────────────────────
   Future<void> _setSelectedByIfEmpty({
     required TextEditingController selectedByController,
     required TextEditingController timestampController,
   }) async {
-    // Already has a saved timestamp → do NOT overwrite
     if (timestampController.text.trim().isNotEmpty) return;
 
     final userName = await _getCurrentUserName();
@@ -394,8 +382,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
         form.Creasing.text.trim().toLowerCase() != "no";
     final bool isPlySelected =
         form.PlyType.text.trim().toLowerCase() != "no";
-    final lpmParam =
-        GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
     final bool isPerforationSelected =
         form.Perforation.text.trim().toLowerCase() != "no";
     final bool isZigZagBladeSelected =
@@ -406,17 +392,29 @@ class _DesignerPage2State extends State<DesignerPage2> {
         form.HoleType.text.trim().toLowerCase() != "no";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, size: 22),
           onPressed: () => context.go('/dashboard'),
         ),
-        title: const Text("Designer 2"),
-        backgroundColor: Colors.yellow,
+        title: const Text(
+          "Add Designer Job",
+          style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Colors.black),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: DesignerStepHeader(currentStep: 2),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -428,9 +426,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   : AddableSearchDropdown(
                 label: "Ply",
                 items: _plyItems,
-                initialValue: form.PlyType.text.isEmpty
-                    ? "No"
-                    : form.PlyType.text,
+                initialValue:
+                form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
                 firestoreCollection: "Plys",
                 firestoreField: "Plys",
                 onChanged: (v) async {
@@ -440,13 +437,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
                   final selected = (v ?? "").trim().toLowerCase();
                   if (selected == "no") {
-                    // User explicitly chose "No" → clear both fields
                     form.PlySelectedBy.clear();
                     form.PlySelectedByTimestamp.clear();
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.PlySelectedBy,
                     timestampController: form.PlySelectedByTimestamp,
@@ -463,7 +458,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Ply Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -499,7 +495,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.BladeSelectedBy,
                     timestampController: form.BladeSelectedByTimestamp,
@@ -513,7 +508,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -550,21 +546,23 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.CreasingSelectedBy,
-                    timestampController: form.CreasingSelectedByTimestamp,
+                    timestampController:
+                    form.CreasingSelectedByTimestamp,
                   );
                 },
               ),
             ],
 
             /// ── Creasing Selected By ──
-            if (isCreasingSelected && form.canView("CreasingSelectedBy")) ...[
+            if (isCreasingSelected &&
+                form.canView("CreasingSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Creasing Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -603,7 +601,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.PerforationSelectedBy,
                     timestampController:
@@ -622,7 +619,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Perforation Done By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -661,7 +659,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.ZigZagBladeSelectedBy,
                     timestampController:
@@ -680,7 +677,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Zig Zag Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -719,7 +717,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.RubberSelectedBy,
                     timestampController: form.RubberSelectedByTimestamp,
@@ -736,7 +733,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Rubber Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -775,7 +773,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.HoleSelectedBy,
                     timestampController: form.HoleSelectedByTimestamp,
@@ -792,7 +789,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Hole Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -851,9 +849,9 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   setState(() => _capsuleItems.add(newItem));
                 },
               ),
-              const SizedBox(height: 20),
             ],
-          ],
+
+          ], // end children
         ),
       ),
     );
