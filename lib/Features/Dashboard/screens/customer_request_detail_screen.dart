@@ -671,7 +671,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ FORM 1 - BASIC INFO
-                _buildSectionHeader("📋 Basic Information"),
+                _buildSectionHeader("Basic Information"),
                 _buildDetailRow("Name", data["name"]),
                 _buildDetailRow("Party Name", data["partyName"]),
                 _buildDetailRow("Particular Job Name",
@@ -684,7 +684,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ FORM 2 - DESIGNING DETAILS
-                _buildSectionHeader("🎨 Designing Details"),
+                _buildSectionHeader("Designing Details"),
                 _buildDetailRow("Designing Status", data["designingStatus"]),
                 _buildDetailRow("Designed By", data["designedBy"]),
                 _buildDetailRow("Ply Type", data["plyType"]),
@@ -693,7 +693,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ FORM 3 - BLADE & CREASING
-                _buildSectionHeader("🔪 Blade & Creasing"),
+                _buildSectionHeader("Blade & Creasing"),
                 _buildDetailRow("Blade", data["blade"]),
                 _buildDetailRow("Blade Selected By", data["bladeSelectedBy"]),
                 _buildDetailRow("Creasing", data["creasing"]),
@@ -705,7 +705,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ FORM 4 - PERFORATION & EMBOSS
-                _buildSectionHeader("⚙️ Perforation & Embossing"),
+                _buildSectionHeader("Perforation & Embossing"),
                 _buildDetailRow("Perforation", data["perforation"]),
                 _buildDetailRow(
                     "Perforation Selected By", data["perforationSelectedBy"]),
@@ -722,7 +722,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ FORM 5 - EMBOSS COORDINATES
-                _buildSectionHeader("📍 Emboss Coordinates"),
+                _buildSectionHeader("Emboss Coordinates"),
                 _buildDetailRow("Male Emboss Type", data["maleEmbossType"]),
                 _buildDetailRow(
                     "Female Emboss Type", data["femaleEmbossType"]),
@@ -734,7 +734,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ FORM 6 - FINISHING
-                _buildSectionHeader("✨ Finishing"),
+                _buildSectionHeader("Finishing"),
                 _buildDetailRow("Stripping Type", data["strippingType"]),
                 _buildDetailRow(
                     "Laser Cutting Status", data["laserCuttingStatus"]),
@@ -745,7 +745,7 @@ class _CustomerRequestDetailScreenState
                 const SizedBox(height: 20),
 
                 // ✅ METADATA
-                _buildSectionHeader("📅 Metadata"),
+                _buildSectionHeader("Metadata"),
                 _buildDetailRow(
                   "Created At",
                   _formatTimestamp(data["createdAt"]),
