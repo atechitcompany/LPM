@@ -352,16 +352,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // ✅ KEY FIX: Only sets timestamp if it is currently empty.
-  //    If a saved timestamp already exists (loaded from Firestore/URL),
-  //    this does nothing — preserving the original selection time forever.
-  // ─────────────────────────────────────────────────────────────────────────
   Future<void> _setSelectedByIfEmpty({
     required TextEditingController selectedByController,
     required TextEditingController timestampController,
   }) async {
-    // Already has a saved timestamp → do NOT overwrite
     if (timestampController.text.trim().isNotEmpty) return;
 
     final userName = await _getCurrentUserName();
@@ -420,9 +414,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   : AddableSearchDropdown(
                 label: "Ply",
                 items: _plyItems,
-                initialValue: form.PlyType.text.isEmpty
-                    ? "No"
-                    : form.PlyType.text,
+                initialValue:
+                form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
                 firestoreCollection: "Plys",
                 firestoreField: "Plys",
                 onChanged: (v) async {
@@ -432,13 +425,11 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
                   final selected = (v ?? "").trim().toLowerCase();
                   if (selected == "no") {
-                    // User explicitly chose "No" → clear both fields
                     form.PlySelectedBy.clear();
                     form.PlySelectedByTimestamp.clear();
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.PlySelectedBy,
                     timestampController: form.PlySelectedByTimestamp,
@@ -454,7 +445,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Ply Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -490,7 +482,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.BladeSelectedBy,
                     timestampController: form.BladeSelectedByTimestamp,
@@ -504,7 +495,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -541,21 +533,23 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.CreasingSelectedBy,
-                    timestampController: form.CreasingSelectedByTimestamp,
+                    timestampController:
+                    form.CreasingSelectedByTimestamp,
                   );
                 },
               ),
             ],
 
             /// ── Creasing Selected By ──
-            if (isCreasingSelected && form.canView("CreasingSelectedBy")) ...[
+            if (isCreasingSelected &&
+                form.canView("CreasingSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Creasing Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -594,7 +588,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.PerforationSelectedBy,
                     timestampController:
@@ -613,7 +606,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Perforation Done By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -652,7 +646,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.ZigZagBladeSelectedBy,
                     timestampController:
@@ -671,7 +664,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Zig Zag Blade Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -710,7 +704,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.RubberSelectedBy,
                     timestampController: form.RubberSelectedByTimestamp,
@@ -727,7 +720,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Rubber Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -766,7 +760,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
                     return;
                   }
 
-                  // ✅ Only writes timestamp if none exists yet
                   await _setSelectedByIfEmpty(
                     selectedByController: form.HoleSelectedBy,
                     timestampController: form.HoleSelectedByTimestamp,
@@ -783,7 +776,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
               const SizedBox(height: 20),
               const Text(
                 "Hole Selected By",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -842,7 +836,9 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   setState(() => _capsuleItems.add(newItem));
                 },
               ),
-          ],
+            ],
+
+          ], // end children
         ),
       ),
 
