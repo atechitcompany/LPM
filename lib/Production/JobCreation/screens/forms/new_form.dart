@@ -203,12 +203,19 @@ class NewFormState extends State<NewForm> {
   final TextEditingController LaserCuttingCreatedByTimestamp =
   TextEditingController();
   final TextEditingController PlySelectedBy = TextEditingController();
+  final TextEditingController PlySelectedByTimestamp = TextEditingController();
   final TextEditingController BladeSelectedBy = TextEditingController();
+  final TextEditingController BladeSelectedByTimestamp = TextEditingController();
   final TextEditingController CreasingSelectedBy = TextEditingController();
+  final TextEditingController CreasingSelectedByTimestamp = TextEditingController();
   final TextEditingController PerforationSelectedBy = TextEditingController();
+  final TextEditingController PerforationSelectedByTimestamp = TextEditingController();
   final TextEditingController ZigZagBladeSelectedBy = TextEditingController();
+  final TextEditingController ZigZagBladeSelectedByTimestamp = TextEditingController();
   final TextEditingController RubberSelectedBy = TextEditingController();
+  final TextEditingController RubberSelectedByTimestamp = TextEditingController();
   final TextEditingController HoleSelectedBy = TextEditingController();
+  final TextEditingController HoleSelectedByTimestamp = TextEditingController();
   final LpmAutoIncrement = TextEditingController();
   final JobDone = TextEditingController();
   final DrawingAttachment = TextEditingController();
@@ -243,24 +250,31 @@ class NewFormState extends State<NewForm> {
 
     PlyType.text = "No";
     PlySelectedBy.clear();
+    PlySelectedByTimestamp.clear();
 
     Blade.text = "No";
     BladeSelectedBy.clear();
+    BladeSelectedByTimestamp.clear();
 
     Creasing.text = "No";
     CreasingSelectedBy.clear();
+    CreasingSelectedByTimestamp.clear();
 
     Perforation.text = "No";
     PerforationSelectedBy.clear();
+    PerforationSelectedByTimestamp.clear();
 
     ZigZagBlade.text = "No";
     ZigZagBladeSelectedBy.clear();
+    ZigZagBladeSelectedByTimestamp.clear();
 
     RubberType.text = "No";
     RubberSelectedBy.clear();
+    RubberSelectedByTimestamp.clear();
 
     HoleType.text = "No";
     HoleSelectedBy.clear();
+    HoleSelectedByTimestamp.clear();
 
     EmbossStatus.text = "No";
     EmbossPcs.clear();
@@ -415,6 +429,23 @@ class NewFormState extends State<NewForm> {
       "PlyType": PlyType.text,
       "Amounts3": Amounts3.text,
       "ParticularSlider": ParticularSlider.text,
+
+      // ✅ Page 2 Selected By and Timestamps
+      "PlySelectedBy": PlySelectedBy.text,
+      "PlySelectedByTimestamp": PlySelectedByTimestamp.text,
+      "BladeSelectedBy": BladeSelectedBy.text,
+      "BladeSelectedByTimestamp": BladeSelectedByTimestamp.text,
+      "CreasingSelectedBy": CreasingSelectedBy.text,
+      "CreasingSelectedByTimestamp": CreasingSelectedByTimestamp.text,
+      "Perforation": Perforation.text,
+      "PerforationSelectedBy": PerforationSelectedBy.text,
+      "PerforationSelectedByTimestamp": PerforationSelectedByTimestamp.text,
+      "ZigZagBladeSelectedBy": ZigZagBladeSelectedBy.text,
+      "ZigZagBladeSelectedByTimestamp": ZigZagBladeSelectedByTimestamp.text,
+      "RubberSelectedBy": RubberSelectedBy.text,
+      "RubberSelectedByTimestamp": RubberSelectedByTimestamp.text,
+      "HoleSelectedBy": HoleSelectedBy.text,
+      "HoleSelectedByTimestamp": HoleSelectedByTimestamp.text,
 
       "RubberFixingDone": RubberFixingDone.text,
       "WhiteProfileRubber": WhiteProfileRubber.text,
@@ -573,12 +604,19 @@ class NewFormState extends State<NewForm> {
     LaserCuttingCreatedByName.clear();
     LaserCuttingCreatedByTimestamp.clear();
     PlySelectedBy.clear();
+    PlySelectedByTimestamp.clear();
     BladeSelectedBy.clear();
+    BladeSelectedByTimestamp.clear();
     CreasingSelectedBy.clear();
+    CreasingSelectedByTimestamp.clear();
     PerforationSelectedBy.clear();
+    PerforationSelectedByTimestamp.clear();
     ZigZagBladeSelectedBy.clear();
+    ZigZagBladeSelectedByTimestamp.clear();
     RubberSelectedBy.clear();
+    RubberSelectedByTimestamp.clear();
     HoleSelectedBy.clear();
+    HoleSelectedByTimestamp.clear();
     Perforation.clear();
     PartyName.clear();
     DrawingAttachment.clear();
@@ -816,25 +854,32 @@ class NewFormState extends State<NewForm> {
       set(PlyLength, "PlyLength");
       set(PlyBreadth, "PlyBreadth");
       set(PlySelectedBy, "PlySelectedBy");
+      set(PlySelectedByTimestamp, "PlySelectedByTimestamp");
       set(Blade, "Blade");
       set(BladeSize, "BladeSize");
       set(BladeSelectedBy, "BladeSelectedBy");
+      set(BladeSelectedByTimestamp, "BladeSelectedByTimestamp");
       set(Creasing, "Creasing");
       set(CreasingSize, "CreasingSize");
       set(CreasingSelectedBy, "CreasingSelectedBy");
+      set(CreasingSelectedByTimestamp, "CreasingSelectedByTimestamp");
       set(Perforation, "Perforation");
       set(PerforationSize, "PerforationSize");
       set(PerforationSelectedBy, "PerforationSelectedBy");
+      set(PerforationSelectedByTimestamp, "PerforationSelectedByTimestamp");
       set(ZigZagBlade, "ZigZagBlade");
       set(ZigZagBladeType, "ZigZagBladeType");
       set(ZigZagBladeSize, "ZigZagBladeSize");
       set(ZigZagBladeSelectedBy, "ZigZagBladeSelectedBy");
+      set(ZigZagBladeSelectedByTimestamp, "ZigZagBladeSelectedByTimestamp");
       set(RubberType, "RubberType");
       set(RubberSize, "RubberSize");
       set(RubberDoneBy, "RubberDoneBy");
       set(RubberSelectedBy, "RubberSelectedBy");
+      set(RubberSelectedByTimestamp, "RubberSelectedByTimestamp");
       set(HoleType, "HoleType");
       set(HoleSelectedBy, "HoleSelectedBy");
+      set(HoleSelectedByTimestamp, "HoleSelectedByTimestamp");
       set(EmbossStatus, "EmbossStatus");
       set(EmbossPcs, "EmbossPcs");
       set(MaleEmbossType, "MaleEmbossType");
@@ -1526,12 +1571,19 @@ class NewFormState extends State<NewForm> {
     LaserCuttingCreatedByName.dispose();
     LaserCuttingCreatedByTimestamp.dispose();
     PlySelectedBy.dispose();
+    PlySelectedByTimestamp.dispose();
     BladeSelectedBy.dispose();
+    BladeSelectedByTimestamp.dispose();
     CreasingSelectedBy.dispose();
+    CreasingSelectedByTimestamp.dispose();
     PerforationSelectedBy.dispose();
+    PerforationSelectedByTimestamp.dispose();
     ZigZagBladeSelectedBy.dispose();
+    ZigZagBladeSelectedByTimestamp.dispose();
     RubberSelectedBy.dispose();
+    RubberSelectedByTimestamp.dispose();
     HoleSelectedBy.dispose();
+    HoleSelectedByTimestamp.dispose();
     Perforation.dispose();
     PartyName.dispose();
     DrawingAttachment.dispose();

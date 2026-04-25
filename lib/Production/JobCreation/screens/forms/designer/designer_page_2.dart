@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../core/session/session_manager.dart';
 import '../new_form_scope.dart';
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import 'package:lightatech/FormComponents/PrioritySelector.dart';
@@ -19,9 +20,7 @@ class DesignerPage2 extends StatefulWidget {
 
 class _DesignerPage2State extends State<DesignerPage2> {
   bool isDesigningDone = false;
-  bool _initialized = false;
 
-  // ✅ NEW
   List<String> _plyItems = [];
   bool _loadingPlys = true;
   List<String> _bladeItems = ["No"];
@@ -42,8 +41,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
   bool _loadingHoles = true;
   bool _loadingStrippings = true;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -60,15 +57,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchPlys() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Plys")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Plys").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Plys'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _plyItems = ["No", ...items];
         _loadingPlys = false;
@@ -82,10 +76,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    if (_initialized) return;
-    _initialized = true;
-
     if (NewFormScope.of(context).mode == "edit") {
       _loadDesignerData();
     }
@@ -93,15 +83,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchBlades() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Blades")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Blades").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _bladeItems = ["No", ...items];
         _loadingBlades = false;
@@ -114,15 +101,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCreasings() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Creasings")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Creasings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Creasings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _creasingItems = ["No", ...items];
         _loadingCreasings = false;
@@ -135,15 +119,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchCapsules() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Capsules")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Capsules").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Capsules'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _capsuleItems = ["No", ...items];
         _loadingCapsules = false;
@@ -153,18 +134,15 @@ class _DesignerPage2State extends State<DesignerPage2> {
       setState(() => _loadingCapsules = false);
     }
   }
-  //EN-D2
+
   Future<void> _fetchPerforations() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Perforations")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Perforations").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Perforations'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _perforationItems = ["No", ...items];
         _loadingPerforations = false;
@@ -180,12 +158,10 @@ class _DesignerPage2State extends State<DesignerPage2> {
       final snap = await FirebaseFirestore.instance
           .collection("Zig Zags Blades")
           .get();
-
       final items = snap.docs
           .map((doc) => (doc.data()['Zig Zags Blades'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _zigZagBladeItems = ["No", ...items];
         _loadingZigZagBlades = false;
@@ -198,15 +174,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchRubbers() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Rubbers")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Rubbers").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Rubbers'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _rubberItems = ["No", ...items];
         _loadingRubbers = false;
@@ -219,15 +192,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchHoles() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Holes")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Holes").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Holes'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _holeItems = ["No", ...items];
         _loadingHoles = false;
@@ -240,15 +210,12 @@ class _DesignerPage2State extends State<DesignerPage2> {
 
   Future<void> _fetchStrippings() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection("Strippings")
-          .get();
-
+      final snap =
+      await FirebaseFirestore.instance.collection("Strippings").get();
       final items = snap.docs
           .map((doc) => (doc.data()['Strippings'] ?? '').toString())
           .where((val) => val.isNotEmpty)
           .toList();
-
       setState(() {
         _strippingItems = ["No", ...items];
         _loadingStrippings = false;
@@ -256,6 +223,25 @@ class _DesignerPage2State extends State<DesignerPage2> {
     } catch (e) {
       debugPrint("❌ Error fetching Strippings: $e");
       setState(() => _loadingStrippings = false);
+    }
+  }
+
+  Future<String> _getCurrentUserName() async {
+    try {
+      final email = await SessionManager.getEmail();
+      final snap = await FirebaseFirestore.instance
+          .collection("Staff")
+          .where("Email", isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        return snap.docs.first.data()['Name'] ?? "Unknown";
+      }
+      return "Unknown";
+    } catch (e) {
+      debugPrint("❌ Error fetching user name: $e");
+      return "Unknown";
     }
   }
 
@@ -274,20 +260,37 @@ class _DesignerPage2State extends State<DesignerPage2> {
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
           form.PlyType.text = decodedData["PlyType"] ?? "No";
           form.PlySelectedBy.text = decodedData["PlySelectedBy"] ?? "";
+          form.PlySelectedByTimestamp.text =
+              decodedData["PlySelectedByTimestamp"] ?? "";
           form.Blade.text = decodedData["Blade"] ?? "No";
           form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
+          form.BladeSelectedByTimestamp.text =
+              decodedData["BladeSelectedByTimestamp"] ?? "";
           form.Creasing.text = decodedData["Creasing"] ?? "No";
-          form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
+          form.CreasingSelectedBy.text =
+              decodedData["CreasingSelectedBy"] ?? "";
+          form.CreasingSelectedByTimestamp.text =
+              decodedData["CreasingSelectedByTimestamp"] ?? "";
           form.Unknown.text = decodedData["Unknown"] ?? "";
           form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
           form.Perforation.text = decodedData["Perforation"] ?? "No";
-          form.PerforationSelectedBy.text = decodedData["PerforationSelectedBy"] ?? "";
+          form.PerforationSelectedBy.text =
+              decodedData["PerforationSelectedBy"] ?? "";
+          form.PerforationSelectedByTimestamp.text =
+              decodedData["PerforationSelectedByTimestamp"] ?? "";
           form.ZigZagBlade.text = decodedData["ZigZagBlade"] ?? "No";
-          form.ZigZagBladeSelectedBy.text = decodedData["ZigZagBladeSelectedBy"] ?? "";
+          form.ZigZagBladeSelectedBy.text =
+              decodedData["ZigZagBladeSelectedBy"] ?? "";
+          form.ZigZagBladeSelectedByTimestamp.text =
+              decodedData["ZigZagBladeSelectedByTimestamp"] ?? "";
           form.RubberType.text = decodedData["RubberType"] ?? "No";
           form.RubberSelectedBy.text = decodedData["RubberSelectedBy"] ?? "";
+          form.RubberSelectedByTimestamp.text =
+              decodedData["RubberSelectedByTimestamp"] ?? "";
           form.HoleType.text = decodedData["HoleType"] ?? "No";
           form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
+          form.HoleSelectedByTimestamp.text =
+              decodedData["HoleSelectedByTimestamp"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
 
@@ -308,28 +311,45 @@ class _DesignerPage2State extends State<DesignerPage2> {
           return;
         }
 
-        final decodedData =
-        Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        final decodedData = Map<String, dynamic>.from(
+            snap.data()?["designer"]?["data"] ?? {});
 
         setState(() {
           form.Priority.text = decodedData["Priority"] ?? "";
           form.Remark.text = decodedData["Remark"] ?? "NO REMARK";
           form.PlyType.text = decodedData["PlyType"] ?? "No";
           form.PlySelectedBy.text = decodedData["PlySelectedBy"] ?? "";
+          form.PlySelectedByTimestamp.text =
+              decodedData["PlySelectedByTimestamp"] ?? "";
           form.Blade.text = decodedData["Blade"] ?? "No";
           form.BladeSelectedBy.text = decodedData["BladeSelectedBy"] ?? "";
+          form.BladeSelectedByTimestamp.text =
+              decodedData["BladeSelectedByTimestamp"] ?? "";
           form.Creasing.text = decodedData["Creasing"] ?? "No";
-          form.CreasingSelectedBy.text = decodedData["CreasingSelectedBy"] ?? "";
+          form.CreasingSelectedBy.text =
+              decodedData["CreasingSelectedBy"] ?? "";
+          form.CreasingSelectedByTimestamp.text =
+              decodedData["CreasingSelectedByTimestamp"] ?? "";
           form.Unknown.text = decodedData["Unknown"] ?? "";
           form.CapsuleType.text = decodedData["CapsuleType"] ?? "";
           form.Perforation.text = decodedData["Perforation"] ?? "No";
-          form.PerforationSelectedBy.text = decodedData["PerforationSelectedBy"] ?? "";
+          form.PerforationSelectedBy.text =
+              decodedData["PerforationSelectedBy"] ?? "";
+          form.PerforationSelectedByTimestamp.text =
+              decodedData["PerforationSelectedByTimestamp"] ?? "";
           form.ZigZagBlade.text = decodedData["ZigZagBlade"] ?? "No";
-          form.ZigZagBladeSelectedBy.text = decodedData["ZigZagBladeSelectedBy"] ?? "";
+          form.ZigZagBladeSelectedBy.text =
+              decodedData["ZigZagBladeSelectedBy"] ?? "";
+          form.ZigZagBladeSelectedByTimestamp.text =
+              decodedData["ZigZagBladeSelectedByTimestamp"] ?? "";
           form.RubberType.text = decodedData["RubberType"] ?? "No";
           form.RubberSelectedBy.text = decodedData["RubberSelectedBy"] ?? "";
+          form.RubberSelectedByTimestamp.text =
+              decodedData["RubberSelectedByTimestamp"] ?? "";
           form.HoleType.text = decodedData["HoleType"] ?? "No";
           form.HoleSelectedBy.text = decodedData["HoleSelectedBy"] ?? "";
+          form.HoleSelectedByTimestamp.text =
+              decodedData["HoleSelectedByTimestamp"] ?? "";
           form.StrippingType.text = decodedData["StrippingType"] ?? "No";
         });
 
@@ -338,6 +358,30 @@ class _DesignerPage2State extends State<DesignerPage2> {
         debugPrint("❌ Error fetching from Firestore: $e");
       }
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ KEY FIX: Only sets timestamp if it is currently empty.
+  //    If a saved timestamp already exists (loaded from Firestore/URL),
+  //    this does nothing — preserving the original selection time forever.
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> _setSelectedByIfEmpty({
+    required TextEditingController selectedByController,
+    required TextEditingController timestampController,
+  }) async {
+    // Already has a saved timestamp → do NOT overwrite
+    if (timestampController.text.trim().isNotEmpty) return;
+
+    final userName = await _getCurrentUserName();
+    if (!mounted) return;
+
+    setState(() {
+      final now = DateTime.now();
+      selectedByController.text =
+      "$userName on ${now.day}/${now.month}/${now.year} "
+          "at ${TimeOfDay.now().format(context)}";
+      timestampController.text = now.toString();
+    });
   }
 
   @override
@@ -350,7 +394,8 @@ class _DesignerPage2State extends State<DesignerPage2> {
         form.Creasing.text.trim().toLowerCase() != "no";
     final bool isPlySelected =
         form.PlyType.text.trim().toLowerCase() != "no";
-    final lpmParam = GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
+    final lpmParam =
+        GoRouterState.of(context).uri.queryParameters['lpm'] ?? '';
     final bool isPerforationSelected =
         form.Perforation.text.trim().toLowerCase() != "no";
     final bool isZigZagBladeSelected =
@@ -359,11 +404,6 @@ class _DesignerPage2State extends State<DesignerPage2> {
         form.RubberType.text.trim().toLowerCase() != "no";
     final bool isHoleSelected =
         form.HoleType.text.trim().toLowerCase() != "no";
-
-    String selectedByText() {
-      return "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
-          "at ${TimeOfDay.now().format(context)}";
-    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -381,43 +421,44 @@ class _DesignerPage2State extends State<DesignerPage2> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-          /// ✅ Ply
+            /// ── Ply ──
             if (form.canView("PlyType")) ...[
               _loadingPlys
                   ? const Center(child: CircularProgressIndicator())
                   : AddableSearchDropdown(
                 label: "Ply",
                 items: _plyItems,
-                initialValue:
-                form.PlyType.text.isEmpty ? "No" : form.PlyType.text,
-                firestoreCollection: "Plys",  // ✅ saves new entries
-                firestoreField: "Plys",       // ✅ field name in Firestore
-                onChanged: (v) {
+                initialValue: form.PlyType.text.isEmpty
+                    ? "No"
+                    : form.PlyType.text,
+                firestoreCollection: "Plys",
+                firestoreField: "Plys",
+                onChanged: (v) async {
                   setState(() {
                     form.PlyType.text = v ?? "";
                   });
 
                   final selected = (v ?? "").trim().toLowerCase();
                   if (selected == "no") {
+                    // User explicitly chose "No" → clear both fields
                     form.PlySelectedBy.clear();
+                    form.PlySelectedByTimestamp.clear();
                     return;
                   }
 
-                  form.PlySelectedBy.text =
-                  "Company on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} "
-                      "at ${TimeOfDay.now().format(context)}";
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.PlySelectedBy,
+                    timestampController: form.PlySelectedByTimestamp,
+                  );
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _plyItems.add(newItem);
-                  });
+                  setState(() => _plyItems.add(newItem));
                 },
               ),
             ],
 
-            const SizedBox(height: 20),
-
-            /// ✅ Ply Selected By
+            /// ── Ply Selected By ──
             if (isPlySelected && form.canView("PlySelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
@@ -431,36 +472,43 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
-            /// ✅ Blade
+            /// ── Blade ──
             if (form.canView("Blade")) ...[
+              const SizedBox(height: 20),
               _loadingBlades
                   ? const Center(child: CircularProgressIndicator())
                   : SearchableDropdownWithInitial(
                 label: "Blade",
                 items: _bladeItems,
-                initialValue:
-                form.Blade.text.isEmpty ? "No" : form.Blade.text,
-                onChanged: (v) {
+                initialValue: form.Blade.text.isEmpty
+                    ? "No"
+                    : form.Blade.text,
+                onChanged: (v) async {
                   setState(() {
                     form.Blade.text = (v ?? "No").trim();
                   });
 
                   if (form.Blade.text.toLowerCase() == "no") {
                     form.BladeSelectedBy.clear();
-                  } else {
-                    form.BladeSelectedBy.text = selectedByText();
+                    form.BladeSelectedByTimestamp.clear();
+                    return;
                   }
+
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.BladeSelectedBy,
+                    timestampController: form.BladeSelectedByTimestamp,
+                  );
                 },
               ),
             ],
 
-            /// ✅ Blade Selected By
+            /// ── Blade Selected By ──
             if (isBladeSelected && form.canView("BladeSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
@@ -474,38 +522,44 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
             if (form.canView("Blade")) const SizedBox(height: 20),
 
-            /// ✅ Creasing
+            /// ── Creasing ──
             if (form.canView("Creasing")) ...[
               _loadingCreasings
                   ? const Center(child: CircularProgressIndicator())
                   : SearchableDropdownWithInitial(
                 label: "Creasing",
                 items: _creasingItems,
-                initialValue:
-                form.Creasing.text.isEmpty ? "No" : form.Creasing.text,
-                onChanged: (v) {
+                initialValue: form.Creasing.text.isEmpty
+                    ? "No"
+                    : form.Creasing.text,
+                onChanged: (v) async {
                   setState(() {
                     form.Creasing.text = (v ?? "No").trim();
                   });
 
                   if (form.Creasing.text.toLowerCase() == "no") {
                     form.CreasingSelectedBy.clear();
-                  } else {
-                    form.CreasingSelectedBy.text = selectedByText();
+                    form.CreasingSelectedByTimestamp.clear();
+                    return;
                   }
+
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.CreasingSelectedBy,
+                    timestampController: form.CreasingSelectedByTimestamp,
+                  );
                 },
               ),
             ],
 
-            /// ✅ Creasing Selected By
+            /// ── Creasing Selected By ──
             if (isCreasingSelected && form.canView("CreasingSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
@@ -519,45 +573,52 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
             if (form.canView("Creasing")) const SizedBox(height: 20),
 
-            /// ✅ Perforation
+            /// ── Perforation ──
             if (form.canView("Perforation")) ...[
               _loadingPerforations
                   ? const Center(child: CircularProgressIndicator())
                   : AddableSearchDropdown(
                 label: "Perforation",
                 items: _perforationItems,
-                initialValue: form.Perforation.text.isEmpty ? "No" : form.Perforation.text,
+                initialValue: form.Perforation.text.isEmpty
+                    ? "No"
+                    : form.Perforation.text,
                 firestoreCollection: "Perforations",
                 firestoreField: "Perforations",
-                onChanged: (v) {
+                onChanged: (v) async {
                   setState(() {
                     form.Perforation.text = (v ?? "No").trim();
                   });
 
                   if (form.Perforation.text.toLowerCase() == "no") {
                     form.PerforationSelectedBy.clear();
-                  } else {
-                    form.PerforationSelectedBy.text = selectedByText();
+                    form.PerforationSelectedByTimestamp.clear();
+                    return;
                   }
+
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.PerforationSelectedBy,
+                    timestampController:
+                    form.PerforationSelectedByTimestamp,
+                  );
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _perforationItems.add(newItem);
-                  });
+                  setState(() => _perforationItems.add(newItem));
                 },
               ),
             ],
 
-            /// ✅ Perforation Selected By
-            if (isPerforationSelected && form.canView("PerforationSelectedBy")) ...[
+            /// ── Perforation Selected By ──
+            if (isPerforationSelected &&
+                form.canView("PerforationSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Perforation Done By",
@@ -570,45 +631,52 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
             if (form.canView("Perforation")) const SizedBox(height: 20),
 
-            /// ✅ Zig Zag Blade
+            /// ── Zig Zag Blade ──
             if (form.canView("ZigZagBlade")) ...[
               _loadingZigZagBlades
                   ? const Center(child: CircularProgressIndicator())
                   : AddableSearchDropdown(
                 label: "Zig Zag Blade",
                 items: _zigZagBladeItems,
-                initialValue: form.ZigZagBlade.text.isEmpty ? "No" : form.ZigZagBlade.text,
+                initialValue: form.ZigZagBlade.text.isEmpty
+                    ? "No"
+                    : form.ZigZagBlade.text,
                 firestoreCollection: "Zig Zags Blades",
                 firestoreField: "Zig Zags Blades",
-                onChanged: (v) {
+                onChanged: (v) async {
                   setState(() {
                     form.ZigZagBlade.text = (v ?? "No").trim();
                   });
 
                   if (form.ZigZagBlade.text.toLowerCase() == "no") {
                     form.ZigZagBladeSelectedBy.clear();
-                  } else {
-                    form.ZigZagBladeSelectedBy.text = selectedByText();
+                    form.ZigZagBladeSelectedByTimestamp.clear();
+                    return;
                   }
+
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.ZigZagBladeSelectedBy,
+                    timestampController:
+                    form.ZigZagBladeSelectedByTimestamp,
+                  );
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _zigZagBladeItems.add(newItem);
-                  });
+                  setState(() => _zigZagBladeItems.add(newItem));
                 },
               ),
             ],
 
-            /// ✅ Zig Zag Blade Selected By
-            if (isZigZagBladeSelected && form.canView("ZigZagBladeSelectedBy")) ...[
+            /// ── Zig Zag Blade Selected By ──
+            if (isZigZagBladeSelected &&
+                form.canView("ZigZagBladeSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
                 "Zig Zag Blade Selected By",
@@ -621,44 +689,49 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
             if (form.canView("ZigZagBlade")) const SizedBox(height: 20),
 
-            /// ✅ Rubber
+            /// ── Rubber ──
             if (form.canView("RubberType")) ...[
               _loadingRubbers
                   ? const Center(child: CircularProgressIndicator())
                   : AddableSearchDropdown(
                 label: "Rubber",
                 items: _rubberItems,
-                initialValue: form.RubberType.text.isEmpty ? "No" : form.RubberType.text,
+                initialValue: form.RubberType.text.isEmpty
+                    ? "No"
+                    : form.RubberType.text,
                 firestoreCollection: "Rubbers",
                 firestoreField: "Rubbers",
-                onChanged: (v) {
+                onChanged: (v) async {
                   setState(() {
                     form.RubberType.text = (v ?? "No").trim();
                   });
 
                   if (form.RubberType.text.toLowerCase() == "no") {
                     form.RubberSelectedBy.clear();
-                  } else {
-                    form.RubberSelectedBy.text = selectedByText();
+                    form.RubberSelectedByTimestamp.clear();
+                    return;
                   }
+
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.RubberSelectedBy,
+                    timestampController: form.RubberSelectedByTimestamp,
+                  );
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _rubberItems.add(newItem);
-                  });
+                  setState(() => _rubberItems.add(newItem));
                 },
               ),
             ],
 
-            /// ✅ Rubber Selected By
+            /// ── Rubber Selected By ──
             if (isRubberSelected && form.canView("RubberSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
@@ -672,44 +745,49 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
             if (form.canView("RubberType")) const SizedBox(height: 20),
 
-            /// ✅ Hole
+            /// ── Hole ──
             if (form.canView("HoleType")) ...[
               _loadingHoles
                   ? const Center(child: CircularProgressIndicator())
                   : AddableSearchDropdown(
                 label: "Hole",
                 items: _holeItems,
-                initialValue: form.HoleType.text.isEmpty ? "No" : form.HoleType.text,
+                initialValue: form.HoleType.text.isEmpty
+                    ? "No"
+                    : form.HoleType.text,
                 firestoreCollection: "Holes",
                 firestoreField: "Holes",
-                onChanged: (v) {
+                onChanged: (v) async {
                   setState(() {
                     form.HoleType.text = (v ?? "No").trim();
                   });
 
                   if (form.HoleType.text.toLowerCase() == "no") {
                     form.HoleSelectedBy.clear();
-                  } else {
-                    form.HoleSelectedBy.text = selectedByText();
+                    form.HoleSelectedByTimestamp.clear();
+                    return;
                   }
+
+                  // ✅ Only writes timestamp if none exists yet
+                  await _setSelectedByIfEmpty(
+                    selectedByController: form.HoleSelectedBy,
+                    timestampController: form.HoleSelectedByTimestamp,
+                  );
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _holeItems.add(newItem);
-                  });
+                  setState(() => _holeItems.add(newItem));
                 },
               ),
             ],
 
-            /// ✅ Hole Selected By
+            /// ── Hole Selected By ──
             if (isHoleSelected && form.canView("HoleSelectedBy")) ...[
               const SizedBox(height: 20),
               const Text(
@@ -723,15 +801,14 @@ class _DesignerPage2State extends State<DesignerPage2> {
                 decoration: InputDecoration(
                   hintText: "Will be filled automatically",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ],
 
             if (form.canView("HoleType")) const SizedBox(height: 20),
 
-            /// ✅ Stripping
+            /// ── Stripping ──
             if (form.canView("StrippingType")) ...[
               _loadingStrippings
                   ? const Center(child: CircularProgressIndicator())
@@ -749,30 +826,29 @@ class _DesignerPage2State extends State<DesignerPage2> {
                   });
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _strippingItems.add(newItem);
-                  });
+                  setState(() => _strippingItems.add(newItem));
                 },
               ),
               const SizedBox(height: 20),
             ],
 
+            /// ── Capsule ──
             if (form.canView("CapsuleType")) ...[
               _loadingCapsules
                   ? const Center(child: CircularProgressIndicator())
                   : AddableSearchDropdown(
                 label: "Capsule",
                 items: _capsuleItems,
-                initialValue: form.CapsuleType.text.isEmpty ? "No" : form.CapsuleType.text,
-                firestoreCollection: "Capsules",  // ✅ NEW
-                firestoreField: "Capsules",       // ✅ NEW
+                initialValue: form.CapsuleType.text.isEmpty
+                    ? "No"
+                    : form.CapsuleType.text,
+                firestoreCollection: "Capsules",
+                firestoreField: "Capsules",
                 onChanged: (v) {
                   form.CapsuleType.text = v ?? "";
                 },
                 onAdd: (newItem) {
-                  setState(() {
-                    _capsuleItems.add(newItem);
-                  });
+                  setState(() => _capsuleItems.add(newItem));
                 },
               ),
               const SizedBox(height: 20),
