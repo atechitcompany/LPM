@@ -13,8 +13,15 @@ class CustomerRequestsScreen extends StatefulWidget {
 class _CustomerRequestsScreenState
     extends State<CustomerRequestsScreen> {
   final searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
-  // ✅ STREAM — Reading from customer_requests collection
+  // ── Pagination state ──────────────────────────────────────────────────────
+  List<QueryDocumentSnapshot> _olderDocs = [];
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDoc;
+
+  // ✅ STREAM — Reading from customer_requests collection (first 50 only)
   Stream<QuerySnapshot>? _customerRequestsStream;
 
   @override
@@ -23,13 +30,43 @@ class _CustomerRequestsScreenState
     _customerRequestsStream = FirebaseFirestore.instance
         .collection("customer_requests")
         .orderBy("createdAt", descending: true)
+        .limit(50)
         .snapshots();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        _loadMore();
+      }
+    });
   }
 
   @override
   void dispose() {
     searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore || _lastDoc == null) return;
+    setState(() => _isLoadingMore = true);
+
+    final snap = await FirebaseFirestore.instance
+        .collection("customer_requests")
+        .orderBy("createdAt", descending: true)
+        .startAfterDocument(_lastDoc!)
+        .limit(50)
+        .get();
+
+    if (snap.docs.isNotEmpty) {
+      _olderDocs.addAll(snap.docs);
+      _lastDoc = snap.docs.last;
+    } else {
+      _hasMore = false;
+    }
+
+    setState(() => _isLoadingMore = false);
   }
 
   // ✅ SHARED LPM GENERATION - Same as new_form.dart
@@ -550,7 +587,19 @@ class _CustomerRequestsScreenState
                       child: CircularProgressIndicator());
                 }
 
-                final docs = snapshot.data!.docs;
+                // Merge real-time first-50 with paginated older pages
+                final latestDocs = snapshot.data!.docs;
+                if (latestDocs.isNotEmpty) {
+                  _lastDoc = latestDocs.last;
+                }
+                final Map<String, QueryDocumentSnapshot> uniqueMap = {};
+                for (var d in latestDocs) {
+                  uniqueMap[d.id] = d;
+                }
+                for (var d in _olderDocs) {
+                  uniqueMap.putIfAbsent(d.id, () => d);
+                }
+                final docs = uniqueMap.values.toList();
 
                 if (docs.isEmpty) {
                   return const Center(
@@ -586,10 +635,28 @@ class _CustomerRequestsScreenState
                 }
 
                 return ListView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 4),
-                  itemCount: filteredDocs.length,
+                  itemCount: filteredDocs.length +
+                      (_hasMore || _isLoadingMore ? 1 : 0),
                   itemBuilder: (context, index) {
+                    if (index == filteredDocs.length) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: _isLoadingMore
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      );
+                    }
                     final data = filteredDocs[index].data()
                     as Map<String, dynamic>;
                     final docId = filteredDocs[index].id;
