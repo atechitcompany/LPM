@@ -143,7 +143,7 @@ class _KeepAliveTab extends StatefulWidget {
 class _KeepAliveTabState extends State<_KeepAliveTab>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => false;
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
@@ -333,25 +333,8 @@ class _FirestoreTabState extends State<_FirestoreTab> {
         // Search filter
         final query = widget.searchText.trim().toLowerCase();
 
-        for (final doc in latestDocs) {
-          final data = doc.data() as Map<String, dynamic>;
-
-          final approvalStatus =
-          (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
-
-          final visibleTo = List<String>.from(data["visibleTo"] ?? []);
-
-          // ✅ CALL ONLY WHEN NEEDED
-          if (approvalStatus == "approved" && visibleTo.length == 1) {
-            if (!_processedDocs.contains(doc.id)) {
-              _processedDocs.add(doc.id);
-
-              Future.microtask(() {
-                _handleCustomerApproval(doc);
-              });
-            }
-          }
-        }
+        // Note: _handleCustomerApproval is available but must be triggered
+        // by a user action (not automatically) to avoid read-write loops.
         final filtered = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
 
