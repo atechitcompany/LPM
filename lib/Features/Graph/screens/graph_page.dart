@@ -3,6 +3,8 @@
 import '../models/analytics_model.dart';
 import '../services/analytics_service.dart';
 import '../widgets/analytics_summary_cards.dart';
+import '../widgets/employee_productivity_chart.dart';
+import '../widgets/top_customers_chart.dart';
 
 class GraphPage extends StatefulWidget {
   const GraphPage({super.key});
@@ -123,149 +125,16 @@ class _GraphPageState extends State<GraphPage> {
                   const SizedBox(height: 30),
 
                   /// EMPLOYEE ANALYTICS
-                  const Text(
-                    "Employee Productivity",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-
-                    child: Column(
-                      children: analytics.employeeJobs.entries.map((e) {
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-
-                          child: Row(
-                            children: [
-
-                              Expanded(
-                                child: Text(
-                                  e.key,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-
-                                child: Text(
-                                  "${e.value} Jobs",
-                                  style: TextStyle(
-                                    color: Colors.blue.shade800,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                  EmployeeProductivityChart(
+                    employeeData: analytics.employeeJobs,
                   ),
 
                   const SizedBox(height: 30),
 
                   /// CUSTOMER ANALYTICS
-                  const Text(
-                    "Customer Orders",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  TopCustomersChart(
+                    customerData: analytics.customerOrders,
                   ),
-
-                  const SizedBox(height: 16),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-
-                    child: Column(
-                      children: analytics.customerOrders.entries.map((e) {
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-
-                          child: Row(
-                            children: [
-
-                              Expanded(
-                                child: Text(
-                                  e.key,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-
-                                child: Text(
-                                  "${e.value} Orders",
-                                  style: TextStyle(
-                                    color: Colors.green.shade800,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-
                   const SizedBox(height: 30),
 
                   /// DEPARTMENT ANALYTICS

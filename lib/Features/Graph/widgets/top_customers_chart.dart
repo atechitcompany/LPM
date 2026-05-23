@@ -1,34 +1,43 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-class EmployeeProductivityChart extends StatelessWidget {
+class TopCustomersChart extends StatelessWidget {
 
-  final Map<String, int> employeeData;
+  final Map<String, int> customerData;
 
-  const EmployeeProductivityChart({
+  const TopCustomersChart({
     super.key,
-    required this.employeeData,
+    required this.customerData,
   });
 
   @override
   Widget build(BuildContext context) {
 
-    if (employeeData.isEmpty) {
+    if (customerData.isEmpty) {
       return const Center(
         child: Text(
-          "No employee analytics found",
+          "No customer analytics found",
         ),
       );
     }
 
-    final employees =
-    employeeData.entries.toList();
+    /// SORT DESCENDING
+    final customers =
+    customerData.entries.toList()
+      ..sort(
+            (a, b) =>
+            b.value.compareTo(a.value),
+      );
 
-    double maxY = 0;
+    /// TAKE TOP 10
+    final topCustomers =
+    customers.take(10).toList();
 
-    for (final e in employees) {
-      if (e.value > maxY) {
-        maxY = e.value.toDouble();
+    double maxX = 0;
+
+    for (final e in topCustomers) {
+      if (e.value > maxX) {
+        maxX = e.value.toDouble();
       }
     }
 
@@ -54,7 +63,7 @@ class EmployeeProductivityChart extends StatelessWidget {
         children: [
 
           const Text(
-            "Employee Productivity",
+            "Top Customers",
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -64,7 +73,7 @@ class EmployeeProductivityChart extends StatelessWidget {
           const SizedBox(height: 20),
 
           SizedBox(
-            height: 320,
+            height: 420,
 
             child: BarChart(
 
@@ -73,11 +82,7 @@ class EmployeeProductivityChart extends StatelessWidget {
                 alignment:
                 BarChartAlignment.spaceAround,
 
-                maxY: maxY + 10,
-
-                barTouchData: BarTouchData(
-                  enabled: true,
-                ),
+                maxY: maxX + 10,
 
                 gridData: FlGridData(
                   show: true,
@@ -86,6 +91,9 @@ class EmployeeProductivityChart extends StatelessWidget {
                 borderData: FlBorderData(
                   show: false,
                 ),
+
+                barTouchData:
+                BarTouchData(enabled: true),
 
                 titlesData: FlTitlesData(
 
@@ -110,6 +118,7 @@ class EmployeeProductivityChart extends StatelessWidget {
                     sideTitles: SideTitles(
 
                       showTitles: true,
+                      reservedSize: 60,
 
                       getTitlesWidget:
                           (value, meta) {
@@ -117,12 +126,19 @@ class EmployeeProductivityChart extends StatelessWidget {
                         final index =
                         value.toInt();
 
-                        if (index >= employees.length) {
+                        if (index >= topCustomers.length) {
                           return const SizedBox();
                         }
 
-                        final name =
-                            employees[index].key;
+                        final customer =
+                            topCustomers[index].key;
+
+                        String shortName = customer;
+
+                        if (customer.length > 12) {
+                          shortName =
+                          "${customer.substring(0, 12)}...";
+                        }
 
                         return Padding(
                           padding:
@@ -130,12 +146,18 @@ class EmployeeProductivityChart extends StatelessWidget {
                             top: 8,
                           ),
 
-                          child: Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight:
-                              FontWeight.w500,
+                          child: RotatedBox(
+                            quarterTurns: 1,
+
+                            child: Text(
+                              shortName,
+
+                              style:
+                              const TextStyle(
+                                fontSize: 10,
+                                fontWeight:
+                                FontWeight.w500,
+                              ),
                             ),
                           ),
                         );
@@ -145,11 +167,11 @@ class EmployeeProductivityChart extends StatelessWidget {
                 ),
 
                 barGroups:
-                employees.asMap().entries.map((e) {
+                topCustomers.asMap().entries.map((e) {
 
                   final index = e.key;
 
-                  final employee = e.value;
+                  final customer = e.value;
 
                   return BarChartGroupData(
 
@@ -160,9 +182,9 @@ class EmployeeProductivityChart extends StatelessWidget {
                       BarChartRodData(
 
                         toY:
-                        employee.value.toDouble(),
+                        customer.value.toDouble(),
 
-                        width: 22,
+                        width: 26,
 
                         borderRadius:
                         BorderRadius.circular(6),
@@ -170,10 +192,11 @@ class EmployeeProductivityChart extends StatelessWidget {
                         gradient:
                         const LinearGradient(
                           colors: [
-                            Colors.blue,
-                            Colors.lightBlueAccent,
+                            Colors.green,
+                            Colors.lightGreen,
                           ],
-                          begin: Alignment.bottomCenter,
+                          begin:
+                          Alignment.bottomCenter,
                           end: Alignment.topCenter,
                         ),
                       ),
@@ -183,7 +206,7 @@ class EmployeeProductivityChart extends StatelessWidget {
               ),
 
               swapAnimationDuration:
-              const Duration(milliseconds: 600),
+              const Duration(milliseconds: 700),
 
               swapAnimationCurve:
               Curves.easeInOut,
