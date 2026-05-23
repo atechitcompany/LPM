@@ -110,27 +110,26 @@ class ActivityList extends StatelessWidget {
                 final lpm = docs[index].id;
 
                 // ── Display fields ─────────────────────────────────────
-                // partyName  → main title (who the job is for)
-                // particularJobName → subtitle (what the job is)
-                // orderBy    → third line (who ordered)
                 final String partyName =
                 (designerData["partyName"] ??
                     designerData["PartyName"] ??
                     "No Party")
                     .toString();
-                final String jobName =
-                (designerData["particularJobName"] ??
-                    designerData["ParticularJobName"] ??
+
+                // ── Priority for left circle ───────────────────────────
+                final String rawPriority =
+                (designerData["priority"] ??
+                    designerData["Priority"] ??
                     "")
                     .toString();
-                final String orderBy =
-                (designerData["orderBy"] ?? "").toString();
+                final _PriorityStyle priority =
+                _resolvePriority(rawPriority);
 
-                // ── Badge ──────────────────────────────────────────────
-                final String rawStatus =
-                (data["status"] ?? "").toString();
-                final _BadgeStyle badge =
-                _resolveBadge(rawStatus, isPending);
+                // ── Dynamic department pill ────────────────────────────
+                final String currentDept =
+                _resolveCurrentDepartment(data);
+                final _DeptPillStyle deptPill =
+                _resolveDeptPillStyle(currentDept);
 
                 return InkWell(
                   // Both pending and jobs go to job-summary
@@ -138,7 +137,7 @@ class ActivityList extends StatelessWidget {
                       context.push('/job-summary/$lpm'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 11),
+                        horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border(
@@ -149,113 +148,96 @@ class ActivityList extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // ── Avatar ──────────────────────────────────
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.person_outline,
-                            color: Colors.grey.shade400,
-                            size: 20,
+                        // ── Priority Circle ─────────────────────────
+                        _PriorityCircle(
+                          label: priority.label,
+                          bgColor: priority.bgColor,
+                          textColor: priority.textColor,
+                          shouldPulse: priority.shouldPulse,
+                        ),
+                        const SizedBox(width: 14),
+
+                        // ── LPM + Party Name ───────────────────────
+                        Expanded(
+                          child: Text(
+                            '$lpm  -  $partyName',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                              color: Color(0xFF1A3A5C),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
 
-                        // ── Party + Job + OrderBy ────────────────────
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                            children: [
-                              // Line 1: Party Name
-                              Text(
-                                partyName,
-                                style: const TextStyle(
+                        // ── Right side: Dept pill + actions ─────────
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Department pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: deptPill.bgColor,
+                                borderRadius:
+                                BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: deptPill.borderColor,
+                                    width: 1),
+                              ),
+                              child: Text(
+                                currentDept,
+                                style: TextStyle(
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: Color(0xFF1A1A1A),
+                                  color: deptPill.textColor,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (jobName.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                // Line 2: Job Name
-                                Text(
-                                  jobName,
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Action buttons row
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Call (outlined blue)
+                                _OutlinedCircleButton(
+                                  color: const Color(0xFF2196F3),
+                                  icon: Icons.phone,
+                                  onTap: () {
+                                    // Call action placeholder
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+
+                                // WhatsApp (outlined green)
+                                _OutlinedCircleButton(
+                                  color: const Color(0xFF25D366),
+                                  iconWidget: Image.asset(
+                                    'assets/whatsapp-logo.png',
+                                    width: 16,
+                                    height: 16,
+                                    color: const Color(0xFF25D366),
+                                    errorBuilder: (ctx, err, st) =>
+                                    const Icon(
+                                      Icons.message,
+                                      color: Color(0xFF25D366),
+                                      size: 16,
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  onTap: () {
+                                    // WhatsApp action placeholder
+                                  },
                                 ),
                               ],
-                              if (orderBy.isNotEmpty) ...[
-                                const SizedBox(height: 1),
-                                // Line 3: Order By
-                                Text(
-                                  'By: $orderBy',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade400,
-                                    fontSize: 11,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-
-                        // ── Status badge ─────────────────────────────
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: badge.bgColor,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                                color: badge.borderColor, width: 1),
-                          ),
-                          child: Text(
-                            badge.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: badge.textColor,
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // ── Call button (blue) ───────────────────────
-                        _CircleButton(
-                          color: const Color(0xFF2196F3),
-                          child: const Icon(Icons.phone,
-                              color: Colors.white, size: 16),
-                        ),
-                        const SizedBox(width: 6),
-
-                        // ── WhatsApp button (green) ──────────────────
-                        _CircleButton(
-                          color: const Color(0xFF25D366),
-                          child: Image.asset(
-                            'assets/whatsapp-logo.png',
-                            width: 16,
-                            height: 16,
-                            color: Colors.white,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.message,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -269,104 +251,319 @@ class ActivityList extends StatelessWidget {
     );
   }
 
-  // ── Badge resolver ────────────────────────────────────────────────────────
-  _BadgeStyle _resolveBadge(String rawStatus, bool isPending) {
-    if (isPending) {
-      return _BadgeStyle(
-        label: 'Pending',
-        textColor: const Color(0xFFFF9800),
-        bgColor: const Color(0xFFFFF3E0),
-        borderColor: const Color(0xFFFFCC80),
+  // ── Priority resolver ──────────────────────────────────────────────────────
+  _PriorityStyle _resolvePriority(String rawPriority) {
+    final normalized = rawPriority.trim().toLowerCase();
+
+    if (normalized == 'emergency' ||
+        normalized == 'emg' ||
+        normalized == 'urgent') {
+      return const _PriorityStyle(
+        label: 'EMG',
+        bgColor: Color(0xFFFFEBEE),
+        textColor: Color(0xFFE53935),
+        shouldPulse: true,
       );
     }
-    switch (rawStatus.toLowerCase()) {
-      case 'urgent':
-      case 'hot':
-        return _BadgeStyle(
-          label: 'Urgent',
-          textColor: const Color(0xFFE53935),
-          bgColor: const Color(0xFFFFEBEE),
-          borderColor: const Color(0xFFEF9A9A),
-        );
-      case 'imp':
-      case 'important':
-        return _BadgeStyle(
-          label: 'IMP',
-          textColor: const Color(0xFFE65100),
-          bgColor: const Color(0xFFFFF3E0),
-          borderColor: const Color(0xFFFFCC80),
-        );
-      case 'today':
-      case 'paid':
-        return _BadgeStyle(
-          label: 'Today',
-          textColor: const Color(0xFF2E7D32),
-          bgColor: const Color(0xFFE8F5E9),
-          borderColor: const Color(0xFFA5D6A7),
-        );
-      case 'hold':
-      case 'cold':
-        return _BadgeStyle(
-          label: 'Hold',
-          textColor: const Color(0xFF1565C0),
-          bgColor: const Color(0xFFE3F2FD),
-          borderColor: const Color(0xFF90CAF9),
-        );
-      case 'cancel':
-      case 'cancelled':
-        return _BadgeStyle(
-          label: 'Cancel',
-          textColor: const Color(0xFF616161),
-          bgColor: const Color(0xFFF5F5F5),
-          borderColor: const Color(0xFFBDBDBD),
-        );
-      case 'pending_designer_review':
-        return _BadgeStyle(
-          label: 'Pending',
-          textColor: const Color(0xFFFF9800),
-          bgColor: const Color(0xFFFFF3E0),
-          borderColor: const Color(0xFFFFCC80),
-        );
-      case 'completed':
-      default:
-        return _BadgeStyle(
-          label: 'Active',
-          textColor: const Color(0xFFE65100),
-          bgColor: const Color(0xFFFFF3E0),
-          borderColor: const Color(0xFFFFCC80),
-        );
+    if (normalized == 'important' ||
+        normalized == 'imp' ||
+        normalized == 'high') {
+      return const _PriorityStyle(
+        label: 'IMP',
+        bgColor: Color(0xFFFFF8E1),
+        textColor: Color(0xFFE65100),
+        shouldPulse: false,
+      );
     }
+    if (normalized == 'normal' || normalized == 'medium') {
+      return const _PriorityStyle(
+        label: 'NRM',
+        bgColor: Color(0xFFE8F5E9),
+        textColor: Color(0xFF388E3C),
+        shouldPulse: false,
+      );
+    }
+    if (normalized == 'low') {
+      return const _PriorityStyle(
+        label: 'LOW',
+        bgColor: Color(0xFFE3F2FD),
+        textColor: Color(0xFF1565C0),
+        shouldPulse: false,
+      );
+    }
+    // Unknown / empty
+    return _PriorityStyle(
+      label: '—',
+      bgColor: Colors.grey.shade100,
+      textColor: Colors.grey.shade500,
+      shouldPulse: false,
+    );
+  }
+
+  // ── Department resolver (no hardcoded pipeline) ────────────────────────────
+  /// Derives current active department from department sub-objects.
+  /// Iterates through all department keys present in the document and finds
+  /// the first one whose status is not "done", indicating it's in progress.
+  String _resolveCurrentDepartment(Map<String, dynamic> data) {
+    // Map of Firestore department keys to their status field and display label
+    final Map<String, Map<String, String>> deptConfig = {
+      "designer":      {"statusField": "DesigningStatus",       "label": "Designing"},
+      "autoBending":   {"statusField": "AutoBendingStatus",     "label": "AutoBending"},
+      "manualBending": {"statusField": "ManualBendingStatus",   "label": "ManualBending"},
+      "laserCutting":  {"statusField": "LaserCuttingStatus",    "label": "Laser Cutting"},
+      "rubber":        {"statusField": "RubberStatus",          "label": "Rubber"},
+      "emboss":        {"statusField": "EmbossStatus",          "label": "Emboss"},
+      "account":       {"statusField": "AccountStatus",         "label": "Account"},
+      "delivery":      {"statusField": "DeliveryStatus",        "label": "Delivery"},
+    };
+
+    // Walk through departments in document order; find first non-"done"
+    for (final entry in deptConfig.entries) {
+      final deptData = data[entry.key];
+      if (deptData == null) continue;
+
+      final innerData = deptData is Map ? (deptData["data"] ?? {}) : {};
+      if (innerData is! Map) continue;
+
+      final status =
+          (innerData[entry.value["statusField"]] ?? "").toString().trim().toLowerCase();
+
+      // If status exists and is not done, this department is active
+      if (status.isNotEmpty && status != "done") {
+        return entry.value["label"]!;
+      }
+    }
+
+    // Fallback: use currentDepartment field if present
+    final raw = (data["currentDepartment"] ?? "").toString().trim();
+    if (raw.isNotEmpty && raw != "InProgress") return raw;
+
+    return "In Progress";
+  }
+
+  // ── Department pill style (color-coded) ────────────────────────────────────
+  _DeptPillStyle _resolveDeptPillStyle(String dept) {
+    final normalized = dept.trim().toLowerCase();
+
+    // Color-code based on department name dynamically
+    if (normalized.contains("design")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF1565C0),
+        bgColor: Color(0xFFE3F2FD),
+        borderColor: Color(0xFF90CAF9),
+      );
+    }
+    if (normalized.contains("auto") || normalized.contains("bending")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFFE65100),
+        bgColor: Color(0xFFFFF3E0),
+        borderColor: Color(0xFFFFCC80),
+      );
+    }
+    if (normalized.contains("laser") || normalized.contains("cut")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF6A1B9A),
+        bgColor: Color(0xFFF3E5F5),
+        borderColor: Color(0xFFCE93D8),
+      );
+    }
+    if (normalized.contains("manual")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF00695C),
+        bgColor: Color(0xFFE0F2F1),
+        borderColor: Color(0xFF80CBC4),
+      );
+    }
+    if (normalized.contains("rubber")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF4E342E),
+        bgColor: Color(0xFFEFEBE9),
+        borderColor: Color(0xFFBCAAA4),
+      );
+    }
+    if (normalized.contains("emboss")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF283593),
+        bgColor: Color(0xFFE8EAF6),
+        borderColor: Color(0xFF9FA8DA),
+      );
+    }
+    if (normalized.contains("account")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF2E7D32),
+        bgColor: Color(0xFFE8F5E9),
+        borderColor: Color(0xFFA5D6A7),
+      );
+    }
+    if (normalized.contains("deliver") || normalized.contains("dispatch")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF00838F),
+        bgColor: Color(0xFFE0F7FA),
+        borderColor: Color(0xFF80DEEA),
+      );
+    }
+    if (normalized.contains("complete")) {
+      return const _DeptPillStyle(
+        textColor: Color(0xFF2E7D32),
+        bgColor: Color(0xFFE8F5E9),
+        borderColor: Color(0xFFA5D6A7),
+      );
+    }
+
+    // Default / fallback
+    return const _DeptPillStyle(
+      textColor: Color(0xFF616161),
+      bgColor: Color(0xFFF5F5F5),
+      borderColor: Color(0xFFBDBDBD),
+    );
   }
 }
 
-// ── Small UI helpers ──────────────────────────────────────────────────────────
+// ── Data classes ──────────────────────────────────────────────────────────────
 
-class _BadgeStyle {
+class _PriorityStyle {
   final String label;
+  final Color bgColor;
+  final Color textColor;
+  final bool shouldPulse;
+  const _PriorityStyle({
+    required this.label,
+    required this.bgColor,
+    required this.textColor,
+    required this.shouldPulse,
+  });
+}
+
+class _DeptPillStyle {
   final Color textColor;
   final Color bgColor;
   final Color borderColor;
-  const _BadgeStyle({
-    required this.label,
+  const _DeptPillStyle({
     required this.textColor,
     required this.bgColor,
     required this.borderColor,
   });
 }
 
-class _CircleButton extends StatelessWidget {
-  final Color color;
-  final Widget child;
-  const _CircleButton({required this.color, required this.child});
+// ── Priority Circle with optional pulse animation ────────────────────────────
+
+class _PriorityCircle extends StatefulWidget {
+  final String label;
+  final Color bgColor;
+  final Color textColor;
+  final bool shouldPulse;
+
+  const _PriorityCircle({
+    required this.label,
+    required this.bgColor,
+    required this.textColor,
+    required this.shouldPulse,
+  });
+
+  @override
+  State<_PriorityCircle> createState() => _PriorityCircleState();
+}
+
+class _PriorityCircleState extends State<_PriorityCircle>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _pulseController;
+  Animation<double>? _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.shouldPulse) {
+      _pulseController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1200),
+      )..repeat(reverse: true);
+      _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _pulseController!,
+          curve: Curves.easeInOut,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration:
-      BoxDecoration(color: color, shape: BoxShape.circle),
-      child: Center(child: child),
+    final circle = Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: widget.bgColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: widget.textColor.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Center(
+        child: Text(
+          widget.label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: widget.textColor,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+
+    if (_pulseAnimation != null) {
+      return AnimatedBuilder(
+        animation: _pulseAnimation!,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _pulseAnimation!.value,
+            child: child,
+          );
+        },
+        child: circle,
+      );
+    }
+
+    return circle;
+  }
+}
+
+// ── Outlined Circle Button ───────────────────────────────────────────────────
+
+class _OutlinedCircleButton extends StatelessWidget {
+  final Color color;
+  final IconData? icon;
+  final Widget? iconWidget;
+  final VoidCallback? onTap;
+
+  const _OutlinedCircleButton({
+    required this.color,
+    this.icon,
+    this.iconWidget,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 1.8),
+        ),
+        child: Center(
+          child: iconWidget ??
+              Icon(icon, color: color, size: 16),
+        ),
+      ),
     );
   }
 }
