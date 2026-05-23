@@ -129,7 +129,9 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
     radius: 22,
     backgroundColor: Colors.grey.shade200,
     child: Text(
-    user['name'][0].toUpperCase(),
+    (user['name'] as String?)?.isNotEmpty == true
+        ? user['name'][0].toUpperCase()
+        : '?',
     ),
     ),
 

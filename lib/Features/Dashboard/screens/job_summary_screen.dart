@@ -6,7 +6,8 @@ import '../../../core/session/session_manager.dart';
 import 'package:provider/provider.dart';
 import '../../../customer/intro/widgets/order_status_card.dart';
 import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
-import 'job_summary_field_config.dart'; // ← add this import
+import 'job_summary_field_config.dart';
+import 'package:intl/intl.dart';
 
 class JobSummaryScreen extends StatefulWidget {
 
@@ -22,7 +23,6 @@ class JobSummaryScreen extends StatefulWidget {
     "Emboss": "/jobform/emboss",
   };
 
-  /// Maps the pipeline display-name → Firestore document key.
   static const Map<String, String> departmentFirestoreKey = {
     "Designer": "designer",
     "AutoBending": "autoBending",
@@ -37,17 +37,15 @@ class JobSummaryScreen extends StatefulWidget {
 }
 
 class _JobSummaryScreenState extends State<JobSummaryScreen> {
-  late Future<DocumentSnapshot> _jobFuture; // ✅ HERW
+  late Future<DocumentSnapshot> _jobFuture;
   @override
   void initState() {
     super.initState();
 
-    // Listener
     Future.microtask(() {
       context.read<OrderDetailViewModel>().listenToJob(widget.lpm);
     });
 
-    // ✅ ADD THIS
     _jobFuture = FirebaseFirestore.instance
         .collection("jobs")
         .doc(widget.lpm)
@@ -83,12 +81,8 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
     return str.isEmpty ? "-" : str;
   }
 
-  /// Returns a human-friendly label for a raw Firestore field key.
-  /// Falls back to inserting spaces before capital letters if no
-  /// explicit override exists.
   String _fieldLabel(String key) {
     const overrides = <String, String>{
-      // Designer
       "PartyName":                 "Party Name",
       "ParticularJobName":         "Particular Job Name",
       "Orderby":                   "Order By",
@@ -116,28 +110,23 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
       "DesignedBy":                "Designed By",
       "DesignedByTimestamp":       "Designed At",
       "SendApproval":              "Send Approval",
-      // AutoBending
       "AutoBendingStatus":              "AutoBending Status",
       "AutoBendingCreatedByName":       "Done By",
       "AutoBendingCreatedByTimestamp":  "Done At",
       "AutoCreasing":                   "Auto Creasing",
       "AutoCreasingStatus":             "Auto Creasing Status",
-      // ManualBending
       "ManualBendingStatus":             "ManualBending Status",
       "ManualBendingCreatedByName":      "Done By",
       "ManualBendingCreatedByTimestamp": "Done At",
-      // LaserCutting
       "LaserCuttingStatus":              "Laser Cutting Status",
       "LaserCuttingCreatedByName":       "Done By",
       "LaserCuttingCreatedByTimestamp":  "Done At",
-      // Rubber
       "RubberStatus":    "Rubber Status",
       "RubberCreatedBy": "Created By",
     };
 
     if (overrides.containsKey(key)) return overrides[key]!;
 
-    // Auto-split camelCase → "Camel Case"
     return key.replaceAllMapped(
       RegExp(r'([A-Z])'),
           (m) => ' ${m[0]}',
@@ -189,7 +178,6 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // ── CUSTOMER CHANGES BANNER ──────────────────────────
                 if (approvalStatus == "changes") ...[
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -215,7 +203,6 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
                   ),
                 ],
 
-                // ── HEADER ───────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -245,13 +232,11 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
 
                 const SizedBox(height: 16),
 
-                // ── ATTACHMENTS ──────────────────────────────────────
                 if (filesMap.isNotEmpty) ...[
                   _buildAttachmentsRow(context, filesMap),
                   const SizedBox(height: 16),
                 ],
 
-                // ── LIVE STATUS ──────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -280,10 +265,6 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
 
                 const SizedBox(height: 20),
 
-                // ── FORM DATA SECTIONS ───────────────────────────────
-                // For each department, read its raw Firestore data then
-                // filter it through JobSummaryFieldConfig so only the
-                // fields that are actually in the form are shown.
                 if (JobSummaryScreen.departmentFirestoreKey[currentDept] != null) ...[
                   Builder(
                     builder: (context) {
@@ -310,11 +291,212 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
                   ),
                 ],
 
+                // ── EDIT HISTORY LOG ─────────────────────────────────
+                const SizedBox(height: 4),
+                const Text(
+                  "EDIT HISTORY LOG",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildHistoryLog(),
+                const SizedBox(height: 20),
+
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildHistoryLog() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(_mainLpm)
+          .collection("history")
+          .orderBy("timestamp", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Center(
+              child: Text(
+                "No edit history available for this job.",
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            ),
+          );
+        }
+
+        final historyDocs = snapshot.data!.docs;
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: historyDocs.length,
+          itemBuilder: (context, index) {
+            final log = historyDocs[index].data() as Map<String, dynamic>;
+            final String changedBy = log['changedBy'] ?? "Unknown User";
+            final String dept = log['department'] ?? "Form Update";
+            final List<dynamic> changes = log['changes'] ?? [];
+
+            String timeString = "Unknown time";
+            if (log['timestamp'] != null) {
+              DateTime dt = (log['timestamp'] as Timestamp).toDate();
+              timeString = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                  )
+                ],
+              ),
+              child: Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  iconColor: Colors.black87,
+                  title: Text(
+                    changedBy,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      "$dept  •  $timeString",
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue.shade50,
+                    child: Icon(Icons.history_edu, color: Colors.blue.shade700, size: 20),
+                  ),
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(14),
+                          bottomRight: Radius.circular(14),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: changes.map((change) {
+                          final Map c = change as Map;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  c['field'] ?? 'Field',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.red.shade100),
+                                        ),
+                                        child: Text(
+                                          c['oldValue'] ?? '-',
+                                          style: TextStyle(
+                                            color: Colors.red.shade700,
+                                            fontSize: 13,
+                                            decoration: TextDecoration.lineThrough,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 10),
+                                      child: Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.grey),
+                                    ),
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.green.shade200),
+                                        ),
+                                        child: Text(
+                                          c['newValue'] ?? '-',
+                                          style: TextStyle(
+                                            color: Colors.green.shade800,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -400,7 +582,6 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
     );
   }
 
-  /// Renders a list of key→value rows using human-friendly labels.
   Widget _infoSection(Map<String, dynamic> data) {
     if (data.isEmpty) return const SizedBox.shrink();
 
@@ -456,9 +637,8 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
         }).toList(),
       ],
     );
-
   }
-  @override
+
   @override
   void dispose() {
     context.read<OrderDetailViewModel>().disposeListener(widget.lpm);
