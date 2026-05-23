@@ -172,6 +172,15 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
           final viewModel = context.watch<OrderDetailViewModel>();
           final filesMap  = Map<String, dynamic>.from(data['files'] ?? {});
 
+          String partyName = "-";
+          if (data["designer"] != null && data["designer"] is Map) {
+            final Map designerSec = data["designer"];
+            final Map innerData = designerSec.containsKey("data") && designerSec["data"] is Map
+                ? designerSec["data"]
+                : designerSec;
+            partyName = innerData["Party Name"] ?? innerData["PartyName"] ?? "-";
+          }
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -204,28 +213,18 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
                 ],
 
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Job Details",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(_mainLpm),
-                      ),
+                      Text("Job Details", style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(_mainLpm, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black87)),
                     ],
                   ),
                 ),
@@ -265,26 +264,97 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
 
                 const SizedBox(height: 20),
 
+                // ── PARTY DETAILS ────────────────────────────────────
+                const Text(
+                  "PARTY DETAILS",
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Party Name", style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(partyName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black87)),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
                 if (JobSummaryScreen.departmentFirestoreKey[currentDept] != null) ...[
                   Builder(
                     builder: (context) {
                       final firestoreKey = JobSummaryScreen.departmentFirestoreKey[currentDept]!;
-
-                      final rawData = Map<String, dynamic>.from(
-                        data[firestoreKey]?["data"] ?? {},
-                      );
-
-                      final filteredData =
-                      JobSummaryFieldConfig.filter(firestoreKey, rawData);
-
+                      final rawData = Map<String, dynamic>.from(data[firestoreKey]?["data"] ?? {});
+                      final filteredData = JobSummaryFieldConfig.filter(firestoreKey, rawData);
                       if (filteredData.isEmpty) return const SizedBox.shrink();
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionTitle("$currentDept Details"),
-                          _infoSection(filteredData),
-                          const SizedBox(height: 16),
+                          Text(
+                            "$currentDept Details".toUpperCase(),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: filteredData.entries.map((e) {
+                                  final label = _fieldLabel(e.key);
+                                  final displayValue = _prettyValue(e.value);
+                                  final isLast = e.key == filteredData.keys.last;
+                                  return Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 4,
+                                              child: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                            ),
+                                            Expanded(
+                                              flex: 6,
+                                              child: Text(
+                                                displayValue,
+                                                textAlign: TextAlign.right,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: displayValue == "-" ? Colors.grey : Colors.black,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (!isLast) Divider(color: Colors.grey.shade300, height: 1),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                         ],
                       );
                     },
