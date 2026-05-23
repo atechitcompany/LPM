@@ -68,6 +68,7 @@ import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
 
 // Firebase
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lightatech/Features/Dashboard/screens/quotation_detail_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -240,6 +241,13 @@ class AppRoutes {
             path: '/job-summary/:lpm',
             builder: (context, state) =>
                 JobSummaryScreen(lpm: state.pathParameters['lpm']!),
+          ),
+          GoRoute(
+            path: '/quotation-detail/:id',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return QuotationDetailScreen(quoteId: id);
+            },
           ),
 
           GoRoute(

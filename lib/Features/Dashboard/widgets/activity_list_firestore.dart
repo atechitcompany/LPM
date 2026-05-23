@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'activity_list.dart';
+import 'package:go_router/go_router.dart';
 
 class ActivityListFirestore extends StatefulWidget {
   final String searchText;
@@ -71,8 +72,9 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                     ),
                   ),
                   // ── Quotations tab ──────────────────────────────────
-                  const _KeepAliveTab(
-                    child: _EmptyQuotations(),
+                  // ── Quotations tab ──────────────────────────────────
+                  _KeepAliveTab(
+                    child: _QuotationsTab(searchText: widget.searchText),
                   ),
                 ],
               ),
@@ -390,6 +392,100 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           hasMore: _hasMore,
           isLoadingMore: _isLoadingMore,
           scrollController: _scrollController,
+        );
+      },
+    );
+  }
+}
+class _QuotationsTab extends StatelessWidget {
+  final String searchText;
+  const _QuotationsTab({required this.searchText});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("quotations")
+          .orderBy("createdAt", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final query = searchText.trim().toLowerCase();
+
+        final filtered = docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (query.isEmpty) return true;
+          return doc.id.toLowerCase().contains(query) ||
+              (data["partyName"] ?? "").toString().toLowerCase().contains(query);
+        }).toList();
+
+        if (filtered.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.description_outlined,
+                    size: 56, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                Text(
+                  "No quotations yet",
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade400),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final doc = filtered[index];
+            final data = doc.data() as Map<String, dynamic>;
+            final designerData = (data["designer"]?["data"] ?? {}) as Map<String, dynamic>;
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              child: ListTile(
+                onTap: () => context.push('/quotation-detail/${doc.id}'), // ← ADD HERE
+                title: Text(
+                  doc.id,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+                subtitle: Text(
+                  data["partyName"] ?? designerData["PartyName"] ?? "—",
+                  style: TextStyle(
+                      fontSize: 13, color: Colors.grey.shade600),
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8D94B).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    (data["status"] ?? "pending").toString().toUpperCase(),
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

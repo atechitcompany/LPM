@@ -228,6 +228,7 @@ class NewFormState extends State<NewForm> {
   final ReqEmboss = TextEditingController();
   final ReqAccount = TextEditingController();
   final SendApproval = TextEditingController();
+  final QuotationStatus = TextEditingController();
 
   bool AutoCreasing = false;
 
@@ -460,6 +461,7 @@ class NewFormState extends State<NewForm> {
       "ReqEmboss": ReqEmboss.text,
       "ReqAccount": ReqAccount.text,
       "SendApproval": SendApproval.text,
+      "QuotationStatus": QuotationStatus.text,
 
       "Timestamp": DateTime.now().toIso8601String(),
     };
@@ -630,6 +632,7 @@ class NewFormState extends State<NewForm> {
     ReqEmboss.clear();
     ReqAccount.clear();
     SendApproval.clear();
+    QuotationStatus.text = "No";
 
     // Set defaults
     ReqAutoBending.text = "NO";
@@ -976,6 +979,7 @@ class NewFormState extends State<NewForm> {
 
       //NEW
       set(SendApproval, "SendApproval");
+      set(QuotationStatus, "QuotationStatus");
     });
   }
 
@@ -1596,6 +1600,7 @@ class NewFormState extends State<NewForm> {
     ReqEmboss.dispose();
     ReqAccount.dispose();
     SendApproval.dispose();
+    QuotationStatus.dispose();
 
     super.dispose();
   }

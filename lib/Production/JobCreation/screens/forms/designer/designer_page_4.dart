@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../new_form_scope.dart';
+import '../new_form.dart';
 import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
@@ -152,6 +153,50 @@ class _DesignerPage4State extends State<DesignerPage4> {
       debugPrint("❌ Error getting current user name: $e");
       return "Unknown";
     }
+  }
+  Future<void> _submitAsQuotation(NewFormState form) async {
+    // Generate QUOTE number
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final year = (now.year % 100).toString().padLeft(2, '0');
+    final counterDocId = "QUOTE_${now.year}_$month";
+
+    final counterRef = FirebaseFirestore.instance
+        .collection("counters")
+        .doc(counterDocId);
+
+    String quoteNumber = "";
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+      int lastNo = snap.exists ? (snap.data()?["lastNo"] ?? 0) : 0;
+      final newNo = lastNo + 1;
+      transaction.set(counterRef, {"lastNo": newNo}, SetOptions(merge: true));
+      quoteNumber = "QUOTE-${newNo.toString().padLeft(4, '0')}";
+    });
+
+    final data = form.buildFormData();
+
+    await FirebaseFirestore.instance
+        .collection("quotations")
+        .doc(quoteNumber)
+        .set({
+      "quoteNumber": quoteNumber,
+      "partyName": form.PartyName.text,
+      "createdAt": FieldValue.serverTimestamp(),
+      "status": "pending",
+      "designer": {
+        "submitted": true,
+        "submittedAt": FieldValue.serverTimestamp(),
+        "submittedBy": form.DesignerCreatedBy.text.isNotEmpty
+            ? form.DesignerCreatedBy.text
+            : "Unknown",
+        "data": data,
+      },
+    });
+
+    debugPrint("✅ Quotation saved as $quoteNumber");
+    // NOTE: LPM counter is NOT incremented here
   }
 
   @override
@@ -369,7 +414,24 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   ],
                 ),
               ),
-
+            // ── Quotation ────────────────────────────────────────────
+            fieldCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  sectionLabel("Quotation"),
+                  FlexibleToggle(
+                    label: "",
+                    inactiveText: "No Quotation",
+                    activeText: "Yes Quotation",
+                    initialValue: form.QuotationStatus.text.trim().toLowerCase() == "yes",
+                    onChanged: (val) => setState(
+                          () => form.QuotationStatus.text = val ? "Yes" : "No",
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // ── Send Approval ────────────────────────────────────────────────
             if (form.canView("SendApproval") && approvalStatus != "changes")
               fieldCard(
@@ -400,18 +462,25 @@ class _DesignerPage4State extends State<DesignerPage4> {
                       ? null
                       : () async {
                     setState(() => isSubmitting = true);
-
                     try {
-                      await form.submitDesignerForm();
+                      final isQuotation =
+                          form.QuotationStatus.text.trim().toLowerCase() == "yes";
+                      final sendApproval =
+                      form.SendApproval.text.trim().toUpperCase();
+
+                      if (isQuotation && sendApproval != "YES") {
+                        await _submitAsQuotation(form);
+                      } else {
+                        await form.submitDesignerForm();
+                      }
 
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("✅ Job Submitted Successfully"),
+                            content: Text("✅ Submitted Successfully"),
                             backgroundColor: Colors.green,
                           ),
                         );
-
                         context.go('/dashboard');
                       }
                     } catch (e) {
