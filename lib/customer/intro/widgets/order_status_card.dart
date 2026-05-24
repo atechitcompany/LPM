@@ -23,7 +23,11 @@ class OrderStatusCard extends StatelessWidget {
         .toList();
 
     // 👈 done steps first, then pending
-    final orderedSteps = [...doneSteps, ...pendingSteps];
+    // With this:
+    final deliveryDone = stepStatus[OrderStatus.delivered] == true;
+    final orderedSteps = deliveryDone
+        ? doneSteps  // 👈 hide pending if delivered
+        : [...doneSteps, ...pendingSteps];
 
     return Column(
       children: [
