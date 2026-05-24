@@ -19,14 +19,14 @@ class SidebarMenu extends StatelessWidget {
 
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
-    final iconColor = isDark ? const Color(0xFFF8D94B) : Colors.blue;
-    final dividerColor = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
+    final iconColor = isDark ? const Color(0xFFF8D94B) : Colors.black;
+    final dividerColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
 
     return Drawer(
       backgroundColor: bgColor,
       child: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
             const SidebarLogo(),
 
@@ -34,7 +34,7 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Reach Dashboard',
               Icons.people_outline,
-              () {
+                  () {
                 Navigator.pop(context);
                 context.push('/dashboard');
               },
@@ -42,24 +42,23 @@ class SidebarMenu extends StatelessWidget {
               iconColor,
             ),
 
-            if (SessionManager.getDepartment() == 'Admin')
-              buildMenuItem(
-                context,
-                'Admin Access',
-                Icons.admin_panel_settings,
-                () {
-                  Navigator.pop(context);
-                  context.push('/admin-panel');
-                },
-                textColor,
-                iconColor,
-              ),
+            buildMenuItem(
+              context,
+              'Admin Access',
+              Icons.admin_panel_settings,
+                  () {
+                // Navigator.pop(context);
+                // context.push('/admin-panel');
+              },
+              textColor,
+              iconColor,
+            ),
 
             buildMenuItem(
               context,
               'Projects',
               Icons.work_outline,
-              () {},
+                  () {},
               textColor,
               iconColor,
             ),
@@ -68,7 +67,7 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Turnover',
               Icons.bar_chart,
-              () {},
+                  () {},
               textColor,
               iconColor,
             ),
@@ -77,7 +76,7 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Packages',
               Icons.card_giftcard,
-              () {},
+                  () {},
               textColor,
               iconColor,
             ),
@@ -86,7 +85,7 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Productivity',
               Icons.show_chart,
-              () {
+                  () {
                 Navigator.pop(context);
                 context.go('/dashboard');
               },
@@ -94,13 +93,25 @@ class SidebarMenu extends StatelessWidget {
               iconColor,
             ),
 
-            Divider(color: dividerColor),
+            buildMenuItem(
+              context,
+              'Staff Performance',
+              Icons.leaderboard_outlined,
+                  () {},
+              textColor,
+              iconColor,
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Divider(color: dividerColor),
+            ),
 
             buildMenuItem(
               context,
               'About',
               Icons.info_outline,
-              () {},
+                  () {},
               textColor,
               iconColor,
             ),
@@ -109,7 +120,7 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Feedback',
               Icons.feedback_outlined,
-              () {},
+                  () {},
               textColor,
               iconColor,
             ),
@@ -118,22 +129,9 @@ class SidebarMenu extends StatelessWidget {
               context,
               'Share',
               Icons.share_outlined,
-              () {
+                  () {
                 Navigator.pop(context);
                 context.go('/dashboard');
-              },
-              textColor,
-              iconColor,
-            ),
-
-            Divider(color: dividerColor),
-
-            buildMenuItem(
-              context,
-              'App Gallery',
-              Icons.apps,
-              () {
-                Navigator.pop(context);
               },
               textColor,
               iconColor,
@@ -145,17 +143,33 @@ class SidebarMenu extends StatelessWidget {
   }
 
   Widget buildMenuItem(
-    BuildContext context,
-    String label,
-    IconData icon,
-    VoidCallback onTap,
-    Color textColor,
-    Color iconColor,
-  ) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(label, style: TextStyle(color: textColor)),
+      BuildContext context,
+      String label,
+      IconData icon,
+      VoidCallback onTap,
+      Color textColor,
+      Color iconColor,
+      ) {
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
