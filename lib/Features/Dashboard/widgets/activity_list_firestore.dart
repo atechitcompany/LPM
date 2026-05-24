@@ -31,22 +31,27 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
           children: [
             Container(
               color: Colors.white,
-              child: TabBar(
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.grey.shade500,
-                labelStyle: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 13),
-                unselectedLabelStyle: const TextStyle(
-                    fontWeight: FontWeight.w500, fontSize: 13),
-                indicator: const UnderlineTabIndicator(
-                  borderSide:
-                  BorderSide(width: 3, color: Color(0xFFF8D94B)),
-                  insets: EdgeInsets.symmetric(horizontal: 12),
-                ),
-                tabs: const [
-                  Tab(text: "Pending"),
-                  Tab(text: "Jobs"),
-                  Tab(text: "Quotations"),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TabBar(
+                    labelColor: Colors.black,
+                    unselectedLabelColor: Colors.grey.shade500,
+                    labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13),
+                    unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 13),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicatorWeight: 2,
+                    indicatorColor: const Color(0xFFF8D94B),
+                    dividerColor: Colors.black,
+                    dividerHeight: 0.8,
+                    tabs: const [
+                      Tab(text: "Pending"),
+                      Tab(text: "Jobs"),
+                      Tab(text: "Quotations"),
+                    ],
+                  ),
                 ],
               ),
             ),

@@ -91,6 +91,11 @@ flutter:
     - assets/telephone.png
     - assets/whatsapp.png
     - assets/whatsapp-logo.png
+    - assets/call-icon.png
+    - assets/whatsapp-icon.png
+    - assets/whatsapp-exact1.png
+    - assets/TextWhatsappLogo.png
+    - assets/TextCallLogo.png
     - assets/service_account.json
 
   # The following line ensures that the Material Icons font is
