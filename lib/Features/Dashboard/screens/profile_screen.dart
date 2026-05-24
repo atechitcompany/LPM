@@ -30,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         )
         .join(' ');
 
-    final parts = name.trim().split(' ');
+    final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
     final String initials = parts.length >= 2
         ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
         : name.isNotEmpty
