@@ -7,24 +7,27 @@ class SidebarLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 16),
-        Image.asset(
-          'assets/sidebar_logo.jpeg', // ✅ Make sure this path matches your asset
-          height: 25,
+        const SizedBox(height: 32),
+        Center(
+          child: Image.asset(
+            'assets/LPM.jpg',
+            height: 120,
+            fit: BoxFit.contain,
+          ),
         ),
-        SizedBox(height: 8),
-
+        const SizedBox(height: 14),
         Center(
           child: Text(
-            'A Tech IT',
+            'Light Punch Maker',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+              color: Colors.grey[800],
             ),
           ),
         ),
-        Divider(thickness: 1),
+        const SizedBox(height: 20),
+        const Divider(thickness: 0.8),
       ],
     );
   }
