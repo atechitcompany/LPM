@@ -174,16 +174,19 @@ class ActivityList extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Department pill (transparent bg, colored text)
+                            // Department badge (white bg + colored border + colored text)
                             ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 110),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 5),
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius:
-                                  BorderRadius.circular(16),
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: deptColor,
+                                    width: 1.4,
+                                  ),
                                 ),
                                 child: Text(
                                   currentDept,
@@ -326,7 +329,7 @@ class ActivityList extends StatelessWidget {
       if (innerData is! Map) continue;
 
       final status =
-          (innerData[entry.value["statusField"]] ?? "").toString().trim().toLowerCase();
+      (innerData[entry.value["statusField"]] ?? "").toString().trim().toLowerCase();
 
       // If status exists and is not done, this department is active
       if (status.isNotEmpty && status != "done") {
