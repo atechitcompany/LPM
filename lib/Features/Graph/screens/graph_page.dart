@@ -5,6 +5,8 @@ import '../services/analytics_service.dart';
 import '../widgets/analytics_summary_cards.dart';
 import '../widgets/employee_productivity_chart.dart';
 import '../widgets/top_customers_chart.dart';
+import '../widgets/analytics_filter_bar.dart';
+import '../widgets/department_status_chart.dart';
 
 class GraphPage extends StatefulWidget {
   const GraphPage({super.key});
@@ -15,6 +17,17 @@ class GraphPage extends StatefulWidget {
 
 class _GraphPageState extends State<GraphPage> {
 
+  String selectedGraph =
+      "Employee Productivity";
+
+  final List<String> graphTypes = [
+
+    "Employee Productivity",
+
+    "Top Customers",
+
+    "Department Workflow",
+  ];
   final AnalyticsService _analyticsService = AnalyticsService();
 
   late Future<AnalyticsModel> analyticsFuture;
@@ -114,6 +127,24 @@ class _GraphPageState extends State<GraphPage> {
 
                   const SizedBox(height: 24),
 
+                  AnalyticsFilterBar(
+
+                    selectedGraph: selectedGraph,
+
+                    graphTypes: graphTypes,
+
+                    onGraphChanged: (value) {
+
+                      if (value == null) return;
+
+                      setState(() {
+                        selectedGraph = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
                   /// KPI CARDS
                   AnalyticsSummaryCards(
                     totalJobs: analytics.totalJobs,
@@ -122,91 +153,33 @@ class _GraphPageState extends State<GraphPage> {
                     deliveredJobs: analytics.deliveredJobs,
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 24,),
 
-                  /// EMPLOYEE ANALYTICS
-                  EmployeeProductivityChart(
-                    employeeData: analytics.employeeJobs,
-                  ),
+                  if (selectedGraph ==
+                      "Employee Productivity") ...[
 
-                  const SizedBox(height: 30),
-
-                  /// CUSTOMER ANALYTICS
-                  TopCustomersChart(
-                    customerData: analytics.customerOrders,
-                  ),
-                  const SizedBox(height: 30),
-
-                  /// DEPARTMENT ANALYTICS
-                  const Text(
-                    "Department Workflow",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                    EmployeeProductivityChart(
+                      employeeData: analytics.employeeJobs,
                     ),
-                  ),
+                  ],
 
-                  const SizedBox(height: 16),
+                  if (selectedGraph ==
+                      "Top Customers") ...[
 
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                        ),
-                      ],
+                    TopCustomersChart(
+                      customerData: analytics.customerOrders,
                     ),
+                  ],
 
-                    child: Column(
-                      children: analytics.departmentLoads.entries.map((e) {
+                  if (selectedGraph ==
+                      "Department Workflow") ...[
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-
-                          child: Row(
-                            children: [
-
-                              Expanded(
-                                child: Text(
-                                  e.key,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-
-                                child: Text(
-                                  "${e.value} Completed",
-                                  style: TextStyle(
-                                    color: Colors.orange.shade800,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                    // TEMPORARY
+                    DepartmentStatusChart(
+                      departmentData:
+                      analytics.departmentLoads,
                     ),
-                  ),
+                  ],
 
                   const SizedBox(height: 50),
                 ],
