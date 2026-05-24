@@ -172,7 +172,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
       int lastNo = snap.exists ? (snap.data()?["lastNo"] ?? 0) : 0;
       final newNo = lastNo + 1;
       transaction.set(counterRef, {"lastNo": newNo}, SetOptions(merge: true));
-      quoteNumber = "QUOTE-${newNo.toString().padLeft(4, '0')}";
+      quoteNumber = "QUOTE-${newNo.toString().padLeft(5, '0')}-$month-$year-01";
     });
 
     final data = form.buildFormData();
