@@ -239,8 +239,8 @@ class ActivityList extends StatelessWidget {
                               child: ClipOval(
                                 child: Image.asset(
                                   'assets/TextWhatsappLogo.png',
-                                  width: 36,
-                                  height: 36,
+                                  width: 40,
+                                  height: 39,
                                   fit: BoxFit.cover,
                                 ),
                               ),
