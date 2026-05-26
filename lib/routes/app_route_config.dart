@@ -64,7 +64,8 @@ import 'package:lightatech/Features/Graph/screens/graph_tasks_page.dart';
 import 'package:lightatech/Features/Target/screens/profile_screen.dart' as target_profile;
 
 // Payment
-import 'package:lightatech/Features/Payment/screens/paid_screen.dart';
+import 'package:lightatech/Features/Payment/screens/payment_page.dart';
+import 'package:lightatech/Features/Payment/screens/record_payment_page.dart';
 
 // Firebase
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -264,7 +265,13 @@ class AppRoutes {
           GoRoute(
             path: '/payment',
             name: AppRoutesName.PaymentScreen,
-            builder: (context, state) => const PaidScreen(),
+            builder: (context, state) => const PaymentPage(),
+          ),
+
+          GoRoute(
+            path: '/record-payment',
+            builder: (context, state) =>
+            const RecordPaymentPage(),
           ),
 
           GoRoute(
