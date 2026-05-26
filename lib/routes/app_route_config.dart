@@ -117,9 +117,11 @@ class AppRoutes {
         builder: (_, __) => const LoginScreen(),
       ),
 
+      // /admin is now inside the ShellRoute as /admin-panel (has sidebar + bottom nav)
+      // Keeping this as a redirect fallback just in case
       GoRoute(
         path: '/admin',
-        builder: (_, __) => const Admin(),
+        redirect: (_, __) => '/admin-panel',
       ),
 
       GoRoute(
@@ -181,6 +183,11 @@ class AppRoutes {
               if (!SessionManager.isLoggedIn()) {
                 return '/login';
               }
+              // ✅ FIX: Admin dept has no DashboardScreen — send to admin panel
+              final dept = SessionManager.getDepartment();
+              if (dept == 'Admin') {
+                return '/admin-panel';
+              }
               return null;
             },
             builder: (context, state) {
@@ -196,7 +203,7 @@ class AppRoutes {
 
           GoRoute(
             path: '/admin-panel',
-            builder: (context, state) => const AdminPanelScreen(),
+            builder: (context, state) => const Admin(),
           ),
 
           GoRoute(
