@@ -42,7 +42,6 @@ class BottomNavBar extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: const BorderRadius.only(
@@ -51,44 +50,51 @@ class BottomNavBar extends StatelessWidget {
           ),
           border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
-
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: List.generate(_icons.length, (index) {
             final isSelected = currentIndex == index;
 
-            return InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () => onNavTap(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                padding: isSelected
-                    ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
-                    : const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.yellowAccent.withOpacity(0.8)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(_icons[index], size: 22, color: iconColor),
-                    if (isSelected) ...[
-                      const SizedBox(width: 6),
-                      Text(
-                        _labels[index],
-                        overflow: TextOverflow.fade,
-                        softWrap: false,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: iconColor,
+            return Flexible(
+              flex: isSelected ? 2 : 1,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => onNavTap(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  padding: isSelected
+                      ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8)
+                      : const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Colors.yellowAccent.withOpacity(0.8)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_icons[index], size: 22, color: iconColor),
+                      if (isSelected) ...[
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            _labels[index],
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: iconColor,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             );
