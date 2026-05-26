@@ -70,6 +70,7 @@ import 'package:lightatech/Features/Payment/screens/record_payment_page.dart';
 // Firebase
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/Features/Dashboard/screens/quotation_detail_screen.dart';
+import 'package:lightatech/Features/adminAccess/screens/edit_material_page.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -243,6 +244,10 @@ class AppRoutes {
               final lpm = state.pathParameters['lpm'] ?? '';
               return PendingFormEditScreen(lpm: lpm);
             },
+          ),
+          GoRoute(
+            path: '/edit-material',
+            builder: (context, state) => const EditMaterialPage(),
           ),
 
           GoRoute(
