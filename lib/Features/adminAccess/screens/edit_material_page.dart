@@ -102,10 +102,24 @@ class _EditMaterialPageState extends State<EditMaterialPage> {
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => FirebaseFirestore.instance
-                                      .collection(_selectedCategory!)
-                                      .doc(doc.id)
-                                      .delete(),
+                                  onPressed: () async {
+                                    final col = FirebaseFirestore.instance.collection(_selectedCategory!);
+                                    final docId = doc.id;
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (dialogContext) => AlertDialog(
+                                        title: const Text('Delete Material'),
+                                        content: const Text('Are you sure you want to delete this material?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+                                          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await col.doc(docId).delete();
+                                    }
+                                  },
                                 ),
                               ],
                             ),
