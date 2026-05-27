@@ -133,6 +133,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             color: Colors.green,
             type: "Customer",
           ),
+          const SizedBox(height: 16),
+          _buildCard(
+            context,
+            title: "Materials",
+            icon: Icons.inventory_2,
+            color: Colors.orange,
+            type: "Material",
+          ),
         ],
       ),
     );
@@ -271,6 +279,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       }) {
     return GestureDetector(
       onTap: () {
+        if (type == "Material") {
+          context.push('/edit-material');
+          return;
+        }
         showModalBottomSheet(
           context: context,
           backgroundColor: Colors.white,
