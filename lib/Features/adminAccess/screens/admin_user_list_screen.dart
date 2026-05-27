@@ -8,217 +8,244 @@ class AdminUserListScreen extends StatefulWidget {
   const AdminUserListScreen({super.key, required this.type});
 
   @override
-  State<AdminUserListScreen> createState() =>
-      _AdminUserListScreenState();
+  State<AdminUserListScreen> createState() => _AdminUserListScreenState();
 }
 
 class _AdminUserListScreenState extends State<AdminUserListScreen> {
-
-  final searchController = TextEditingController();
-
-  Stream<List<Map<String, dynamic>>> fetchUsers() {
-    if (widget.type == "Staff") {
-      return FirebaseFirestore.instance
-          .collection('Staff')
-          .snapshots()
-          .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          return {
-            "id": doc.id,
-            "name": doc['Name'],
-            "email": doc['Email'],
-            "type": "Staff",
-            "role": doc['Role'],
-          };
-        }).toList();
-      });
-    } else {
-      return FirebaseFirestore.instance
-          .collection('customers')
-          .snapshots()
-          .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          return {
-            "id": doc.id,
-            "name": doc['Username'],
-            "email": doc['Email'],
-            "type": "Customer",
-            "role": "-",
-          };
-        }).toList();
-      });
-    }
-  }
+  final TextEditingController searchController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    final searchText = searchController.text.toLowerCase();
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
+  Stream<List<Map<String, dynamic>>> fetchUsers() {
+    final bool isStaff = widget.type == "Staff";
+    final String collection = isStaff ? "Staff" : "customers";
 
-    return Scaffold(
-    backgroundColor: const Color(0xFFEEF2FF),
+    return FirebaseFirestore.instance.collection(collection).snapshots().map(
+          (snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
 
-    appBar: AppBar(
-    title: Text("${widget.type} Users"),
-    backgroundColor: const Color(0xFFEEF2FF),
-    elevation: 0,
-    ),
-
-    body: Column(
-    children: [
-
-    /// 🔍 SEARCH BAR (REAL WORKING)
-    Padding(
-    padding: const EdgeInsets.all(12),
-    child: Container(
-    height: 44,
-    decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(14),
-    ),
-    child: TextField(
-    controller: searchController,
-    onChanged: (_) => setState(() {}),
-    decoration: const InputDecoration(
-    hintText: "Search user...",
-    prefixIcon: Icon(Icons.search),
-    border: InputBorder.none,
-    ),
-    ),
-    ),
-    ),
-
-    /// 📋 USER LIST
-    Expanded(
-    child: StreamBuilder<List<Map<String, dynamic>>>(
-    stream: fetchUsers(),
-    builder: (context, snapshot) {
-    if (!snapshot.hasData) {
-    return const Center(child: CircularProgressIndicator());
-    }
-
-    /// 🔥 APPLY SEARCH FILTER HERE
-    final users = snapshot.data!
-        .where((user) => user['name']
-        .toLowerCase()
-        .contains(searchText))
-        .toList();
-
-    if (users.isEmpty) {
-    return const Center(child: Text("No users found"));
-    }
-
-    return ListView.builder(
-    itemCount: users.length,
-    itemBuilder: (context, index) {
-    final user = users[index];
-
-    return Container(
-    margin: const EdgeInsets.symmetric(
-    horizontal: 12, vertical: 6),
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(14),
-    ),
-    child: Row(
-    children: [
-
-    /// 👤 Avatar
-    CircleAvatar(
-    radius: 22,
-    backgroundColor: Colors.grey.shade200,
-    child: Text(
-    (user['name'] as String?)?.isNotEmpty == true
-        ? user['name'][0].toUpperCase()
-        : '?',
-    ),
-    ),
-
-    const SizedBox(width: 12),
-
-    /// 📝 Name + Email
-    Expanded(
-    child: Column(
-    crossAxisAlignment:
-    CrossAxisAlignment.start,
-    children: [
-    Text(
-    user['name'],
-    style: const TextStyle(
-    fontWeight: FontWeight.w600,
-    ),
-    ),
-    Text(
-    user['email'],
-    style: TextStyle(
-    color: Colors.grey.shade600,
-    fontSize: 12,
-    ),
-    ),
-    ],
-    ),
-    ),
-
-    /// ✏️ EDIT
-    GestureDetector(
-    onTap: () {
-    Navigator.push(
-    context,
-    MaterialPageRoute(
-    builder: (_) =>
-    EditUserScreen(user: user),
-    ),
+          return {
+            "id": doc.id,
+            "name": isStaff
+                ? (data["Name"] ?? "").toString()
+                : (data["Username"] ?? "").toString(),
+            "email": (data["Email"] ?? "").toString(),
+            "type": isStaff ? "Staff" : "Customer",
+            "role": isStaff ? (data["Role"] ?? "").toString() : "-",
+          };
+        }).toList();
+      },
     );
-    },
-    child: const CircleAvatar(
-    radius: 16,
-    backgroundColor: Colors.blue,
-    child: Icon(Icons.edit,
-    color: Colors.white, size: 16),
-    ),
-    ),
+  }
 
-    const SizedBox(width: 6),
+  Future<void> deleteUser(Map<String, dynamic> user) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete User"),
+          content: Text(
+            "Are you sure you want to delete ${user['name']}?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
-    /// 🗑 DELETE
-    GestureDetector(
-    onTap: () async {
-    final collection =
-    user['type'] == "Staff"
-    ? "Staff"
-        : "customers";
+    if (confirm != true) return;
+
+    final collection = user['type'] == "Staff" ? "Staff" : "customers";
 
     await FirebaseFirestore.instance
         .collection(collection)
         .doc(user['id'])
         .delete();
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-    const SnackBar(
-    content: Text("User Deleted")),
-    );
-    },
-    child: const CircleAvatar(
-    radius: 16,
-    backgroundColor: Colors.red,
-    child: Icon(Icons.delete,
-    color: Colors.white, size: 16),
-    ),
-    ),
-    ],
-    ),
-    );
-    },
-    );
-    },
-    ),
-    ),
-    ],
-    ),
-    );
+    if (!mounted) return;
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("User Deleted")),
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final searchText = searchController.text.trim().toLowerCase();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFEEF2FF),
+      appBar: AppBar(
+        title: Text("${widget.type} Users"),
+        backgroundColor: const Color(0xFFEEF2FF),
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: TextField(
+                controller: searchController,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  hintText: "Search user...",
+                  prefixIcon: Icon(Icons.search),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: fetchUsers(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      "Error: ${snapshot.error}",
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final users = snapshot.data!.where((user) {
+                  final name = user['name'].toString().toLowerCase();
+                  final email = user['email'].toString().toLowerCase();
+
+                  return name.contains(searchText) ||
+                      email.contains(searchText);
+                }).toList();
+
+                if (users.isEmpty) {
+                  return const Center(child: Text("No users found"));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  itemCount: users.length,
+                  itemBuilder: (context, index) {
+                    final user = users[index];
+                    final name = user['name'].toString();
+                    final email = user['email'].toString();
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: Colors.grey.shade200,
+                            child: Text(
+                              name.isNotEmpty
+                                  ? name[0].toUpperCase()
+                                  : "?",
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name.isNotEmpty ? name : "No Name",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  email.isNotEmpty ? email : "No Email",
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      EditUserScreen(user: user),
+                                ),
+                              );
+                            },
+                            child: const CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.blue,
+                              child: Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 6),
+
+                          GestureDetector(
+                            onTap: () => deleteUser(user),
+                            child: const CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.red,
+                              child: Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -208,6 +208,11 @@ class AppRoutes {
           ),
 
           GoRoute(
+            path: '/admin-access',
+            builder: (context, state) => const AdminPanelScreen(),
+          ),
+
+          GoRoute(
             path: '/add-staff',
             builder: (context, state) => const AddStaffScreen(),
           ),
