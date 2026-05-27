@@ -232,22 +232,7 @@ class _DashboardAppBarState extends State<DashboardAppBar>
             ),
           ),
         // ── Edit Material (Admin only) ─────────────────────────────────────
-        if (widget.department == 'Admin')
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: GestureDetector(
-              onTap: () => context.push('/edit-material'),
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.edit_note, color: iconColor, size: 20),
-              ),
-            ),
-          ),
+
 
         // ── Profile icon ───────────────────────────────────────────────
         Padding(
