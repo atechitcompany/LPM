@@ -279,20 +279,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       }) {
     return GestureDetector(
       onTap: () {
+        if (type == "Staff" || type == "Customer") {
+          context.push('/admin-users?type=$type');
+          return;
+        }
+
         if (type == "Material") {
           context.push('/edit-material');
           return;
         }
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.white,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-          ),
-          builder: (context) {
-            return _buildOptionsSheet(context, type: type);
-          },
-        );
       },
       child: Container(
         height: 80,

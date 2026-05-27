@@ -4,7 +4,8 @@ import 'package:lightatech/routes/app_route_constants.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form.dart';
-import 'package:lightatech/Features/Dashboard/screens/profile_screen.dart' as dashboard_profile;
+import 'package:lightatech/Features/Dashboard/screens/profile_screen.dart'
+as dashboard_profile;
 
 // Intro
 import 'package:lightatech/Features/Intro/screens/splash_screen.dart';
@@ -17,7 +18,6 @@ import 'package:lightatech/Features/adminAccess/screens/admin_panel_screen.dart'
 import 'package:lightatech/Features/adminAccess/screens/add_staff_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/add_customer_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/admin_user_list_screen.dart';
-
 
 // Login
 import 'package:lightatech/Login/LoginScreen.dart';
@@ -37,7 +37,6 @@ import '../Features/Dashboard/screens/customer_quotation_detail_screen.dart';
 import '../customer/intro/viewmodel/order_detail_view.dart';
 
 // Job Forms
-
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_1.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_2.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/designer/designer_page_3.dart';
@@ -62,7 +61,8 @@ import 'package:lightatech/Features/Graph/widgets/graph_form.dart';
 import 'package:lightatech/Features/Graph/screens/graph_tasks_page.dart';
 
 // Target
-import 'package:lightatech/Features/Target/screens/profile_screen.dart' as target_profile;
+import 'package:lightatech/Features/Target/screens/profile_screen.dart'
+as target_profile;
 
 // Payment
 import 'package:lightatech/Features/Payment/screens/payment_page.dart';
@@ -74,7 +74,8 @@ import 'package:lightatech/Features/Dashboard/screens/quotation_detail_screen.da
 import 'package:lightatech/Features/adminAccess/screens/edit_material_page.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+GlobalKey<NavigatorState>();
 
 String _normalizeDepartment(String d) {
   switch (d.toLowerCase()) {
@@ -99,16 +100,26 @@ String _normalizeDepartment(String d) {
   }
 }
 
+// ADMIN ONLY PROTECTION
+String? _adminOnlyRedirect() {
+  if (!SessionManager.isLoggedIn()) {
+    return '/login';
+  }
+
+  if (SessionManager.getDepartment() != 'Admin') {
+    return '/dashboard';
+  }
+
+  return null;
+}
+
 class AppRoutes {
   AppRoutes._();
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
-
     routes: [
-
-      // AUTH
       GoRoute(
         path: '/',
         builder: (context, state) => const SplashScreen(),
@@ -119,8 +130,6 @@ class AppRoutes {
         builder: (_, __) => const LoginScreen(),
       ),
 
-      // /admin is now inside the ShellRoute as /admin-panel (has sidebar + bottom nav)
-      // Keeping this as a redirect fallback just in case
       GoRoute(
         path: '/admin',
         redirect: (_, __) => '/admin-panel',
@@ -167,7 +176,6 @@ class AppRoutes {
         },
       ),
 
-      // DASHBOARD SHELL
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
@@ -177,19 +185,18 @@ class AppRoutes {
           );
         },
         routes: [
-
-          // FIXED DASHBOARD ROUTE
           GoRoute(
             path: '/dashboard',
             redirect: (context, state) {
               if (!SessionManager.isLoggedIn()) {
                 return '/login';
               }
-              // ✅ FIX: Admin dept has no DashboardScreen — send to admin panel
+
               final dept = SessionManager.getDepartment();
               if (dept == 'Admin') {
                 return '/admin-panel';
               }
+
               return null;
             },
             builder: (context, state) {
@@ -205,21 +212,25 @@ class AppRoutes {
 
           GoRoute(
             path: '/admin-panel',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const Admin(),
           ),
 
           GoRoute(
             path: '/admin-access',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const AdminPanelScreen(),
           ),
 
           GoRoute(
             path: '/add-staff',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const AddStaffScreen(),
           ),
 
           GoRoute(
             path: '/add-customer',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const AddCustomerScreen(),
           ),
 
@@ -230,6 +241,7 @@ class AppRoutes {
 
           GoRoute(
             path: '/admin-users',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) {
               final type = state.uri.queryParameters['type'] ?? "Staff";
               return AdminUserListScreen(type: type);
@@ -251,8 +263,10 @@ class AppRoutes {
               return PendingFormEditScreen(lpm: lpm);
             },
           ),
+
           GoRoute(
             path: '/edit-material',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const EditMaterialPage(),
           ),
 
@@ -261,6 +275,7 @@ class AppRoutes {
             builder: (context, state) =>
                 JobSummaryScreen(lpm: state.pathParameters['lpm']!),
           ),
+
           GoRoute(
             path: '/quotation-detail/:id',
             builder: (context, state) {
@@ -277,7 +292,8 @@ class AppRoutes {
 
           GoRoute(
             path: '/profile',
-            builder: (context, state) => const dashboard_profile.ProfileScreen(),
+            builder: (context, state) =>
+            const dashboard_profile.ProfileScreen(),
           ),
 
           GoRoute(
@@ -288,8 +304,7 @@ class AppRoutes {
 
           GoRoute(
             path: '/record-payment',
-            builder: (context, state) =>
-            const RecordPaymentPage(),
+            builder: (context, state) => const RecordPaymentPage(),
           ),
 
           GoRoute(
@@ -304,25 +319,31 @@ class AppRoutes {
         ],
       ),
 
-      // JOB FORM SHELL
-      // JOB FORM SHELL
       ShellRoute(
         builder: (context, state, child) {
-          // 1. Try to get it from the query parameter
           String? dept = state.uri.queryParameters['department'];
 
-          // 2. If it's null, auto-detect based on the URL path!
           if (dept == null) {
             final path = state.uri.path;
-            if (path.contains('designer')) dept = 'designer';
-            else if (path.contains('autobending')) dept = 'auto-bending';
-            else if (path.contains('manualbending')) dept = 'manual-bending';
-            else if (path.contains('laser')) dept = 'laser';
-            else if (path.contains('emboss')) dept = 'emboss';
-            else if (path.contains('rubber')) dept = 'rubber';
-            else if (path.contains('account1')) dept = 'account1'; // 🟢 Catches the Account route!
-            else if (path.contains('delivery')) dept = 'delivery';
-            else dept = 'designer'; // Ultimate fallback
+            if (path.contains('designer')) {
+              dept = 'designer';
+            } else if (path.contains('autobending')) {
+              dept = 'auto-bending';
+            } else if (path.contains('manualbending')) {
+              dept = 'manual-bending';
+            } else if (path.contains('laser')) {
+              dept = 'laser';
+            } else if (path.contains('emboss')) {
+              dept = 'emboss';
+            } else if (path.contains('rubber')) {
+              dept = 'rubber';
+            } else if (path.contains('account1')) {
+              dept = 'account1';
+            } else if (path.contains('delivery')) {
+              dept = 'delivery';
+            } else {
+              dept = 'designer';
+            }
           }
 
           final lpm = state.uri.queryParameters['lpm'];
@@ -336,25 +357,56 @@ class AppRoutes {
           );
         },
         routes: [
-
           GoRoute(
             path: '/jobform',
             redirect: (_, __) => '/jobform/designer-1?department=designer',
           ),
 
-          GoRoute(path: '/jobform/designer-1', builder: (_, __) => const DesignerPage1()),
-          GoRoute(path: '/jobform/designer-2', builder: (_, __) => const DesignerPage2()),
-          GoRoute(path: '/jobform/designer-3', builder: (_, __) => const DesignerPage3()),
-          GoRoute(path: '/jobform/designer-4', builder: (_, __) => const DesignerPage4()),
+          GoRoute(
+            path: '/jobform/designer-1',
+            builder: (_, __) => const DesignerPage1(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-2',
+            builder: (_, __) => const DesignerPage2(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-3',
+            builder: (_, __) => const DesignerPage3(),
+          ),
+          GoRoute(
+            path: '/jobform/designer-4',
+            builder: (_, __) => const DesignerPage4(),
+          ),
 
-
-          GoRoute(path: '/jobform/autobending', builder: (_, __) => const AutoBendingPage()),
-          GoRoute(path: '/jobform/manualbending', builder: (_, __) => const ManualBendingPage()),
-          GoRoute(path: '/jobform/laser', builder: (_, __) => const LaserPage()),
-          GoRoute(path: '/jobform/emboss', builder: (_, __) => const EmbossPage()),
-          GoRoute(path: '/jobform/rubber', builder: (_, __) => const RubberPage()),
-          GoRoute(path: '/jobform/account1', builder: (_, __) => const AccountFormFlow()),
-          GoRoute(path: '/jobform/delivery', builder: (_, __) => const DeliveryPage()),
+          GoRoute(
+            path: '/jobform/autobending',
+            builder: (_, __) => const AutoBendingPage(),
+          ),
+          GoRoute(
+            path: '/jobform/manualbending',
+            builder: (_, __) => const ManualBendingPage(),
+          ),
+          GoRoute(
+            path: '/jobform/laser',
+            builder: (_, __) => const LaserPage(),
+          ),
+          GoRoute(
+            path: '/jobform/emboss',
+            builder: (_, __) => const EmbossPage(),
+          ),
+          GoRoute(
+            path: '/jobform/rubber',
+            builder: (_, __) => const RubberPage(),
+          ),
+          GoRoute(
+            path: '/jobform/account1',
+            builder: (_, __) => const AccountFormFlow(),
+          ),
+          GoRoute(
+            path: '/jobform/delivery',
+            builder: (_, __) => const DeliveryPage(),
+          ),
         ],
       ),
 
@@ -364,7 +416,7 @@ class AppRoutes {
           docId: state.pathParameters['id']!,
         ),
       ),
-      // TASK
+
       GoRoute(
         path: '/task',
         builder: (context, state) {

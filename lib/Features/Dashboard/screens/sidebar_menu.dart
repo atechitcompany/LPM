@@ -5,12 +5,12 @@ import 'package:lightatech/core/session/session_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:lightatech/core/theme/theme_provider.dart';
 
-import '../../adminAccess/screens/admin_panel_screen.dart';
-import '../../adminAccess/screens/user_rights_screen.dart';
-import 'package:lightatech/customer/intro/viewmodel/order_detail_view.dart';
-
 class SidebarMenu extends StatelessWidget {
   const SidebarMenu({Key? key}) : super(key: key);
+
+  bool get isAdminUser {
+    return SessionManager.getDepartment() == "Admin";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,17 +42,18 @@ class SidebarMenu extends StatelessWidget {
               iconColor,
             ),
 
-            buildMenuItem(
-              context,
-              'Admin Access',
-              Icons.admin_panel_settings,
-                  () {
-                Navigator.pop(context);
-                context.push('/admin-access');
-              },
-              textColor,
-              iconColor,
-            ),
+            if (isAdminUser)
+              buildMenuItem(
+                context,
+                'Admin Access',
+                Icons.admin_panel_settings,
+                    () {
+                  Navigator.pop(context);
+                  context.push('/admin-access');
+                },
+                textColor,
+                iconColor,
+              ),
 
             buildMenuItem(
               context,
