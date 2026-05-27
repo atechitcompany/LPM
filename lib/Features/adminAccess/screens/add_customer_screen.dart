@@ -10,7 +10,6 @@ class AddCustomerScreen extends StatefulWidget {
 }
 
 class _AddCustomerScreenState extends State<AddCustomerScreen> {
-
   final usernameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -21,16 +20,14 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     try {
       setState(() => isLoading = true);
 
-      // 🔥 Create Auth User
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      final userCredential =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       final uid = userCredential.user!.uid;
 
-      // 🔥 Save to Firestore
       await FirebaseFirestore.instance.collection('customers').doc(uid).set({
         "Username": usernameController.text.trim(),
         "Email": emailController.text.trim(),
@@ -43,7 +40,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
       );
 
       Navigator.pop(context);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -55,13 +51,26 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   Widget buildTextField(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFF8D94B), width: 2),
           ),
         ),
       ),
@@ -71,22 +80,46 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add Customer")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFFEEF2FF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFEEF2FF),
+        elevation: 0,
+        title: const Text(
+          "Add Customer",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             buildTextField("Username", usernameController),
             buildTextField("Email", emailController),
             buildTextField("Password", passwordController),
-
             const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: isLoading ? null : addCustomer,
-              child: isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text("Add Customer"),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : addCustomer,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF8D94B),
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.black)
+                    : const Text(
+                  "Add Customer",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

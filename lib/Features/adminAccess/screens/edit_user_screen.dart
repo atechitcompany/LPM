@@ -11,7 +11,6 @@ class EditUserScreen extends StatefulWidget {
 }
 
 class _EditUserScreenState extends State<EditUserScreen> {
-
   late TextEditingController nameController;
   late TextEditingController emailController;
 
@@ -23,8 +22,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   }
 
   Future<void> updateUser() async {
-    final collection =
-    widget.user['type'] == "Staff" ? "Staff" : "customers";
+    final collection = widget.user['type'] == "Staff" ? "Staff" : "customers";
 
     await FirebaseFirestore.instance
         .collection(collection)
@@ -42,33 +40,77 @@ class _EditUserScreenState extends State<EditUserScreen> {
     Navigator.pop(context);
   }
 
+  Widget buildTextField(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFF8D94B), width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final type = widget.user['type'];
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit User")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFFEEF2FF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFEEF2FF),
+        elevation: 0,
+        title: Text(
+          "Edit $type",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: "Name"),
-            ),
-
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-
+            buildTextField("Name", nameController),
+            buildTextField("Email", emailController),
             const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: updateUser,
-              child: const Text("Update"),
-            )
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: updateUser,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF8D94B),
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  "Update",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -10,7 +10,6 @@ class AddStaffScreen extends StatefulWidget {
 }
 
 class _AddStaffScreenState extends State<AddStaffScreen> {
-
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -24,16 +23,14 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     try {
       setState(() => isLoading = true);
 
-      // 🔥 STEP 1: Create Auth User
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      final userCredential =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       final uid = userCredential.user!.uid;
 
-      // 🔥 STEP 2: Save in Firestore
       await FirebaseFirestore.instance.collection('Staff').doc(uid).set({
         "Name": nameController.text.trim(),
         "Email": emailController.text.trim(),
@@ -48,7 +45,6 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
       );
 
       Navigator.pop(context);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -58,18 +54,33 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     }
   }
 
-  Widget buildTextField(String label, TextEditingController controller,
-      {bool isNumber = false}) {
+  Widget buildTextField(
+      String label,
+      TextEditingController controller, {
+        bool isNumber = false,
+      }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
-        keyboardType:
-        isNumber ? TextInputType.number : TextInputType.text,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFF8D94B), width: 2),
           ),
         ),
       ),
@@ -79,9 +90,17 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add Staff")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFFEEF2FF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFEEF2FF),
+        elevation: 0,
+        title: const Text(
+          "Add Staff",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             buildTextField("Name", nameController),
@@ -90,14 +109,30 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
             buildTextField("Contact", contactController),
             buildTextField("Role", roleController),
             buildTextField("Key", keyController, isNumber: true),
-
             const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: isLoading ? null : addStaff,
-              child: isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text("Add Staff"),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : addStaff,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF8D94B),
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.black)
+                    : const Text(
+                  "Add Staff",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

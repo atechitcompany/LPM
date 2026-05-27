@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'edit_user_screen.dart';
 
 class AdminUserListScreen extends StatefulWidget {
@@ -130,6 +131,14 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
     );
   }
 
+  void goToAddUser() {
+    if (widget.type == "Staff") {
+      context.push('/add-staff');
+    } else {
+      context.push('/add-customer');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final searchText = searchController.text.trim().toLowerCase();
@@ -140,6 +149,27 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
         title: Text("${widget.type} Users"),
         backgroundColor: const Color(0xFFEEF2FF),
         elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: goToAddUser,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8D94B),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.black,
+                  size: 22,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -163,7 +193,6 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
               ),
             ),
           ),
-
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: fetchUsers(),
@@ -221,14 +250,10 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                             radius: 22,
                             backgroundColor: Colors.grey.shade200,
                             child: Text(
-                              name.isNotEmpty
-                                  ? name[0].toUpperCase()
-                                  : "?",
+                              name.isNotEmpty ? name[0].toUpperCase() : "?",
                             ),
                           ),
-
                           const SizedBox(width: 12),
-
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,14 +274,12 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                               ],
                             ),
                           ),
-
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      EditUserScreen(user: user),
+                                  builder: (_) => EditUserScreen(user: user),
                                 ),
                               );
                             },
@@ -270,9 +293,7 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                               ),
                             ),
                           ),
-
                           const SizedBox(width: 6),
-
                           GestureDetector(
                             onTap: () => deleteUser(user),
                             child: const CircleAvatar(
