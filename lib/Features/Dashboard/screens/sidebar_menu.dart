@@ -47,8 +47,8 @@ class SidebarMenu extends StatelessWidget {
               'Admin Access',
               Icons.admin_panel_settings,
                   () {
-                // Navigator.pop(context);
-                // context.push('/admin-panel');
+                Navigator.pop(context);
+                context.push('/admin-access');
               },
               textColor,
               iconColor,
