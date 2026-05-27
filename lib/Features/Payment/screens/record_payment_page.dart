@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
+import '../models/payment_material_model.dart';
+import '../services/payment_material_service.dart';
+import '../widgets/payment_bill_table.dart';
 
 class RecordPaymentPage extends StatefulWidget {
   const RecordPaymentPage({super.key});
@@ -22,9 +25,58 @@ class _RecordPaymentPageState
 
   bool isLoadingJobs = false;
 
+  final PaymentMaterialService
+  _paymentMaterialService =
+  PaymentMaterialService();
+
+  List<PaymentMaterialModel>
+  billMaterials = [];
+
+  bool isLoadingBill = false;
   /// =========================
   /// FETCH JOBS BASED ON CLIENT
   /// =========================
+
+  Future<void> fetchBillMaterials() async {
+
+    if (selectedJob == "No") {
+
+      setState(() {
+        billMaterials = [];
+      });
+
+      return;
+    }
+
+    setState(() {
+      isLoadingBill = true;
+    });
+
+    try {
+
+      final materials =
+      await _paymentMaterialService
+          .fetchMaterialsForJob(
+        selectedJob,
+      );
+
+      setState(() {
+
+        billMaterials = materials;
+
+        isLoadingBill = false;
+      });
+
+    } catch (e) {
+
+      debugPrint(
+          "❌ Error loading bill: $e");
+
+      setState(() {
+        isLoadingBill = false;
+      });
+    }
+  }
 
   Future<void> fetchJobsForClient(
       String clientName,
@@ -49,9 +101,9 @@ class _RecordPaymentPageState
 
       final snapshot =
       await FirebaseFirestore.instance
-          .collection("Jobs")
+          .collection("jobs")
           .where(
-        "Party Name",
+        "designer.data.PartyName",
         isEqualTo: clientName,
       )
           .get();
@@ -62,8 +114,13 @@ class _RecordPaymentPageState
 
         final data = doc.data();
 
+        final designerData =
+        Map<String, dynamic>.from(
+          data["designer"]?["data"] ?? {},
+        );
+
         final jobName =
-        (data["Particular Job Name"] ?? "")
+        (designerData["particularJobName"] ?? "")
             .toString()
             .trim();
 
@@ -168,12 +225,28 @@ class _RecordPaymentPageState
 
                 initialValue: selectedJob,
 
-                onChanged: (value) {
+                onChanged: (value) async {
 
                   setState(() {
                     selectedJob = value;
                   });
+
+                  await fetchBillMaterials();
                 },
+              ),
+
+            const SizedBox(height: 30),
+
+            if (isLoadingBill)
+
+              const Center(
+                child: CircularProgressIndicator(),
+              )
+
+            else if (billMaterials.isNotEmpty)
+
+              PaymentBillTable(
+                materials: billMaterials,
               ),
           ],
         ),
