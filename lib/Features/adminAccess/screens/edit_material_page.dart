@@ -8,9 +8,14 @@ const List<String> kCategories = [
   'Strippings', 'Zig Zags Blades',
 ];
 
+const Map<String, String> kFieldKeys = {
+  'Females Emobosse': 'Females Emobosse ',
+};
+
+String _fk(String category) => kFieldKeys[category] ?? category;
+
 class EditMaterialPage extends StatefulWidget {
   const EditMaterialPage({super.key});
-
   @override
   State<EditMaterialPage> createState() => _EditMaterialPageState();
 }
@@ -18,6 +23,7 @@ class EditMaterialPage extends StatefulWidget {
 class _EditMaterialPageState extends State<EditMaterialPage> {
   String? _selectedCategory;
   final _searchController = TextEditingController();
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -53,7 +59,6 @@ class _EditMaterialPageState extends State<EditMaterialPage> {
             const SizedBox(height: 20),
             if (_selectedCategory != null) ...[
               Text(_selectedCategory!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 10),
               const SizedBox(height: 8),
               TextField(
                 controller: _searchController,
@@ -65,14 +70,16 @@ class _EditMaterialPageState extends State<EditMaterialPage> {
                   isDense: true,
                 ),
               ),
+              const SizedBox(height: 8),
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance.collection(_selectedCategory!).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    final fk = _fk(_selectedCategory!);
                     final docs = snapshot.data!.docs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;
-                      final name = (data[_selectedCategory!] ?? '').toString().toLowerCase();
+                      final name = (data[fk] ?? '').toString().toLowerCase();
                       return name.contains(_searchController.text.toLowerCase());
                     }).toList();
                     if (docs.isEmpty) return const Center(child: Text('No materials found.'));
@@ -84,7 +91,7 @@ class _EditMaterialPageState extends State<EditMaterialPage> {
                         final rate = data.containsKey('rate') ? data['rate'] : null;
                         return Card(
                           child: ListTile(
-                            title: Text(data[_selectedCategory!] ?? ''),
+                            title: Text((data[fk] ?? '').toString()),
                             subtitle: Text(rate != null ? 'Rate: ₹$rate' : 'Rate: not set'),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -121,7 +128,11 @@ class _EditMaterialPageState extends State<EditMaterialPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AddEditMaterialPage(doc: doc, category: _selectedCategory!),
+        builder: (_) => AddEditMaterialPage(
+          doc: doc,
+          category: _selectedCategory!,
+          fieldKey: _fk(_selectedCategory!),
+        ),
       ),
     );
   }
@@ -130,8 +141,9 @@ class _EditMaterialPageState extends State<EditMaterialPage> {
 class AddEditMaterialPage extends StatefulWidget {
   final DocumentSnapshot? doc;
   final String category;
+  final String fieldKey;
 
-  const AddEditMaterialPage({super.key, this.doc, required this.category});
+  const AddEditMaterialPage({super.key, this.doc, required this.category, required this.fieldKey});
 
   @override
   State<AddEditMaterialPage> createState() => _AddEditMaterialPageState();
@@ -146,7 +158,7 @@ class _AddEditMaterialPageState extends State<AddEditMaterialPage> {
     super.initState();
     if (widget.doc != null) {
       final data = widget.doc!.data() as Map<String, dynamic>;
-      _nameController.text = data[widget.category] ?? '';
+      _nameController.text = (data[widget.fieldKey] ?? '').toString();
       _rateController.text = data.containsKey('rate') ? data['rate'].toString() : '';
     }
   }
@@ -162,7 +174,7 @@ class _AddEditMaterialPageState extends State<AddEditMaterialPage> {
     if (_nameController.text.isEmpty) return;
     final col = FirebaseFirestore.instance.collection(widget.category);
     final data = {
-      widget.category: _nameController.text.trim(),
+      widget.fieldKey: _nameController.text.trim(),
       if (_rateController.text.isNotEmpty)
         'rate': double.tryParse(_rateController.text) ?? 0,
     };
