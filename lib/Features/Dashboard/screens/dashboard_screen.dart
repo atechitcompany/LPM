@@ -3,10 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../screens/sidebar_menu.dart';
-import '../widgets/dashboard_appbar.dart';
+
 import '../widgets/activity_list_firestore.dart';
 import 'package:lightatech/FormComponents/FLoatingButton.dart';
 import 'package:lightatech/core/theme/theme_provider.dart';
+import 'package:lightatech/Features/Dashboard/widgets/dashboard_appbar.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String department;
