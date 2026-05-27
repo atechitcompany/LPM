@@ -33,6 +33,7 @@ import 'package:lightatech/Features/Dashboard/screens/customer_requests_screen.d
 import 'package:lightatech/Features/Dashboard/screens/pending_form_edit_screen.dart';
 
 // Order
+import '../Features/Dashboard/screens/customer_quotation_detail_screen.dart';
 import '../customer/intro/viewmodel/order_detail_view.dart';
 
 // Job Forms
@@ -357,6 +358,12 @@ class AppRoutes {
         ],
       ),
 
+      GoRoute(
+        path: '/customer-quotation-detail/:id',
+        builder: (context, state) => CustomerQuotationDetailScreen(
+          docId: state.pathParameters['id']!,
+        ),
+      ),
       // TASK
       GoRoute(
         path: '/task',

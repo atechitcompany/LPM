@@ -11,22 +11,22 @@ class CustomerRequestsScreen extends StatefulWidget {
 }
 
 class _CustomerRequestsScreenState
-    extends State<CustomerRequestsScreen> {
+    extends State<CustomerRequestsScreen> with SingleTickerProviderStateMixin {
   final searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late TabController _tabController;
 
-  // ── Pagination state ──────────────────────────────────────────────────────
   List<QueryDocumentSnapshot> _olderDocs = [];
   bool _isLoadingMore = false;
   bool _hasMore = true;
   DocumentSnapshot? _lastDoc;
 
-  // ✅ STREAM — Reading from customer_requests collection (first 50 only)
   Stream<QuerySnapshot>? _customerRequestsStream;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _customerRequestsStream = FirebaseFirestore.instance
         .collection("customer_requests")
         .orderBy("createdAt", descending: true)
@@ -45,6 +45,7 @@ class _CustomerRequestsScreenState
   void dispose() {
     searchController.dispose();
     _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -69,7 +70,6 @@ class _CustomerRequestsScreenState
     setState(() => _isLoadingMore = false);
   }
 
-  // ✅ SHARED LPM GENERATION - Same as new_form.dart
   Future<String> _generateLpm() async {
     try {
       final now = DateTime.now();
@@ -77,14 +77,12 @@ class _CustomerRequestsScreenState
       final year = (now.year % 100).toString().padLeft(2, '0');
       final counterDocId = "${now.year}_$month";
 
-
       debugPrint("⏳ Generating LPM... counterDoc=$counterDocId");
 
       final counterRef = FirebaseFirestore.instance
           .collection("counters")
           .doc(counterDocId);
 
-      // ✅ Set a timeout so it doesn't hang forever if offline
       final snap = await counterRef.get().timeout(
         const Duration(seconds: 8),
         onTimeout: () => throw Exception("Firestore timeout — no internet?"),
@@ -102,10 +100,8 @@ class _CustomerRequestsScreenState
 
       debugPrint("✅ LPM Generated: $fullLpm");
       return fullLpm;
-
     } catch (e) {
       debugPrint("❌ LPM Generation Error: $e");
-      // ✅ Fallback: generate a temporary LPM from timestamp
       final now = DateTime.now();
       final month = now.month.toString().padLeft(2, '0');
       final year = (now.year % 100).toString().padLeft(2, '0');
@@ -116,7 +112,6 @@ class _CustomerRequestsScreenState
     }
   }
 
-  // ✅ INCREMENT MONTHLY COUNTER - Same as new_form.dart
   Future<void> _incrementMonthlyCounter() async {
     final now = DateTime.now();
     final month = now.month.toString().padLeft(2, '0');
@@ -127,13 +122,10 @@ class _CustomerRequestsScreenState
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
-
       int lastOrderNo = 0;
-
       if (snap.exists) {
         lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
       }
-
       transaction.set(
         counterRef,
         {"lastOrderNo": lastOrderNo + 1},
@@ -142,10 +134,9 @@ class _CustomerRequestsScreenState
     });
   }
 
-  // ✅ BUILD DESIGNER DATA - Maps customer request data to designer format
   Map<String, dynamic> _buildDesignerData(Map<String, dynamic> customerData) {
     return {
-      "LpmAutoIncrement": "", // Will be set during submission
+      "LpmAutoIncrement": "",
       "BuyerOrderNo": customerData["buyerOrderNo"] ?? "",
       "DeliveryAt": customerData["deliveryAt"] ?? "",
       "Orderby": customerData["orderBy"] ?? "",
@@ -243,18 +234,12 @@ class _CustomerRequestsScreenState
     };
   }
 
-  // ✅ ACCEPT LOGIC — Creates job with proper nested structure
   Future<void> _acceptRequest(
-      BuildContext context,
-      String docId,
-      Map<String, dynamic> customerData) async {
+      BuildContext context, String docId, Map<String, dynamic> customerData) async {
     try {
       debugPrint("🚀 Starting Accept Request...");
 
-      // Step 1: Generate LPM (UNIFIED FORMAT)
       final fullLpm = await _generateLpm();
-
-      // Parse LPM to extract components
       final parts = fullLpm.split("-");
       final orderNo = parts[1];
       final month = parts[2];
@@ -265,20 +250,12 @@ class _CustomerRequestsScreenState
       debugPrint("📋 Main Order ID: $mainOrderId");
       debugPrint("📦 Full LPM: $fullLpm");
 
-      // Step 2: Build designer data from customer request
       final designerData = _buildDesignerData(customerData);
-
-      // ✅ NOW SET THE LPM FIELD!
       designerData['LpmAutoIncrement'] = fullLpm;
 
-      // Step 3: Create job document in jobs collection with proper structure
-      final jobRef = FirebaseFirestore.instance
-          .collection("jobs")
-          .doc(mainOrderId);
-
+      final jobRef = FirebaseFirestore.instance.collection("jobs").doc(mainOrderId);
       final itemRef = jobRef.collection("items").doc(subOrderNo);
 
-      // ✅ Create main order document with proper nested structure
       await jobRef.set({
         "orderNo": orderNo,
         "month": month,
@@ -287,50 +264,25 @@ class _CustomerRequestsScreenState
         "visibleTo": ["Designer"],
         "status": "pending_designer_review",
         "acceptedAt": FieldValue.serverTimestamp(),
-
-        // ✅ All departments initialized
         "designer": {
           "submitted": false,
           "submittedAt": null,
           "submittedBy": "",
-          "data": designerData,  // ✅ Now contains LpmAutoIncrement!
+          "data": designerData,
         },
-        "autoBending": {
-          "submitted": false,
-          "data": {},
-        },
-        "manualBending": {
-          "submitted": false,
-          "data": {},
-        },
-        "laserCutting": {
-          "submitted": false,
-          "data": {},
-        },
-        "emboss": {
-          "submitted": false,
-          "data": {},
-        },
-        "rubber": {
-          "submitted": false,
-          "data": {},
-        },
-        "account": {
-          "submitted": false,
-          "data": {},
-        },
-        "delivery": {
-          "submitted": false,
-          "data": {},
-        },
-
+        "autoBending": {"submitted": false, "data": {}},
+        "manualBending": {"submitted": false, "data": {}},
+        "laserCutting": {"submitted": false, "data": {}},
+        "emboss": {"submitted": false, "data": {}},
+        "rubber": {"submitted": false, "data": {}},
+        "account": {"submitted": false, "data": {}},
+        "delivery": {"submitted": false, "data": {}},
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
       debugPrint("✅ Main order document created in jobs collection");
 
-      // ✅ Create sub-order item document
       await itemRef.set({
         "fullLpm": fullLpm,
         "subOrderNo": subOrderNo,
@@ -341,19 +293,17 @@ class _CustomerRequestsScreenState
           "submitted": false,
           "submittedAt": null,
           "submittedBy": "",
-          "data": designerData,  // ✅ Now contains LpmAutoIncrement!
+          "data": designerData,
         },
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      debugPrint("✅ Sub-order item document created in jobs/{mainOrderId}/items collection");
+      debugPrint("✅ Sub-order item document created");
 
-      // Step 4: Increment monthly counter
       await _incrementMonthlyCounter();
       debugPrint("✅ Monthly counter incremented");
 
-      // Step 5: Delete from customer_requests collection
       await FirebaseFirestore.instance
           .collection("customer_requests")
           .doc(docId)
@@ -374,24 +324,18 @@ class _CustomerRequestsScreenState
       debugPrint("❌ Error in _acceptRequest: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('❌ Error: $e'),
-              backgroundColor: Colors.red),
+          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
-  // ✅ REJECT LOGIC — Saves to "rejected_requests" collection and deletes from customer_requests
   Future<void> _rejectRequest(BuildContext context, String docId,
       Map<String, dynamic> customerData) async {
     try {
       debugPrint("🚫 Starting Reject Request...");
 
-      // Step 1: Save full customer data to rejected_requests collection
-      await FirebaseFirestore.instance
-          .collection("rejected_requests")
-          .add({
+      await FirebaseFirestore.instance.collection("rejected_requests").add({
         ...customerData,
         "originalDocId": docId,
         "rejectedAt": FieldValue.serverTimestamp(),
@@ -400,7 +344,6 @@ class _CustomerRequestsScreenState
 
       debugPrint("✅ Request saved to rejected_requests collection");
 
-      // Step 2: Delete from customer_requests collection
       await FirebaseFirestore.instance
           .collection("customer_requests")
           .doc(docId)
@@ -427,8 +370,7 @@ class _CustomerRequestsScreenState
     }
   }
 
-  void _showAcceptDialog(BuildContext context, String docId,
-      Map<String, dynamic> data) {
+  void _showAcceptDialog(BuildContext context, String docId, Map<String, dynamic> data) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -446,26 +388,19 @@ class _CustomerRequestsScreenState
             const SizedBox(height: 12),
             const Text(
               "A unique LPM number will be generated automatically.",
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                fontStyle: FontStyle.italic,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
             ),
           ],
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _acceptRequest(context, docId, data);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white),
+                backgroundColor: Colors.green, foregroundColor: Colors.white),
             child: const Text("Accept"),
           ),
         ],
@@ -473,8 +408,7 @@ class _CustomerRequestsScreenState
     );
   }
 
-  void _showRejectDialog(BuildContext context, String docId,
-      Map<String, dynamic> data) {
+  void _showRejectDialog(BuildContext context, String docId, Map<String, dynamic> data) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -485,8 +419,7 @@ class _CustomerRequestsScreenState
           children: [
             const Text(
               "⚠️ Are you sure you want to reject this request?",
-              style: TextStyle(
-                  fontWeight: FontWeight.w500, color: Colors.red),
+              style: TextStyle(fontWeight: FontWeight.w500, color: Colors.red),
             ),
             const SizedBox(height: 12),
             Text("Customer: ${data['partyName'] ?? 'N/A'}",
@@ -496,25 +429,19 @@ class _CustomerRequestsScreenState
             const SizedBox(height: 12),
             const Text(
               "This action cannot be undone. The request will be saved in rejected records.",
-              style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic),
+              style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
             ),
           ],
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _rejectRequest(context, docId, data);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white),
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text("Reject"),
           ),
         ],
@@ -535,144 +462,237 @@ class _CustomerRequestsScreenState
         ),
         title: const Text(
           'Customer Requests',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18),
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: const Color(0xFF4A90D9),
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: const Color(0xFF4A90D9),
+          tabs: const [
+            Tab(text: "Jobs"),
+            Tab(text: "Quotations"),
+          ],
         ),
       ),
-      body: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          // ── Search Bar ────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 12),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: searchController,
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  hintText: 'Search by name, party, or job...',
-                  hintStyle: TextStyle(
-                      color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: Icon(Icons.search,
-                      color: Colors.grey.shade400),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                ),
-              ),
-            ),
-          ),
-
-          // ── List ──────────────────────────────────────────────────
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _customerRequestsStream,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(
-                      child: CircularProgressIndicator());
-                }
-
-                // Merge real-time first-50 with paginated older pages
-                final latestDocs = snapshot.data!.docs;
-                if (latestDocs.isNotEmpty) {
-                  _lastDoc = latestDocs.last;
-                }
-                final Map<String, QueryDocumentSnapshot> uniqueMap = {};
-                for (var d in latestDocs) {
-                  uniqueMap[d.id] = d;
-                }
-                for (var d in _olderDocs) {
-                  uniqueMap.putIfAbsent(d.id, () => d);
-                }
-                final docs = uniqueMap.values.toList();
-
-                if (docs.isEmpty) {
-                  return const Center(
-                    child: Text("No customer requests available",
-                        style: TextStyle(
-                            fontSize: 16, color: Colors.grey)),
-                  );
-                }
-
-                final query =
-                searchController.text.trim().toLowerCase();
-                final filteredDocs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final name =
-                  (data["name"] ?? "").toString().toLowerCase();
-                  final partyName = (data["partyName"] ?? "")
-                      .toString().toLowerCase();
-                  final particularJobName =
-                  (data["particularJobName"] ?? "")
-                      .toString().toLowerCase();
-                  if (query.isEmpty) return true;
-                  return name.contains(query) ||
-                      partyName.contains(query) ||
-                      particularJobName.contains(query);
-                }).toList();
-
-                if (filteredDocs.isEmpty) {
-                  return const Center(
-                    child: Text("No matching requests",
-                        style: TextStyle(
-                            fontSize: 16, color: Colors.grey)),
-                  );
-                }
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
-                  itemCount: filteredDocs.length +
-                      (_hasMore || _isLoadingMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == filteredDocs.length) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Center(
-                          child: _isLoadingMore
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      );
-                    }
-                    final data = filteredDocs[index].data()
-                    as Map<String, dynamic>;
-                    final docId = filteredDocs[index].id;
-                    return _buildCard(context, data, docId);
-                  },
-                );
-              },
-            ),
-          ),
+          _buildJobsTab(),
+          _buildQuotationsTab(),
         ],
       ),
     );
   }
 
-  Widget _buildCard(BuildContext context,
-      Map<String, dynamic> data, String docId) {
+  Widget _buildJobsTab() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: searchController,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Search by name, party, or job...',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: _customerRequestsStream,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final latestDocs = snapshot.data!.docs;
+              if (latestDocs.isNotEmpty) {
+                _lastDoc = latestDocs.last;
+              }
+              final Map<String, QueryDocumentSnapshot> uniqueMap = {};
+              for (var d in latestDocs) {
+                uniqueMap[d.id] = d;
+              }
+              for (var d in _olderDocs) {
+                uniqueMap.putIfAbsent(d.id, () => d);
+              }
+              final docs = uniqueMap.values.toList();
+
+              if (docs.isEmpty) {
+                return const Center(
+                  child: Text("No customer requests available",
+                      style: TextStyle(fontSize: 16, color: Colors.grey)),
+                );
+              }
+
+              final query = searchController.text.trim().toLowerCase();
+              final filteredDocs = docs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final name = (data["name"] ?? "").toString().toLowerCase();
+                final partyName = (data["partyName"] ?? "").toString().toLowerCase();
+                final particularJobName =
+                (data["particularJobName"] ?? "").toString().toLowerCase();
+                if (query.isEmpty) return true;
+                return name.contains(query) ||
+                    partyName.contains(query) ||
+                    particularJobName.contains(query);
+              }).toList();
+
+              if (filteredDocs.isEmpty) {
+                return const Center(
+                  child: Text("No matching requests",
+                      style: TextStyle(fontSize: 16, color: Colors.grey)),
+                );
+              }
+
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                itemCount: filteredDocs.length + (_hasMore || _isLoadingMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == filteredDocs.length) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: _isLoadingMore
+                            ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        )
+                            : const SizedBox.shrink(),
+                      ),
+                    );
+                  }
+                  final data = filteredDocs[index].data() as Map<String, dynamic>;
+                  final docId = filteredDocs[index].id;
+                  return _buildCard(context, data, docId);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuotationsTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("demo_customer_form")
+          .orderBy("submittedAt", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return const Center(
+            child: Text("No quotations available",
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final docId = docs[index].id;
+            final partyName = data["partyName"] ?? "No Party";
+            final jobName = data["jobName"] ?? "No Job";
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: () => context.push('/customer-quotation-detail/$docId'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE3F0FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.description_outlined,
+                              color: Color(0xFF4A90D9), size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                partyName.toString(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  color: Color(0xFF1A1A2E),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Job: $jobName",
+                                style: const TextStyle(
+                                  color: Color(0xFF555555),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(BuildContext context, Map<String, dynamic> data, String docId) {
     final partyName = data["partyName"] ?? "No Party";
     final particularJobName = data["particularJobName"] ?? "No Job";
     final priority = data["priority"] ?? "Normal";
@@ -682,8 +702,7 @@ class _CustomerRequestsScreenState
     String formattedDate = "N/A";
     if (createdAt != null) {
       final dateTime = (createdAt as Timestamp).toDate();
-      formattedDate =
-      "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+      formattedDate = "${dateTime.day}/${dateTime.month}/${dateTime.year}";
     }
 
     final Color priorityColor = _getPriorityColor(priority);
@@ -704,8 +723,7 @@ class _CustomerRequestsScreenState
           ],
         ),
         child: InkWell(
-          onTap: () =>
-              context.push('/customer-request-detail/$docId'),
+          onTap: () => context.push('/customer-request-detail/$docId'),
           borderRadius: BorderRadius.circular(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -743,13 +761,11 @@ class _CustomerRequestsScreenState
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 5),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
                             color: priorityColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: priorityColor, width: 1),
+                            border: Border.all(color: priorityColor, width: 1),
                           ),
                           child: Text(
                             priorityLabel,
@@ -769,8 +785,7 @@ class _CustomerRequestsScreenState
                       children: [
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 "Job: $particularJobName",
@@ -787,9 +802,7 @@ class _CustomerRequestsScreenState
                                 text: TextSpan(children: [
                                   TextSpan(
                                     text: "Delivery: ",
-                                    style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 14),
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                                   ),
                                   TextSpan(
                                     text: deliveryAt.toString(),
@@ -806,47 +819,33 @@ class _CustomerRequestsScreenState
                         ),
                         const SizedBox(width: 8),
                         Text(formattedDate,
-                            style: TextStyle(
-                                color: Colors.grey.shade400,
-                                fontSize: 12)),
+                            style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
                       ],
                     ),
                   ],
                 ),
               ),
-              Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Colors.grey.shade200),
+              Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
               SizedBox(
                 height: 48,
                 child: Row(
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () =>
-                            _showAcceptDialog(context, docId, data),
-                        borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(16)),
+                        onTap: () => _showAcceptDialog(context, docId, data),
+                        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(16)),
                         child: const Center(
-                          child: Icon(Icons.check,
-                              color: Color(0xFF27AE60), size: 24),
+                          child: Icon(Icons.check, color: Color(0xFF27AE60), size: 24),
                         ),
                       ),
                     ),
-                    Container(
-                        width: 1,
-                        height: 48,
-                        color: Colors.grey.shade200),
+                    Container(width: 1, height: 48, color: Colors.grey.shade200),
                     Expanded(
                       child: InkWell(
-                        onTap: () =>
-                            _showRejectDialog(context, docId, data),
-                        borderRadius: const BorderRadius.only(
-                            bottomRight: Radius.circular(16)),
+                        onTap: () => _showRejectDialog(context, docId, data),
+                        borderRadius: const BorderRadius.only(bottomRight: Radius.circular(16)),
                         child: const Center(
-                          child: Icon(Icons.close,
-                              color: Color(0xFFE74C3C), size: 24),
+                          child: Icon(Icons.close, color: Color(0xFFE74C3C), size: 24),
                         ),
                       ),
                     ),
