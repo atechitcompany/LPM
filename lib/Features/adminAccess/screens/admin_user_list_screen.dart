@@ -20,6 +20,32 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
     super.dispose();
   }
 
+  String getNameFromEmail(String email) {
+    if (email.isEmpty || !email.contains("@")) return "No Name";
+
+    String name = email.split("@").first;
+
+    name = name
+        .replaceAll(".com", "")
+        .replaceAll(".in", "")
+        .replaceAll(".net", "")
+        .replaceAll(".", " ")
+        .replaceAll("_", " ")
+        .replaceAll("-", " ")
+        .trim();
+
+    if (name.isEmpty) return "No Name";
+
+    return name
+        .split(" ")
+        .map(
+          (word) => word.isNotEmpty
+          ? word[0].toUpperCase() + word.substring(1)
+          : "",
+    )
+        .join(" ");
+  }
+
   Stream<List<Map<String, dynamic>>> fetchUsers() {
     final bool isStaff = widget.type == "Staff";
     final String collection = isStaff ? "Staff" : "customers";
@@ -29,15 +55,34 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
         return snapshot.docs.map((doc) {
           final data = doc.data();
 
-          return {
-            "id": doc.id,
-            "name": isStaff
-                ? (data["Name"] ?? "").toString()
-                : (data["Username"] ?? "").toString(),
-            "email": (data["Email"] ?? "").toString(),
-            "type": isStaff ? "Staff" : "Customer",
-            "role": isStaff ? (data["Role"] ?? "").toString() : "-",
-          };
+          if (isStaff) {
+            return {
+              "id": doc.id,
+              "name": (data["Name"] ?? "").toString(),
+              "email": (data["Email"] ?? "").toString(),
+              "type": "Staff",
+              "role": (data["Role"] ?? "").toString(),
+            };
+          } else {
+            final email = (data["Email"] ?? "").toString();
+
+            final customerName = (data["Username"] ??
+                data["Name"] ??
+                data["name"] ??
+                data["username"] ??
+                "")
+                .toString();
+
+            return {
+              "id": doc.id,
+              "name": customerName.isNotEmpty
+                  ? customerName
+                  : getNameFromEmail(email),
+              "email": email,
+              "type": "Customer",
+              "role": "-",
+            };
+          }
         }).toList();
       },
     );
@@ -125,9 +170,12 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
-                    child: Text(
-                      "Error: ${snapshot.error}",
-                      textAlign: TextAlign.center,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        "Error: ${snapshot.error}",
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   );
                 }
@@ -153,6 +201,7 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                   itemCount: users.length,
                   itemBuilder: (context, index) {
                     final user = users[index];
+
                     final name = user['name'].toString();
                     final email = user['email'].toString();
 
