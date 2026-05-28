@@ -35,7 +35,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
     passwordController = TextEditingController(text: widget.user['password'] ?? "");
     aadhaarController = TextEditingController(text: widget.user['aadhaar'] ?? "");
     panController = TextEditingController(text: widget.user['pan'] ?? "");
-    discountController = TextEditingController(text: widget.user['discount'] ?? "0");
+    discountController = TextEditingController(
+      text: (widget.user['discount'] ?? 0).toString(),
+    );
   }
 
   @override
@@ -69,7 +71,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
           "Password": passwordController.text.trim(),
           "Aadhaar": aadhaarController.text.trim(),
           "PAN": panController.text.trim(),
-          "Discount": double.tryParse(discountController.text.trim()) ?? 0,
           "updatedAt": FieldValue.serverTimestamp(),
         });
       } else {
@@ -81,6 +82,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
           "Email": emailController.text.trim(),
           "Contact": contactController.text.trim(),
           "Password": passwordController.text.trim(),
+          "Discount": double.tryParse(discountController.text.trim()) ?? 0,
           "updatedAt": FieldValue.serverTimestamp(),
         });
       }
@@ -93,6 +95,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
       Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
@@ -127,7 +131,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFF8D94B), width: 2),
+            borderSide: const BorderSide(
+              color: Color(0xFFF8D94B),
+              width: 2,
+            ),
           ),
         ),
       ),
