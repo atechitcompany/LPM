@@ -182,9 +182,9 @@ class _RecordPaymentPageState
 
               label: "Select Client",
 
-              firestoreCollection: "Clients",
+              firestoreCollection: "customers",
 
-              firestoreField: "PartyName",
+              firestoreField: "Party Names",
 
               initialValue: selectedClient,
 
