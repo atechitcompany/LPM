@@ -14,8 +14,12 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController contactController;
-  late TextEditingController whatsappController;
-  late TextEditingController addressController;
+  late TextEditingController roleController;
+  late TextEditingController passwordController;
+  late TextEditingController aadhaarController;
+  late TextEditingController panController;
+
+  bool isLoading = false;
 
   bool get isStaff => widget.user['type'] == "Staff";
 
@@ -25,47 +29,84 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
     nameController = TextEditingController(text: widget.user['name'] ?? "");
     emailController = TextEditingController(text: widget.user['email'] ?? "");
-    contactController =
-        TextEditingController(text: widget.user['contact'] ?? "");
-    whatsappController =
-        TextEditingController(text: widget.user['whatsapp'] ?? "");
-    addressController =
-        TextEditingController(text: widget.user['address'] ?? "");
+    contactController = TextEditingController(text: widget.user['contact'] ?? "");
+    roleController = TextEditingController(text: widget.user['role'] ?? "");
+    passwordController = TextEditingController(text: widget.user['password'] ?? "");
+    aadhaarController = TextEditingController(text: widget.user['aadhaar'] ?? "");
+    panController = TextEditingController(text: widget.user['pan'] ?? "");
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    contactController.dispose();
+    roleController.dispose();
+    passwordController.dispose();
+    aadhaarController.dispose();
+    panController.dispose();
+    super.dispose();
   }
 
   Future<void> updateUser() async {
-    final collection = isStaff ? "Staff" : "customers";
+    try {
+      setState(() => isLoading = true);
 
-    final Map<String, dynamic> updatedData = isStaff
-        ? {
-      "Name": nameController.text.trim(),
-      "Email": emailController.text.trim(),
+      final collection = isStaff ? "Staff" : "customers";
+
+      if (isStaff) {
+        await FirebaseFirestore.instance
+            .collection(collection)
+            .doc(widget.user['id'])
+            .update({
+          "Name": nameController.text.trim(),
+          "Email": emailController.text.trim(),
+          "Contact": contactController.text.trim(),
+          "Role": roleController.text.trim(),
+          "Password": passwordController.text.trim(),
+          "Aadhaar": aadhaarController.text.trim(),
+          "PAN": panController.text.trim(),
+          "updatedAt": FieldValue.serverTimestamp(),
+        });
+      } else {
+        await FirebaseFirestore.instance
+            .collection(collection)
+            .doc(widget.user['id'])
+            .update({
+          "Party Names": nameController.text.trim(),
+          "Email": emailController.text.trim(),
+          "Contact": contactController.text.trim(),
+          "Password": passwordController.text.trim(),
+          "updatedAt": FieldValue.serverTimestamp(),
+        });
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User Updated")),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
-        : {
-      "Party Names": nameController.text.trim(),
-      "Email": emailController.text.trim(),
-      "Contact": contactController.text.trim(),
-      "Whatsapp Number": whatsappController.text.trim(),
-      "Address": addressController.text.trim(),
-    };
-
-    await FirebaseFirestore.instance
-        .collection(collection)
-        .doc(widget.user['id'])
-        .update(updatedData);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("User Updated")),
-    );
-
-    Navigator.pop(context);
   }
 
-  Widget buildTextField(String label, TextEditingController controller) {
+  Widget buildTextField(
+      String label,
+      TextEditingController controller, {
+        bool isNumber = false,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
@@ -90,16 +131,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
   }
 
   @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    contactController.dispose();
-    whatsappController.dispose();
-    addressController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final type = widget.user['type'];
 
@@ -120,10 +151,15 @@ class _EditUserScreenState extends State<EditUserScreen> {
             buildTextField(isStaff ? "Name" : "Party Name", nameController),
             buildTextField("Email", emailController),
 
-            if (!isStaff) ...[
-              buildTextField("Contact", contactController),
-              buildTextField("Whatsapp Number", whatsappController),
-              buildTextField("Address", addressController),
+            if (isStaff) ...[
+              buildTextField("Contact", contactController, isNumber: true),
+              buildTextField("Role", roleController),
+              buildTextField("Password", passwordController),
+              buildTextField("Aadhaar", aadhaarController, isNumber: true),
+              buildTextField("PAN", panController),
+            ] else ...[
+              buildTextField("Contact", contactController, isNumber: true),
+              buildTextField("Password", passwordController),
             ],
 
             const SizedBox(height: 20),
@@ -132,7 +168,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: updateUser,
+                onPressed: isLoading ? null : updateUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF8D94B),
                   foregroundColor: Colors.black,
@@ -141,7 +177,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.black)
+                    : const Text(
                   "Update",
                   style: TextStyle(
                     fontSize: 16,
