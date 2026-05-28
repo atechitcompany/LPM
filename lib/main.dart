@@ -7,6 +7,7 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:lightatech/core/theme/theme_provider.dart';
 import 'customer/intro/viewmodel/order_detail_viewmodel.dart'; // 👈 added
+import 'package:lightatech/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,14 @@ void main() async {
 
   await Hive.initFlutter();
   await Hive.openBox('sessionBox');
+
+  // Initialize notification service
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint("Failed to initialize NotificationService: $e");
+  }
+
   runApp(const MyApp());
 }
 
