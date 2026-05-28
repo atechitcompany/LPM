@@ -16,6 +16,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final contactController = TextEditingController();
   final whatsappController = TextEditingController();
   final addressController = TextEditingController();
+  final discountController = TextEditingController();
 
   bool isLoading = false;
 
@@ -38,6 +39,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         "Contact": contactController.text.trim(),
         "Whatsapp Number": whatsappController.text.trim(),
         "Address": addressController.text.trim(),
+        "Discount": double.tryParse(discountController.text.trim()) ?? 0,
         "createdAt": FieldValue.serverTimestamp(),
       });
 
@@ -55,11 +57,16 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     }
   }
 
-  Widget buildTextField(String label, TextEditingController controller) {
+  Widget buildTextField(
+      String label,
+      TextEditingController controller, {
+        bool isNumber = false,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
@@ -91,6 +98,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     contactController.dispose();
     whatsappController.dispose();
     addressController.dispose();
+    discountController.dispose();
     super.dispose();
   }
 
@@ -113,10 +121,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             buildTextField("Party Name", partyNameController),
             buildTextField("Email", emailController),
             buildTextField("Password", passwordController),
-            buildTextField("Contact", contactController),
-            buildTextField("Whatsapp Number", whatsappController),
+            buildTextField("Contact", contactController, isNumber: true),
+            buildTextField("Whatsapp Number", whatsappController, isNumber: true),
             buildTextField("Address", addressController),
+            buildTextField("Discount (%)", discountController, isNumber: true),
+
             const SizedBox(height: 20),
+
             SizedBox(
               width: double.infinity,
               height: 52,
