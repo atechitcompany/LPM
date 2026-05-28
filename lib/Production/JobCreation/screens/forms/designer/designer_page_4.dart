@@ -240,6 +240,27 @@ class _DesignerPage4State extends State<DesignerPage4> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+            if (NewFormScope.of(context).mode != "edit")
+              fieldCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sectionLabel("Generate LPM NUMBER"),
+                    FlexibleToggle(
+                      label: "",
+                      inactiveText: "No",
+                      activeText: "Yes",
+                      initialValue: form.generateLpmToggle.text == "YES",
+                      onChanged: (val) async {
+                        await form.handleLpmToggle(val);
+                        setState(() {});
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
             // ── Rubber Fixing Done ───────────────────────────────────────────
             if (form.canView("RubberFixingDone"))
               fieldCard(

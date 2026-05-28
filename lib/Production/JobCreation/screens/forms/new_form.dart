@@ -217,6 +217,11 @@ class NewFormState extends State<NewForm> {
   final TextEditingController HoleSelectedBy = TextEditingController();
   final TextEditingController HoleSelectedByTimestamp = TextEditingController();
   final LpmAutoIncrement = TextEditingController();
+  // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+  final generateLpmToggle = TextEditingController(text: "YES");
+  String? originalStandardLpm;
+  String? originalAlternativeLpm;
+  // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
   final JobDone = TextEditingController();
   final DrawingAttachment = TextEditingController();
   //new Flow system
@@ -298,6 +303,9 @@ class NewFormState extends State<NewForm> {
     return {
       // Basic Info
       "LpmAutoIncrement": LpmAutoIncrement.text,
+      // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+      "generateLpmToggle": generateLpmToggle.text,
+      // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
 
       "BuyerOrderNo": BuyerOrderNo.text,
       "DeliveryAt": DeliveryAt.text,
@@ -622,6 +630,11 @@ class NewFormState extends State<NewForm> {
     Perforation.clear();
     PartyName.clear();
     DrawingAttachment.clear();
+    // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+    generateLpmToggle.text = "YES";
+    originalStandardLpm = null;
+    originalAlternativeLpm = null;
+    // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
 
     //New Flow
     // ✅ Clear routing toggles
@@ -711,6 +724,9 @@ class NewFormState extends State<NewForm> {
       if (mounted) {
         setState(() {
           LpmAutoIncrement.text = fullLpm;
+          // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+          originalStandardLpm = fullLpm;
+          // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
         });
       }
     } catch (e) {
@@ -730,6 +746,9 @@ class NewFormState extends State<NewForm> {
 
         setState(() {
           LpmAutoIncrement.text = fallbackLpm;
+          // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+          originalStandardLpm = fallbackLpm;
+          // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
         });
 
         // Show a warning to the user
@@ -745,6 +764,94 @@ class NewFormState extends State<NewForm> {
       }
     }
   }
+
+  // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+  Future<void> loadAlternativeLpm() async {
+    try {
+      debugPrint("⏳ Loading Alternative LPM...");
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc("alternative_lpm");
+
+      final snap = await counterRef.get().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
+      );
+
+      int lastOrderNo = 0;
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      } else {
+        await counterRef.set({"lastOrderNo": 0});
+      }
+
+      final newOrderNo = (lastOrderNo + 1).toString().padLeft(3, '0');
+      final fullLpm = "LPM-$newOrderNo";
+
+      debugPrint("✅ Alternative LPM Generated: $fullLpm");
+
+      if (mounted) {
+        setState(() {
+          LpmAutoIncrement.text = fullLpm;
+          originalAlternativeLpm = fullLpm;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Alternative LPM Load Error: $e");
+      if (mounted) {
+        final now = DateTime.now();
+        final tempNo = now.millisecondsSinceEpoch.toString().substring(10); // last 3 digits
+        final fallbackLpm = "LPM-TEMP$tempNo";
+        setState(() {
+          LpmAutoIncrement.text = fallbackLpm;
+          originalAlternativeLpm = fallbackLpm;
+        });
+      }
+    }
+  }
+
+  Future<void> handleLpmToggle(bool value) async {
+    if (value) {
+      generateLpmToggle.text = "YES";
+      if (originalStandardLpm != null) {
+        setState(() {
+          LpmAutoIncrement.text = originalStandardLpm!;
+        });
+      } else {
+        await loadCurrentLpm();
+      }
+    } else {
+      generateLpmToggle.text = "NO";
+      if (originalAlternativeLpm != null) {
+        setState(() {
+          LpmAutoIncrement.text = originalAlternativeLpm!;
+        });
+      } else {
+        await loadAlternativeLpm();
+      }
+    }
+  }
+
+  Future<void> incrementAlternativeCounter() async {
+    final counterRef = FirebaseFirestore.instance
+        .collection("counters")
+        .doc("alternative_lpm");
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+
+      int lastOrderNo = 0;
+
+      if (snap.exists) {
+        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+      }
+
+      transaction.set(counterRef, {
+        "lastOrderNo": lastOrderNo + 1,
+      }, SetOptions(merge: true));
+    });
+  }
+  // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
 
   //myyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
   // ────────────────────────────────────────────
@@ -920,6 +1027,9 @@ class NewFormState extends State<NewForm> {
       set(DeliveryStatus, "DeliveryStatus");
       set(InvoiceStatus, "InvoiceStatus");
       set(LpmAutoIncrement, "LpmAutoIncrement");
+      // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+      set(generateLpmToggle, "generateLpmToggle");
+      // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
 
       //New Form Flow
       set(ReqAutoBending, "ReqAutoBending");
@@ -976,7 +1086,9 @@ class NewFormState extends State<NewForm> {
       set(DeliveryStatus, "DeliveryStatus");
       set(InvoiceStatus, "InvoiceStatus");
       set(LpmAutoIncrement, "LpmAutoIncrement");
-
+      // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+      set(generateLpmToggle, "generateLpmToggle");
+      // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
       //NEW
       set(SendApproval, "SendApproval");
       set(QuotationStatus, "QuotationStatus");
@@ -1021,37 +1133,53 @@ class NewFormState extends State<NewForm> {
         throw Exception("❌ LPM Auto Increment is empty. Cannot submit form.");
       }
 
-      // ✅ VALIDATION: Check LPM format
-      // ✅ If editing, LpmAutoIncrement might be the main doc ID (4 parts)
-      // Append "-01" to make it a valid full LPM
+      // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+      final bool isAlternative = generateLpmToggle.text == "NO";
       String resolvedLpm = fullLpm;
-      if (fullLpm.split("-").length == 4) {
-        resolvedLpm = "$fullLpm-01";
-        debugPrint("⚠️ LPM was 4 parts, resolved to: $resolvedLpm");
-      }
+      String orderNo;
+      String month;
+      String year;
+      String subOrderNo;
+      String mainOrderId;
 
-      final parts = resolvedLpm.split("-");
-      debugPrint("🔍 LPM Parts: $parts (Total: ${parts.length} parts)");
+      if (isAlternative) {
+        final cleanLpm = fullLpm.endsWith("-01") ? fullLpm.substring(0, fullLpm.length - 3) : fullLpm;
+        final partsAlt = cleanLpm.split("-");
+        orderNo = partsAlt.length > 1 ? partsAlt[1] : "001";
+        final now = DateTime.now();
+        month = now.month.toString().padLeft(2, '0');
+        year = (now.year % 100).toString().padLeft(2, '0');
+        subOrderNo = "01";
+        mainOrderId = cleanLpm;
+        resolvedLpm = "$cleanLpm-01";
+        debugPrint("ℹ️ Alternative LPM flow: mainOrderId=$mainOrderId, orderNo=$orderNo");
+      } else {
+        if (fullLpm.split("-").length == 4) {
+          resolvedLpm = "$fullLpm-01";
+          debugPrint("⚠️ LPM was 4 parts, resolved to: $resolvedLpm");
+        }
 
-      if (parts.length < 5) {
-        throw Exception(
-          "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
-              "Got: $resolvedLpm (${parts.length} parts instead of 5)",
+        final parts = resolvedLpm.split("-");
+        debugPrint("🔍 LPM Parts: $parts (Total: ${parts.length} parts)");
+
+        if (parts.length < 5) {
+          throw Exception(
+            "❌ Invalid LPM format. Expected: LPM-ORDER-MONTH-YEAR-SUB\n"
+                "Got: $resolvedLpm (${parts.length} parts instead of 5)",
+          );
+        }
+
+        orderNo = parts[1];
+        month = parts[2];
+        year = parts[3];
+        subOrderNo = parts[4];
+        mainOrderId = "LPM-$orderNo-$month-$year";
+
+        debugPrint(
+          "✅ Parsed LPM: orderNo=$orderNo, month=$month, year=$year, sub=$subOrderNo",
         );
       }
-
-      // ✅ PARSE: Extract LPM components safely
-      String orderNo = parts[1];
-      String month = parts[2];
-      String year = parts[3];
-      String subOrderNo = parts[4];
-
-      debugPrint(
-        "✅ Parsed LPM: orderNo=$orderNo, month=$month, year=$year, sub=$subOrderNo",
-      );
-
-      // ✅ BUILD: Create main order ID
-      final mainOrderId = "LPM-$orderNo-$month-$year";
+      // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
       debugPrint("📋 Main Order ID: $mainOrderId");
 
       // ✅ GET: References
@@ -1177,10 +1305,17 @@ class NewFormState extends State<NewForm> {
 
       debugPrint("✅ Sub-order item document written");
 
-      // ✅ INCREMENT: Monthly counter
-      debugPrint("⏱️ Incrementing monthly counter...");
-      await incrementMonthlyCounter();
-      debugPrint("✅ Monthly counter incremented");
+      // --- BEGIN ALTERNATIVE LPM TOGGLE FEATURE ---
+      if (isAlternative) {
+        debugPrint("⏱️ Incrementing alternative counter...");
+        await incrementAlternativeCounter();
+        debugPrint("✅ Alternative counter incremented");
+      } else {
+        debugPrint("⏱️ Incrementing monthly counter...");
+        await incrementMonthlyCounter();
+        debugPrint("✅ Monthly counter incremented");
+      }
+      // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
 
       debugPrint("🎉 Designer form submission successful!");
     } catch (e, stackTrace) {
