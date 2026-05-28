@@ -10,9 +10,12 @@ class AddCustomerScreen extends StatefulWidget {
 }
 
 class _AddCustomerScreenState extends State<AddCustomerScreen> {
-  final usernameController = TextEditingController();
+  final partyNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final contactController = TextEditingController();
+  final whatsappController = TextEditingController();
+  final addressController = TextEditingController();
 
   bool isLoading = false;
 
@@ -29,9 +32,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
       final uid = userCredential.user!.uid;
 
       await FirebaseFirestore.instance.collection('customers').doc(uid).set({
-        "Username": usernameController.text.trim(),
+        "Party Names": partyNameController.text.trim(),
         "Email": emailController.text.trim(),
         "Password": passwordController.text.trim(),
+        "Contact": contactController.text.trim(),
+        "Whatsapp Number": whatsappController.text.trim(),
+        "Address": addressController.text.trim(),
         "createdAt": FieldValue.serverTimestamp(),
       });
 
@@ -78,6 +84,17 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   }
 
   @override
+  void dispose() {
+    partyNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    contactController.dispose();
+    whatsappController.dispose();
+    addressController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEEF2FF),
@@ -93,9 +110,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            buildTextField("Username", usernameController),
+            buildTextField("Party Name", partyNameController),
             buildTextField("Email", emailController),
             buildTextField("Password", passwordController),
+            buildTextField("Contact", contactController),
+            buildTextField("Whatsapp Number", whatsappController),
+            buildTextField("Address", addressController),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
