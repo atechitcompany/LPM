@@ -35,8 +35,13 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
               "id": doc.id,
               "name": (data["Name"] ?? "").toString(),
               "email": (data["Email"] ?? "").toString(),
-              "type": "Staff",
+              "contact": (data["Contact"] ?? "").toString(),
               "role": (data["Role"] ?? "").toString(),
+              "password": (data["Password"] ?? "").toString(),
+              "aadhaar": (data["Aadhaar"] ?? "").toString(),
+              "pan": (data["PAN"] ?? "").toString(),
+              "bankDetails": data["BankDetails"] ?? {},
+              "type": "Staff",
             };
           } else {
             return {
@@ -184,12 +189,15 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                   final name = user['name'].toString().toLowerCase();
                   final email = user['email'].toString().toLowerCase();
                   final contact = (user['contact'] ?? "").toString().toLowerCase();
+                  final role = (user['role'] ?? "").toString().toLowerCase();
                   final whatsapp = (user['whatsapp'] ?? "").toString().toLowerCase();
 
                   return name.contains(searchText) ||
                       email.contains(searchText) ||
                       contact.contains(searchText) ||
+                      role.contains(searchText) ||
                       whatsapp.contains(searchText);
+
                 }).toList();
 
                 if (users.isEmpty) {
