@@ -153,6 +153,8 @@ class _MapScreenState extends State<MapScreen> {
     void Function(String) onSelected;
     void Function() onClear;
 
+
+
     switch (type) {
       case FloatingSheetType.priority:
         icon = Icons.flag_outlined;
