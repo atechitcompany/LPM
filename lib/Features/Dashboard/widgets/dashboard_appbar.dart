@@ -8,11 +8,17 @@ class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
   final String department;
 
+  // ✅ ADDED FOR WORKING SEARCH
+  final TextEditingController? searchController;
+  final Function(String)? onSearchChanged;
+
   const DashboardAppBar({
     Key? key,
     this.showBack = false,
     this.onBack,
     required this.department,
+    this.searchController,
+    this.onSearchChanged,
   }) : super(key: key);
 
   @override
@@ -24,21 +30,26 @@ class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _DashboardAppBarState extends State<DashboardAppBar>
     with SingleTickerProviderStateMixin {
-
-  // ── Animation (ported from customer app) ─────────────────────────────────
   bool _searchOpen = false;
   late AnimationController _animController;
   late Animation<double> _widthAnim;
-  final TextEditingController _searchController = TextEditingController();
+
+  final TextEditingController _localSearchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+
+  TextEditingController get _activeSearchController {
+    return widget.searchController ?? _localSearchController;
+  }
 
   @override
   void initState() {
     super.initState();
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
+
     _widthAnim = CurvedAnimation(
       parent: _animController,
       curve: Curves.easeInOut,
@@ -48,13 +59,14 @@ class _DashboardAppBarState extends State<DashboardAppBar>
   @override
   void dispose() {
     _animController.dispose();
-    _searchController.dispose();
+    _localSearchController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
   void _toggleSearch() {
     setState(() => _searchOpen = !_searchOpen);
+
     if (_searchOpen) {
       _animController.forward();
       Future.delayed(
@@ -64,7 +76,10 @@ class _DashboardAppBarState extends State<DashboardAppBar>
     } else {
       _animController.reverse();
       _focusNode.unfocus();
-      _searchController.clear();
+      _activeSearchController.clear();
+
+      // ✅ CLEAR DASHBOARD SEARCH ALSO
+      widget.onSearchChanged?.call("");
     }
   }
 
@@ -85,7 +100,6 @@ class _DashboardAppBarState extends State<DashboardAppBar>
       automaticallyImplyLeading: false,
       titleSpacing: 0,
 
-      // ── Leading: hamburger or back ────────────────────────────────────
       leading: widget.showBack
           ? IconButton(
         icon: Icon(Icons.arrow_back, color: iconColor),
@@ -103,8 +117,9 @@ class _DashboardAppBarState extends State<DashboardAppBar>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withOpacity(isDark ? 0.3 : 0.06),
+                    color: Colors.black.withOpacity(
+                      isDark ? 0.3 : 0.06,
+                    ),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -116,10 +131,8 @@ class _DashboardAppBarState extends State<DashboardAppBar>
         ),
       ),
 
-      // ── Title: "Dashboard" collapses when search opens ───────────────
       title: Row(
         children: [
-          // Title — hidden while search is open
           if (!_searchOpen)
             Expanded(
               child: Padding(
@@ -135,14 +148,14 @@ class _DashboardAppBarState extends State<DashboardAppBar>
               ),
             ),
 
-          // ── Animated expanding search bar ─────────────────────────
           AnimatedBuilder(
             animation: _widthAnim,
             builder: (context, _) {
-              final maxW =
-                  MediaQuery.of(context).size.width * 0.48;
+              final maxW = MediaQuery.of(context).size.width * 0.48;
               final currentW = maxW * _widthAnim.value;
+
               if (currentW <= 10) return const SizedBox.shrink();
+
               return SizedBox(
                 width: currentW.clamp(0.0, maxW),
                 child: Container(
@@ -153,18 +166,22 @@ class _DashboardAppBarState extends State<DashboardAppBar>
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black
-                            .withOpacity(isDark ? 0.3 : 0.08),
+                        color: Colors.black.withOpacity(
+                          isDark ? 0.3 : 0.08,
+                        ),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
                     ],
                   ),
                   child: TextField(
-                    controller: _searchController,
+                    controller: _activeSearchController,
                     focusNode: _focusNode,
-                    style: TextStyle(
-                        fontSize: 13, color: iconColor),
+
+                    // ✅ MAIN FIX
+                    onChanged: widget.onSearchChanged,
+
+                    style: TextStyle(fontSize: 13, color: iconColor),
                     decoration: InputDecoration(
                       hintText: 'Search...',
                       hintStyle: TextStyle(
@@ -193,9 +210,7 @@ class _DashboardAppBarState extends State<DashboardAppBar>
         ],
       ),
 
-      // ── Actions ──────────────────────────────────────────────────────
       actions: [
-        // Search toggle / close — animated icon swap
         IconButton(
           tooltip: _searchOpen ? 'Close search' : 'Search',
           icon: AnimatedSwitcher(
@@ -210,7 +225,6 @@ class _DashboardAppBarState extends State<DashboardAppBar>
           onPressed: _toggleSearch,
         ),
 
-        // ── Notification bell (Designer only) ─────────────────────────
         if (widget.department == 'Designer')
           Padding(
             padding: const EdgeInsets.only(right: 4),
@@ -231,10 +245,7 @@ class _DashboardAppBarState extends State<DashboardAppBar>
               ),
             ),
           ),
-        // ── Edit Material (Admin only) ─────────────────────────────────────
 
-
-        // ── Profile icon ───────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: GestureDetector(

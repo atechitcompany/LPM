@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../screens/sidebar_menu.dart';
-
 import '../widgets/activity_list_firestore.dart';
-import 'package:lightatech/FormComponents/FLoatingButton.dart';
-import 'package:lightatech/core/theme/theme_provider.dart';
 import 'package:lightatech/Features/Dashboard/widgets/dashboard_appbar.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -24,10 +20,11 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   String _normalizeDepartment(String dept) {
     final cleanDept = dept.replaceAll(" ", "").toLowerCase();
+
     switch (cleanDept) {
       case "lasercut":
         return "LaserCutting";
@@ -50,28 +47,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedDepartment = _normalizeDepartment(widget.department);
+
     return Scaffold(
       backgroundColor: const Color(0xFFEEF2FF),
-      drawer: SidebarMenu(),
+      drawer: const SidebarMenu(),
+
       appBar: DashboardAppBar(
         showBack: false,
         department: widget.department,
         onBack: () {},
-      ),
-      body: Column(
-        children: [
-          // ── Firebase Jobs List (tabs inside) ───────────────────────────
-          Expanded(
-            child: ActivityListFirestore(
-              searchText: searchController.text,
-              department: _normalizeDepartment(widget.department),
-            ),
-          ),
-        ],
+
+        // ✅ CONNECT APPBAR SEARCH TO DASHBOARD LIST
+        searchController: searchController,
+        onSearchChanged: (value) {
+          setState(() {});
+        },
       ),
 
-      // ── Floating Add Button ────────────────────────────────────────────
-      floatingActionButton: widget.department == 'Designer'
+      body: ActivityListFirestore(
+        searchText: searchController.text.trim(),
+        department: normalizedDepartment,
+      ),
+
+      floatingActionButton: normalizedDepartment == 'Designer'
           ? SizedBox(
         width: 46,
         height: 46,
@@ -94,76 +93,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : null,
     );
   }
-}
-
-class ShadowWrapper extends StatelessWidget {
-  final Widget child;
-  const ShadowWrapper({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 4,
-            spreadRadius: 0.1,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: child,
-    );
-  }
-}
-
-//Login Parsing to be done
-
-class _ThinSearchIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-  const _ThinSearchIcon({this.size = 22, this.color = Colors.black});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _SearchIconPainter(color: color),
-    );
-  }
-}
-
-class _SearchIconPainter extends CustomPainter {
-  final Color color;
-  _SearchIconPainter({this.color = Colors.black});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final double r = size.width * 0.35;
-    final Offset center = Offset(size.width * 0.42, size.height * 0.42);
-
-    canvas.drawCircle(center, r, paint);
-
-    final Offset lineStart = Offset(
-      center.dx + r * 0.707,
-      center.dy + r * 0.707,
-    );
-    final Offset lineEnd = Offset(
-      lineStart.dx + size.width * 0.22,
-      lineStart.dy + size.height * 0.22,
-    );
-    canvas.drawLine(lineStart, lineEnd, paint);
-  }
-
-  @override
-  bool shouldRepaint(_SearchIconPainter oldDelegate) => false;
 }
