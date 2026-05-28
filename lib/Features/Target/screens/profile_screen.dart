@@ -3,11 +3,11 @@ import '../widgets/user_post.dart';
 import '../widgets/stats_box.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/section_title.dart';
+import 'package:lightatech/Features/Dashboard/screens/sidebar_menu.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  // Mock DB data
   final String pageTitle = "Target Page";
   final String userName = "Ashif Khan";
   final String userPost = "Account";
@@ -15,16 +15,18 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const SidebarMenu(),
+
       appBar: AppBar(
         centerTitle: true,
         title: Text(pageTitle),
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// User Name + Post
             Center(
               child: Column(
                 children: [
@@ -43,7 +45,6 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            /// Stats Grid
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -77,7 +78,6 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            /// Top Goals Section
             const SectionTitle(title: "Top Goals"),
             const SizedBox(height: 12),
 
@@ -92,10 +92,8 @@ class ProfileScreen extends StatelessWidget {
               progress: 0.5,
             ),
 
-
             const SizedBox(height: 32),
 
-            /// Other Goals Section
             const SectionTitle(title: "Other Goals"),
             const SizedBox(height: 12),
 

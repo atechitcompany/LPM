@@ -9,6 +9,7 @@ import '../models/floating_sheet_type.dart';
 import 'task_detail_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/gestures.dart';
+import 'package:lightatech/Features/Dashboard/screens/sidebar_menu.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MapScreen extends StatefulWidget {
@@ -2237,6 +2238,7 @@ class _MapScreenState extends State<MapScreen> {
         return true; // Allow normal back navigation
       },
       child: Scaffold(
+        drawer: const SidebarMenu(),
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
         appBar: selectionActive
