@@ -26,7 +26,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
 
     if (widget.department == "Designer") {
       return DefaultTabController(
-        length: 3,
+        length: 4,
         child: Column(
           children: [
             Container(
@@ -50,6 +50,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                       Tab(text: "Pending"),
                       Tab(text: "Jobs"),
                       Tab(text: "Quotations"),
+                      Tab(text: 'Quotation Pending'),
                     ],
                   ),
                 ],
@@ -80,6 +81,9 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                   // ── Quotations tab ──────────────────────────────────
                   _KeepAliveTab(
                     child: _QuotationsTab(searchText: widget.searchText),
+                  ),
+                  _KeepAliveTab(
+                    child: _QuotationPendingTab(searchText: widget.searchText),
                   ),
                 ],
               ),
@@ -486,6 +490,96 @@ class _QuotationsTab extends StatelessWidget {
                     (data["status"] ?? "pending").toString().toUpperCase(),
                     style: const TextStyle(
                         fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+class _QuotationPendingTab extends StatelessWidget {
+  final String searchText;
+  const _QuotationPendingTab({required this.searchText});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("quotations")
+          .where("status", isEqualTo: "pending")
+          .orderBy("createdAt", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final query = searchText.trim().toLowerCase();
+
+        final filtered = docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (query.isEmpty) return true;
+          return doc.id.toLowerCase().contains(query) ||
+              (data["partyName"] ?? "").toString().toLowerCase().contains(query);
+        }).toList();
+
+        if (filtered.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.hourglass_empty, size: 56, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                Text(
+                  "No pending quotations",
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade400),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final doc = filtered[index];
+            final data = doc.data() as Map<String, dynamic>;
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              child: ListTile(
+                onTap: () => context.push('/quotation-detail/${doc.id}'),
+                title: Text(
+                  doc.id,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+                subtitle: Text(
+                  data["partyName"] ?? "—",
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    "PENDING",
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
