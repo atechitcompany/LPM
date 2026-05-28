@@ -56,6 +56,12 @@ class Task {
   bool isDone;
   String note;
   String createdDate;
+  // --- BEGIN NEW TAB LOGIC ---
+  String? createdBy;
+  // --- END NEW TAB LOGIC ---
+  // --- BEGIN NEW ACCOMPANY FIELD ---
+  String? accompany;
+  // --- END NEW ACCOMPANY FIELD ---
 
   // button selections
   String? priority;
@@ -77,6 +83,12 @@ class Task {
         this.isDone = false,
         this.note = '',
         String? createdDate,
+        // --- BEGIN NEW TAB LOGIC ---
+        this.createdBy,
+        // --- END NEW TAB LOGIC ---
+        // --- BEGIN NEW ACCOMPANY FIELD ---
+        this.accompany,
+        // --- END NEW ACCOMPANY FIELD ---
         this.priority,
         this.reminder,
         this.assignee,
@@ -97,6 +109,12 @@ class Task {
       'isDone': isDone,
       'note': note,
       'createdDate': createdDate,
+      // --- BEGIN NEW TAB LOGIC ---
+      'createdBy': createdBy,
+      // --- END NEW TAB LOGIC ---
+      // --- BEGIN NEW ACCOMPANY FIELD ---
+      'accompany': accompany,
+      // --- END NEW ACCOMPANY FIELD ---
       'priority': priority,
       'reminder': reminder,
       'assignee': assignee,
@@ -120,6 +138,12 @@ class Task {
       isDone: data['isDone'] ?? false,
       note: data['note'] ?? '',
       createdDate: data['createdDate'],
+      // --- BEGIN NEW TAB LOGIC ---
+      createdBy: data['createdBy'],
+      // --- END NEW TAB LOGIC ---
+      // --- BEGIN NEW ACCOMPANY FIELD ---
+      accompany: data['accompany'],
+      // --- END NEW ACCOMPANY FIELD ---
       priority: data['priority'],
       reminder: data['reminder'],
       assignee: data['assignee'],
