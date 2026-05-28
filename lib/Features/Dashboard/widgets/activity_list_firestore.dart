@@ -508,8 +508,7 @@ class _QuotationPendingTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection("quotations")
-          .where("status", isEqualTo: "pending")
+          .collection("quotation_pending")
           .orderBy("createdAt", descending: true)
           .snapshots(),
       builder: (context, snapshot) {
@@ -561,7 +560,7 @@ class _QuotationPendingTab extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               child: ListTile(
-                onTap: () => context.push('/quotation-detail/${doc.id}'),
+                onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
                 title: Text(
                   doc.id,
                   style: const TextStyle(
