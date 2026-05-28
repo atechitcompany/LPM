@@ -21,32 +21,6 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
     super.dispose();
   }
 
-  String getNameFromEmail(String email) {
-    if (email.isEmpty || !email.contains("@")) return "No Name";
-
-    String name = email.split("@").first;
-
-    name = name
-        .replaceAll(".com", "")
-        .replaceAll(".in", "")
-        .replaceAll(".net", "")
-        .replaceAll(".", " ")
-        .replaceAll("_", " ")
-        .replaceAll("-", " ")
-        .trim();
-
-    if (name.isEmpty) return "No Name";
-
-    return name
-        .split(" ")
-        .map(
-          (word) => word.isNotEmpty
-          ? word[0].toUpperCase() + word.substring(1)
-          : "",
-    )
-        .join(" ");
-  }
-
   Stream<List<Map<String, dynamic>>> fetchUsers() {
     final bool isStaff = widget.type == "Staff";
     final String collection = isStaff ? "Staff" : "customers";
@@ -65,21 +39,14 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
               "role": (data["Role"] ?? "").toString(),
             };
           } else {
-            final email = (data["Email"] ?? "").toString();
-
-            final customerName = (data["Username"] ??
-                data["Name"] ??
-                data["name"] ??
-                data["username"] ??
-                "")
-                .toString();
-
             return {
               "id": doc.id,
-              "name": customerName.isNotEmpty
-                  ? customerName
-                  : getNameFromEmail(email),
-              "email": email,
+              "name": (data["Party Names"] ?? "").toString(),
+              "email": (data["Email"] ?? "").toString(),
+              "contact": (data["Contact"] ?? "").toString(),
+              "whatsapp": (data["Whatsapp Number"] ?? "").toString(),
+              "address": (data["Address"] ?? "").toString(),
+              "password": (data["Password"] ?? "").toString(),
               "type": "Customer",
               "role": "-",
             };
@@ -216,9 +183,13 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                 final users = snapshot.data!.where((user) {
                   final name = user['name'].toString().toLowerCase();
                   final email = user['email'].toString().toLowerCase();
+                  final contact = (user['contact'] ?? "").toString().toLowerCase();
+                  final whatsapp = (user['whatsapp'] ?? "").toString().toLowerCase();
 
                   return name.contains(searchText) ||
-                      email.contains(searchText);
+                      email.contains(searchText) ||
+                      contact.contains(searchText) ||
+                      whatsapp.contains(searchText);
                 }).toList();
 
                 if (users.isEmpty) {
