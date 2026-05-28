@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:lightatech/Features/MapScreen/models/task.dart';
 import 'package:lightatech/core/session/session_manager.dart';
@@ -23,6 +23,12 @@ class NotificationService {
 
   StreamSubscription<QuerySnapshot>? _tasksSubscription;
   bool _isInitialized = false;
+
+  // --- Reminder / Deadline polling ---
+  Timer? _reminderTimer;
+  // Track which (taskId + timestamp) combos have already been notified
+  // so we don't spam the same reminder every 60 seconds.
+  final Set<String> _firedNotificationKeys = {};
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -64,7 +70,114 @@ class NotificationService {
 
     // 4. Start listening to Firestore task updates for user notifications
     startFirestoreTasksListener();
+
+    // 5. Start the periodic reminder/deadline checker (every 60 seconds)
+    _startReminderDeadlineChecker();
   }
+
+  // ──────────────────────────────────────────────────────────
+  //  PERIODIC REMINDER & DEADLINE CHECKER
+  // ──────────────────────────────────────────────────────────
+
+  void _startReminderDeadlineChecker() {
+    _reminderTimer?.cancel();
+
+    // Run immediately once, then every 60 seconds
+    _checkRemindersAndDeadlines();
+    _reminderTimer = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => _checkRemindersAndDeadlines(),
+    );
+  }
+
+  Future<void> _checkRemindersAndDeadlines() async {
+    try {
+      final String? loginUserId = SessionManager.getEmail();
+      if (loginUserId == null || loginUserId.isEmpty) return;
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .get();
+
+      final now = DateTime.now();
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final task = Task.fromMap(doc.id, data);
+
+        // Skip completed tasks
+        if (task.isDone) continue;
+
+        // Only check tasks relevant to this user
+        final createdBy = task.createdBy ?? '';
+        final assignee = task.assignee ?? '';
+        final isRelevant = createdBy == loginUserId ||
+            assignee.split(', ').contains(loginUserId);
+        if (!isRelevant) continue;
+
+        // ── Check REMINDERS ──
+        if (task.reminder != null && task.reminder!.isNotEmpty) {
+          final reminderParts = task.reminder!.split(', ');
+          for (final part in reminderParts) {
+            final reminderTime = DateTime.tryParse(part.trim());
+            if (reminderTime == null) continue;
+
+            final key = '${doc.id}_remind_${reminderTime.toIso8601String()}';
+            if (_firedNotificationKeys.contains(key)) continue;
+
+            // Fire if the reminder time is within the past 2 minutes
+            final diff = now.difference(reminderTime).inSeconds;
+            if (diff >= 0 && diff <= 120) {
+              _firedNotificationKeys.add(key);
+              await showLocalNotification(
+                "⏰ Reminder: ${task.title}",
+                "Your reminder for this task is due now!",
+              );
+            }
+          }
+        }
+
+        // ── Check DEADLINE ──
+        if (task.deadline != null && task.deadline!.isNotEmpty) {
+          final deadlineTime = DateTime.tryParse(task.deadline!.trim());
+          if (deadlineTime == null) continue;
+
+          // Notify at deadline time (within past 2 minutes)
+          final deadlineKey = '${doc.id}_deadline_${deadlineTime.toIso8601String()}';
+          if (!_firedNotificationKeys.contains(deadlineKey)) {
+            final diff = now.difference(deadlineTime).inSeconds;
+            if (diff >= 0 && diff <= 120) {
+              _firedNotificationKeys.add(deadlineKey);
+              await showLocalNotification(
+                "🚨 Deadline Reached: ${task.title}",
+                "This task's deadline has arrived!",
+              );
+            }
+          }
+
+          // Also notify 30 minutes BEFORE the deadline
+          final earlyKey = '${doc.id}_deadline_early_${deadlineTime.toIso8601String()}';
+          if (!_firedNotificationKeys.contains(earlyKey)) {
+            final minutesBefore = deadlineTime.difference(now).inMinutes;
+            if (minutesBefore >= 0 && minutesBefore <= 30) {
+              _firedNotificationKeys.add(earlyKey);
+              await showLocalNotification(
+                "⚠️ Deadline Approaching: ${task.title}",
+                "This task is due in $minutesBefore minutes!",
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Silently handle errors so the timer keeps running
+      debugPrint('Reminder/deadline check error: $e');
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────
+  //  NEW TASK LISTENER (existing)
+  // ──────────────────────────────────────────────────────────
 
   void startFirestoreTasksListener() {
     _tasksSubscription?.cancel();
@@ -158,5 +271,7 @@ class NotificationService {
   void stopListener() {
     _tasksSubscription?.cancel();
     _tasksSubscription = null;
+    _reminderTimer?.cancel();
+    _reminderTimer = null;
   }
 }
