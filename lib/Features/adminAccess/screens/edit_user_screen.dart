@@ -18,6 +18,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController passwordController;
   late TextEditingController aadhaarController;
   late TextEditingController panController;
+  late TextEditingController discountController;
 
   bool isLoading = false;
 
@@ -34,6 +35,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     passwordController = TextEditingController(text: widget.user['password'] ?? "");
     aadhaarController = TextEditingController(text: widget.user['aadhaar'] ?? "");
     panController = TextEditingController(text: widget.user['pan'] ?? "");
+    discountController = TextEditingController(text: widget.user['discount'] ?? "0");
   }
 
   @override
@@ -45,6 +47,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     passwordController.dispose();
     aadhaarController.dispose();
     panController.dispose();
+    discountController.dispose();
     super.dispose();
   }
 
@@ -66,6 +69,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
           "Password": passwordController.text.trim(),
           "Aadhaar": aadhaarController.text.trim(),
           "PAN": panController.text.trim(),
+          "Discount": double.tryParse(discountController.text.trim()) ?? 0,
           "updatedAt": FieldValue.serverTimestamp(),
         });
       } else {
@@ -160,6 +164,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
             ] else ...[
               buildTextField("Contact", contactController, isNumber: true),
               buildTextField("Password", passwordController),
+              buildTextField("Discount (%)", discountController, isNumber: true),
             ],
 
             const SizedBox(height: 20),
