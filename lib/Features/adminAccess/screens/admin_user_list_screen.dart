@@ -53,6 +53,7 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
               "address": (data["Address"] ?? "").toString(),
               "password": (data["Password"] ?? "").toString(),
               "type": "Customer",
+              "discount": (data["Discount"] ?? 0).toString(),
               "role": "-",
             };
           }
