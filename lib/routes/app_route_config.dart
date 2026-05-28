@@ -73,6 +73,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lightatech/Features/Dashboard/screens/quotation_detail_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/edit_material_page.dart';
 
+import 'package:lightatech/Features/Dashboard/screens/customer_quotation_form_screen.dart';
+
+
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey =
 GlobalKey<NavigatorState>();
@@ -255,7 +258,19 @@ class AppRoutes {
               return CustomerRequestDetailScreen(docId: docId);
             },
           ),
+          GoRoute(
+            path: '/customer-quotation-detail/:id',
+            builder: (context, state) => CustomerQuotationDetailScreen(
+              docId: state.pathParameters['id']!,
+            ),
+          ),
 
+          GoRoute(
+            path: '/customer-quotation-edit/:id',
+            builder: (context, state) => CustomerQuotationFormScreen(
+              docId: state.pathParameters['id']!,
+            ),
+          ),
           GoRoute(
             path: '/pending-form-edit/:lpm',
             builder: (context, state) {
