@@ -504,7 +504,10 @@ class _CustomerRequestsScreenState
             ),
             child: TextField(
               controller: searchController,
-              onChanged: (_) => setState(() {}),
+              onChanged: (value) {
+                debugPrint("SEARCH TYPED IN CustomerRequestsScreen: $value");
+                setState(() {});
+              },
               decoration: InputDecoration(
                 hintText: 'Search by name, party, or job...',
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
@@ -544,16 +547,30 @@ class _CustomerRequestsScreenState
               }
 
               final query = searchController.text.trim().toLowerCase();
+
               final filteredDocs = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-                final name = (data["name"] ?? "").toString().toLowerCase();
-                final partyName = (data["partyName"] ?? "").toString().toLowerCase();
-                final particularJobName =
-                (data["particularJobName"] ?? "").toString().toLowerCase();
+
+                final searchableText = [
+                  data["name"],
+                  data["email"],
+                  data["Email"],
+                  data["partyName"],
+                  data["PartyName"],
+                  data["particularJobName"],
+                  data["ParticularJobName"],
+                  data["requestedDepartments"],
+                  data["departments"],
+                  data["department"],
+                  data["requested"],
+                  data["orderBy"],
+                  data["deliveryAt"],
+                  data["priority"],
+                ].join(" ").toLowerCase();
+
                 if (query.isEmpty) return true;
-                return name.contains(query) ||
-                    partyName.contains(query) ||
-                    particularJobName.contains(query);
+
+                return searchableText.contains(query);
               }).toList();
 
               if (filteredDocs.isEmpty) {
