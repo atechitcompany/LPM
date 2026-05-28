@@ -322,15 +322,32 @@ class _CustomerQuotationFormScreenState
         'RubberOrWithout': _rubberOrWithout ?? '',
       };
 
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc("QUOTE_${now.year}_$month");
+
+      String quoteNumber = "";
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snap = await transaction.get(counterRef);
+        int lastNo = snap.exists ? (snap.data()?["lastNo"] ?? 0) : 0;
+        final newNo = lastNo + 1;
+        transaction.set(counterRef, {"lastNo": newNo}, SetOptions(merge: true));
+        quoteNumber = "QUOTE-${newNo.toString().padLeft(5, '0')}-$month-$year-01";
+      });
+
       await FirebaseFirestore.instance
           .collection('quotation_pending')
-          .doc(widget.docId)
+          .doc(quoteNumber)
           .set({
         ...designerData,
         'sourceDocId': widget.docId,
+        'quoteNumber': quoteNumber,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

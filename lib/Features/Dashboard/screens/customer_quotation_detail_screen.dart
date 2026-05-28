@@ -28,13 +28,21 @@ class _CustomerQuotationDetailScreenState
 
   Future<void> _fetch() async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('demo_customer_form')
+      var doc = await FirebaseFirestore.instance
+          .collection('quotation_pending')
           .doc(widget.docId)
           .get();
+
+      if (!doc.exists) {
+        doc = await FirebaseFirestore.instance
+            .collection('demo_customer_form')
+            .doc(widget.docId)
+            .get();
+      }
+
       if (mounted) setState(() { _data = doc.data(); _loading = false; });
     } catch (e) {
-      debugPrint('Error fetching quotation: $e');
+      debugPrint('Error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -100,26 +108,26 @@ class _CustomerQuotationDetailScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _field('Party Name', _data!['partyName']?.toString() ?? ''),
-            _field('Delivery At', _data!['deliveryAt']?.toString() ?? ''),
-            _field('Job Name', _data!['jobName']?.toString() ?? ''),
-            _field('Machine Name', _data!['machineName']?.toString() ?? ''),
-            _field('Ply Wood Size & Griper', _data!['plywoodSizeGriper']?.toString() ?? ''),
-            _field('Rubber Or Without Rubber', _data!['rubberOrWithout']?.toString() ?? ''),
-            _field('Cutting Rule', _data!['cuttingRule']?.toString() ?? ''),
-            _field('Creasing Rule', _data!['creasingRule']?.toString() ?? ''),
-            _field('Material To Punch', _data!['materialToPunch']?.toString() ?? ''),
-            _field('Flute', _data!['flute']?.toString() ?? ''),
-            _field('Board Compressed Thickness', _data!['boardCompressedThickness']?.toString() ?? ''),
-            _field('Center Notch', _data!['centerNotch']?.toString() ?? ''),
-            _field('Ply Wood Thickness', _data!['plywoodThickness']?.toString() ?? ''),
-            _field('Perforation', _data!['perforation']?.toString() ?? ''),
-            _field('Partinex', _data!['partinex']?.toString() ?? ''),
-            _field('Nicking', _data!['nicking']?.toString() ?? ''),
-            _field('Broaching', _data!['broaching']?.toString() ?? ''),
-            _field('Blade Welding', _data!['bladeWelding']?.toString() ?? ''),
-            _field('Stripping Male & Female', _data!['strippingMaleFemale']?.toString() ?? ''),
-            _field('Sanwitch Die', _data!['sanwitchDie']?.toString() ?? ''),
+            _field('Party Name', _data!['PartyName'] ?? _data!['partyName'] ?? ''),
+            _field('Delivery At', _data!['DeliveryAt'] ?? _data!['deliveryAt'] ?? ''),
+            _field('Job Name', _data!['ParticularJobName'] ?? _data!['jobName'] ?? ''),
+            _field('Machine Name', _data!['MachineName'] ?? _data!['machineName'] ?? ''),
+            _field('Ply Wood Size & Griper', _data!['PlywoodSizeGriper'] ?? _data!['plywoodSizeGriper'] ?? ''),
+            _field('Rubber Or Without Rubber', _data!['RubberOrWithout'] ?? _data!['rubberOrWithout'] ?? ''),
+            _field('Cutting Rule', _data!['CuttingRule'] ?? _data!['cuttingRule'] ?? ''),
+            _field('Creasing Rule', _data!['CreasingRule'] ?? _data!['creasingRule'] ?? ''),
+            _field('Material To Punch', _data!['MaterialToPunch'] ?? _data!['materialToPunch'] ?? ''),
+            _field('Flute', _data!['Flute'] ?? _data!['flute'] ?? ''),
+            _field('Board Compressed Thickness', _data!['BoardCompressedThickness'] ?? _data!['boardCompressedThickness'] ?? ''),
+            _field('Center Notch', _data!['CenterNotch'] ?? _data!['centerNotch'] ?? ''),
+            _field('Ply Wood Thickness', _data!['PlywoodThickness'] ?? _data!['plywoodThickness'] ?? ''),
+            _field('Perforation', _data!['Perforation'] ?? _data!['perforation'] ?? ''),
+            _field('Partinex', _data!['Partinex'] ?? _data!['partinex'] ?? ''),
+            _field('Nicking', _data!['Nicking'] ?? _data!['nicking'] ?? ''),
+            _field('Broaching', _data!['Broaching'] ?? _data!['broaching'] ?? ''),
+            _field('Blade Welding', _data!['BladeWelding'] ?? _data!['bladeWelding'] ?? ''),
+            _field('Stripping Male & Female', _data!['StrippingMaleFemale'] ?? _data!['strippingMaleFemale'] ?? ''),
+            _field('Sanwitch Die', _data!['SanwitchDie'] ?? _data!['sanwitchDie'] ?? ''),
           ],
         ),
       ),
