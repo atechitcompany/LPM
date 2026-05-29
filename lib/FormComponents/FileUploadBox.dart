@@ -65,17 +65,15 @@ class _FileUploadBoxState extends State<FileUploadBox> {
           ),
         );
       }
-    } catch (e) {
-      if (context.mounted) {
+      } else {
         setState(() => _isUploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Upload failed: $e'),
+          const SnackBar(
+            content: Text('❌ Upload failed. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
       }
-    }
   }
 
   @override
