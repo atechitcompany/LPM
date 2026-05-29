@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../viewmodels/payment_viewmodel.dart';
 import '../widgets/record_payment_button.dart';
 import 'record_payment_page.dart';
+import 'package:lightatech/Features/Dashboard/screens/sidebar_menu.dart';
 
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});
@@ -13,21 +14,18 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-
-  final PaymentViewModel _viewModel =
-  PaymentViewModel();
+  final PaymentViewModel _viewModel = PaymentViewModel();
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
+      drawer: const SidebarMenu(),
       backgroundColor: Colors.grey.shade100,
 
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-
+        iconTheme: const IconThemeData(color: Colors.black),
         title: const Text(
           'Payment',
           style: TextStyle(
@@ -48,14 +46,12 @@ class _PaymentPageState extends State<PaymentPage> {
       ),
 
       floatingActionButton: RecordPaymentButton(
-
         onTap: () {
           context.push('/record-payment');
         },
       ),
 
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

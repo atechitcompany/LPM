@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ThemeProvider extends ChangeNotifier {
   static const String _boxName = 'settingsBox';
@@ -40,20 +41,21 @@ class ThemeProvider extends ChangeNotifier {
       surface: Colors.white,
       onSurface: Colors.black,
     ),
+    textTheme: GoogleFonts.latoTextTheme(ThemeData.light().textTheme),
     scaffoldBackgroundColor: Colors.white,
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: Colors.black,
       selectionHandleColor: Colors.black,
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFF8D94B),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFFF8D94B),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      iconTheme: IconThemeData(color: Colors.black),
-      titleTextStyle: TextStyle(
+      iconTheme: const IconThemeData(color: Colors.black),
+      titleTextStyle: GoogleFonts.lato(
         color: Colors.black,
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
       ),
     ),
   );
@@ -63,23 +65,24 @@ class ThemeProvider extends ChangeNotifier {
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFFF8D94B),
       onPrimary: Colors.black,
-      surface: Color(0xFF1E1E1E),
+      surface: const Color(0xFF1E1E1E),
       onSurface: Colors.white,
     ),
+    textTheme: GoogleFonts.latoTextTheme(ThemeData.dark().textTheme),
     scaffoldBackgroundColor: const Color(0xFF121212),
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: Color(0xFFF8D94B),
       selectionHandleColor: Color(0xFFF8D94B),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1E1E1E),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF1E1E1E),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(
+      iconTheme: const IconThemeData(color: Colors.white),
+      titleTextStyle: GoogleFonts.lato(
         color: Colors.white,
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
       ),
     ),
   );

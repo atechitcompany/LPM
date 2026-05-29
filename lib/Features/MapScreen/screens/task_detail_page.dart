@@ -278,6 +278,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         case FloatingSheetType.assign:
           resolvedKey = 'assignee';
           break;
+        // --- BEGIN NEW ACCOMPANY FIELD ---
+        case FloatingSheetType.accompany:
+          resolvedKey = 'accompany';
+          break;
+        // --- END NEW ACCOMPANY FIELD ---
         case FloatingSheetType.deadline:
           resolvedKey = 'deadline';
           break;
@@ -300,7 +305,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
     if (resolvedKey == 'workType') {
       workTypes = await _loadWorkTypesFromFirestore();
-    } else if (resolvedKey == 'assignee') {
+    } else if (resolvedKey == 'assignee' || resolvedKey == 'accompany') {
       assignees = await _loadAssigneesFromFirestore();
     } else if (resolvedKey == 'clientName') {
       clients = await _loadClientsFromFirestore();
@@ -368,6 +373,19 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           return assignees
               .map((v) => ListTile(title: Text(v)))
               .toList();
+        // --- BEGIN NEW ACCOMPANY FIELD ---
+        case 'accompany':
+          if (assignees == null || assignees.isEmpty) {
+            return const [
+              ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text("None")),
+            ];
+          }
+          return assignees
+              .map((v) => ListTile(title: Text(v)))
+              .toList();
+        // --- END NEW ACCOMPANY FIELD ---
         case 'deadline':
           return const [
             ListTile(
@@ -412,6 +430,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
     // Positioning
     final bool hasSearchBar = resolvedKey == 'assignee' ||
+        resolvedKey == 'accompany' ||
         resolvedKey == 'workType' ||
         resolvedKey == 'clientName';
 
@@ -456,6 +475,19 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             .contains(_searchQuery.toLowerCase());
                       }).toList()
                           : allTiles;
+
+                      final bool isMultiSelect = resolvedKey == 'reminder' ||
+                          resolvedKey == 'assignee' ||
+                          resolvedKey == 'accompany';
+
+                      List<String> selectedList = [];
+                      if (resolvedKey == 'reminder') {
+                        selectedList = (task.reminder ?? '').split(', ').where((e) => e.isNotEmpty).toList();
+                      } else if (resolvedKey == 'assignee') {
+                        selectedList = (task.assignee ?? '').split(', ').where((e) => e.isNotEmpty).toList();
+                      } else if (resolvedKey == 'accompany') {
+                        selectedList = (task.accompany ?? '').split(', ').where((e) => e.isNotEmpty).toList();
+                      }
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,
@@ -512,107 +544,165 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               padding: EdgeInsets.zero,
                               shrinkWrap: true,
                               children: filteredTiles.map((tile) {
-                                return InkWell(
-                                  onTap: () async {
-                                    if (tile is ListTile) {
-                                      final label =
-                                          (tile.title as Text).data ?? '';
+                                if (tile is ListTile) {
+                                  final label = (tile.title as Text).data ?? '';
+                                  final isSelected = selectedList.contains(label);
 
-                                      if (resolvedKey == 'reminder' ||
-                                          resolvedKey == 'deadline') {
-                                        DateTime? computed;
-
-                                        if (label
-                                            .toLowerCase()
-                                            .contains('custom')) {
+                                  return InkWell(
+                                    onTap: () async {
+                                      if (isMultiSelect) {
+                                        // Multiple selection handling
+                                        if (resolvedKey == 'reminder' && label.toLowerCase().contains('custom')) {
                                           _hideOverlay();
-                                          computed =
-                                          await pickDateTimeWithTabs(
-                                              context);
-                                        } else {
-                                          final now = DateTime.now();
-                                          final lower = label.toLowerCase();
-                                          if (lower
-                                              .contains('today (1 hour)')) {
-                                            computed = now.add(
-                                                const Duration(hours: 1));
-                                          } else if (lower
-                                              .contains('today (3 hour)')) {
-                                            computed = now.add(
-                                                const Duration(hours: 3));
-                                          } else if (lower
-                                              .contains('today (6 hour)')) {
-                                            computed = now.add(
-                                                const Duration(hours: 6));
-                                          } else if (lower.contains(
-                                              'tomorrow (12 pm)')) {
-                                            final tomorrow = DateTime(
-                                                now.year,
-                                                now.month,
-                                                now.day)
-                                                .add(
-                                                const Duration(days: 1));
-                                            computed = DateTime(
-                                                tomorrow.year,
-                                                tomorrow.month,
-                                                tomorrow.day,
-                                                12,
-                                                0);
+                                          final DateTime? computed = await pickDateTimeWithTabs(context);
+                                          if (computed != null) {
+                                            final iso = computed.toIso8601String();
+                                            setState(() {
+                                              if (!selectedList.contains(iso)) {
+                                                selectedList.add(iso);
+                                              }
+                                              task.reminder = selectedList.join(', ');
+                                            });
+                                            widget.onChanged();
                                           }
+                                          return;
                                         }
 
-                                        if (computed != null) {
-                                          final iso =
-                                          computed.toIso8601String();
+                                        // Accompany None handling
+                                        if (resolvedKey == 'accompany' && label == 'None') {
                                           setState(() {
-                                            if (resolvedKey == 'reminder') {
-                                              task.reminder = iso;
-                                            } else {
-                                              task.deadline = iso;
-                                            }
+                                            selectedList.clear();
+                                            task.accompany = null;
                                           });
                                           widget.onChanged();
+                                          setOverlayState(() {});
+                                          return;
                                         }
-                                      } else {
+
                                         setState(() {
-                                          switch (resolvedKey) {
-                                            case 'priority':
-                                              task.priority = label;
-                                              task.priorityUpdatedAt =
-                                                  DateTime.now()
-                                                      .millisecondsSinceEpoch;
-                                              break;
-                                            case 'assignee':
-                                              task.assignee = label;
-                                              break;
-                                            case 'workType':
-                                              task.workType = label;
-                                              break;
-                                            case 'clientName':
-                                              task.clientName = label;
-                                              break;
-                                            case 'folder':
-                                              task.folder = label;
-                                              break;
-                                            default:
-                                              break;
+                                          if (isSelected) {
+                                            selectedList.remove(label);
+                                          } else {
+                                            selectedList.add(label);
+                                          }
+
+                                          final valueStr = selectedList.isEmpty ? null : selectedList.join(', ');
+                                          if (resolvedKey == 'reminder') {
+                                            task.reminder = valueStr;
+                                          } else if (resolvedKey == 'assignee') {
+                                            task.assignee = valueStr;
+                                          } else if (resolvedKey == 'accompany') {
+                                            task.accompany = valueStr;
                                           }
                                         });
                                         widget.onChanged();
+                                        setOverlayState(() {});
+                                      } else {
+                                        // Single selection handling
+                                        if (resolvedKey == 'deadline' && label.toLowerCase().contains('custom')) {
+                                          _hideOverlay();
+                                          final DateTime? computed = await pickDateTimeWithTabs(context);
+                                          if (computed != null) {
+                                            final iso = computed.toIso8601String();
+                                            setState(() {
+                                              task.deadline = iso;
+                                            });
+                                            widget.onChanged();
+                                          }
+                                        } else if (resolvedKey == 'reminder' && label.toLowerCase().contains('custom')) {
+                                          _hideOverlay();
+                                          final DateTime? computed = await pickDateTimeWithTabs(context);
+                                          if (computed != null) {
+                                            final iso = computed.toIso8601String();
+                                            setState(() {
+                                              task.reminder = iso;
+                                            });
+                                            widget.onChanged();
+                                          }
+                                        } else {
+                                          setState(() {
+                                            switch (resolvedKey) {
+                                              case 'priority':
+                                                task.priority = label;
+                                                task.priorityUpdatedAt = DateTime.now().millisecondsSinceEpoch;
+                                                break;
+                                              case 'deadline':
+                                                final now = DateTime.now();
+                                                final lower = label.toLowerCase();
+                                                DateTime? computed;
+                                                if (lower.contains('today (1 hour)')) {
+                                                  computed = now.add(const Duration(hours: 1));
+                                                } else if (lower.contains('today (3 hour)')) {
+                                                  computed = now.add(const Duration(hours: 3));
+                                                } else if (lower.contains('today (6 hour)')) {
+                                                  computed = now.add(const Duration(hours: 6));
+                                                } else if (lower.contains('tomorrow (12 pm)')) {
+                                                  final tomorrow = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+                                                  computed = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 12, 0);
+                                                }
+                                                if (computed != null) {
+                                                  task.deadline = computed.toIso8601String();
+                                                }
+                                                break;
+                                              case 'workType':
+                                                task.workType = label;
+                                                break;
+                                              case 'clientName':
+                                                task.clientName = label;
+                                                break;
+                                              case 'folder':
+                                                task.folder = label;
+                                                break;
+                                              default:
+                                                break;
+                                            }
+                                          });
+                                          widget.onChanged();
+                                          _searchController.clear();
+                                          _searchQuery = '';
+                                          _hideOverlay();
+                                        }
                                       }
-
-                                      _searchController.clear();
-                                      _searchQuery = '';
-                                      _hideOverlay();
-                                    } else {
-                                      _hideOverlay();
-                                    }
-                                  },
-                                  child: tile,
-                                );
+                                    },
+                                    child: ListTile(
+                                      leading: tile.leading,
+                                      title: tile.title,
+                                      subtitle: tile.subtitle,
+                                      trailing: isMultiSelect
+                                          ? Icon(
+                                              isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                                              color: isSelected ? Colors.brown : Colors.grey.shade400,
+                                            )
+                                          : tile.trailing,
+                                    ),
+                                  );
+                                }
+                                return tile;
                               }).toList(),
                             ),
                           ),
+                          if (isMultiSelect)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.brown,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                    _hideOverlay();
+                                  },
+                                  child: const Text("Done"),
+                                ),
+                              ),
+                            ),
                         ],
                       );
                     },
@@ -766,6 +856,198 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       ),
     );
   }
+
+  // --- BEGIN NEW SUBSTEPS TABLE ---
+  Widget _buildSubstepsTable() {
+    if (task.steps.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Substeps",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.brown,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                color: Colors.grey.shade100,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: const [
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        "Step",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.brown),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        "Status",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.brown),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        "Action",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.brown),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, thickness: 1),
+              // Body rows
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: task.steps.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final step = task.steps[index];
+                  final isEditing = _editingStepIndex == index;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        // Step Title
+                        Expanded(
+                          flex: 4,
+                          child: isEditing
+                              ? TextField(
+                                  controller: _stepController,
+                                  autofocus: true,
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  style: const TextStyle(fontSize: 14),
+                                  onSubmitted: (val) => _saveEditedStep(index, val),
+                                )
+                              : Text(
+                                  step.title,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    decoration: step.isDone ? TextDecoration.lineThrough : null,
+                                    color: step.isDone ? Colors.grey : Colors.black87,
+                                  ),
+                                ),
+                        ),
+                        // Status
+                        Expanded(
+                          flex: 2,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() => step.isDone = !step.isDone);
+                                widget.onChanged();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: step.isDone ? Colors.green.shade50 : Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: step.isDone ? Colors.green.shade300 : Colors.orange.shade300,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      step.isDone ? Icons.check_circle : Icons.pending_actions,
+                                      size: 14,
+                                      color: step.isDone ? Colors.green.shade700 : Colors.orange.shade700,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      step.isDone ? "Done" : "Pending",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: step.isDone ? Colors.green.shade700 : Colors.orange.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Action
+                        Expanded(
+                          flex: 2,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isEditing) ...[
+                                IconButton(
+                                  icon: const Icon(Icons.check, size: 18, color: Colors.green),
+                                  onPressed: () => _saveEditedStep(index, _stepController.text),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      _editingStepIndex = null;
+                                      _stepController.clear();
+                                    });
+                                  },
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ] else ...[
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                  onPressed: () => _startEditStep(index),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                                  onPressed: () => _confirmDeleteStep(index),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  // --- END NEW SUBSTEPS TABLE ---
 
   Widget _borderedTile({required Widget child}) {
     return Container(
@@ -974,78 +1256,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const SizedBox(height: 10),
 
-                    // ── Steps ────────────────────────────────────────
-                    if (task.steps.isNotEmpty)
-                      ...task.steps
-                          .asMap()
-                          .entries
-                          .map((e) =>
-                          _buildStepTile(e.value, e.key)),
-
-                    if (_isAddingStep)
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: [
-                            const Icon(
-                                Icons.radio_button_unchecked,
-                                size: 22),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _stepController,
-                                autofocus: true,
-                                decoration:
-                                const InputDecoration(
-                                  hintText: "Add step",
-                                  border: InputBorder.none,
-                                ),
-                                onSubmitted: _saveStep,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close,
-                                  size: 18),
-                              onPressed: () {
-                                setState(() {
-                                  _isAddingStep = false;
-                                  _stepController.clear();
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _editingStepIndex = null;
-                            _isAddingStep = true;
-                            _stepController.clear();
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8.0),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.add,
-                                  color: Colors.blue, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                "Add step",
-                                style: TextStyle(
-                                    color: Colors.blue,
-                                    fontSize: 15),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    const SizedBox(height: 8),
-
                     // ── Fields ───────────────────────────────────────
                     Builder(
                       builder: (buttonContext) =>
@@ -1071,8 +1281,26 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                   Icons.notifications_active,
                                   color: Colors.brown),
                               title: const Text("Remind Me"),
-                              trailing:
-                              _infoTrailing(task.reminder),
+                              subtitle: _isSelected(task.reminder)
+                                  ? _infoTrailing(task.reminder)
+                                  : null,
+                              trailing: _isSelected(task.reminder)
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 18, color: Colors.brown),
+                                      onPressed: () {
+                                        setState(() {
+                                          task.reminder = null;
+                                        });
+                                        widget.onChanged();
+                                      },
+                                    )
+                                  : const Text(
+                                      "None",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 13,
+                                      ),
+                                    ),
                               onTap: () => _showOverlay(buttonContext,
                                   FloatingSheetType.remind),
                             ),
@@ -1086,13 +1314,66 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               leading: const Icon(Icons.checklist,
                                   color: Colors.brown),
                               title: const Text("Assign"),
-                              trailing:
-                              _infoTrailing(task.assignee),
+                              subtitle: _isSelected(task.assignee)
+                                  ? _infoTrailing(task.assignee)
+                                  : null,
+                              trailing: _isSelected(task.assignee)
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 18, color: Colors.brown),
+                                      onPressed: () {
+                                        setState(() {
+                                          task.assignee = null;
+                                        });
+                                        widget.onChanged();
+                                      },
+                                    )
+                                  : const Text(
+                                      "None",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 13,
+                                      ),
+                                    ),
                               onTap: () => _showOverlay(buttonContext,
                                   FloatingSheetType.assign),
                             ),
                           ),
                     ),
+                    // --- BEGIN NEW ACCOMPANY FIELD ---
+                    Builder(
+                      builder: (buttonContext) =>
+                          _animatedBorderedTile(
+                            isSelected: _isSelected(task.accompany),
+                            child: ListTile(
+                              leading: const Icon(Icons.people_outline,
+                                  color: Colors.brown),
+                              title: const Text("Accompany"),
+                              subtitle: _isSelected(task.accompany)
+                                  ? _infoTrailing(task.accompany)
+                                  : null,
+                              trailing: _isSelected(task.accompany)
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 18, color: Colors.brown),
+                                      onPressed: () {
+                                        setState(() {
+                                          task.accompany = null;
+                                        });
+                                        widget.onChanged();
+                                      },
+                                    )
+                                  : const Text(
+                                      "None",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                              onTap: () => _showOverlay(buttonContext,
+                                  FloatingSheetType.accompany),
+                            ),
+                          ),
+                    ),
+                    // --- END NEW ACCOMPANY FIELD ---
                     Builder(
                       builder: (buttonContext) =>
                           _animatedBorderedTile(
@@ -1282,6 +1563,73 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
                     const SizedBox(height: 15),
 
+                    // ── Steps ────────────────────────────────────────
+                    _buildSubstepsTable(),
+
+                    if (_isAddingStep)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                                Icons.radio_button_unchecked,
+                                size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _stepController,
+                                autofocus: true,
+                                decoration:
+                                const InputDecoration(
+                                  hintText: "Add step",
+                                  border: InputBorder.none,
+                                ),
+                                onSubmitted: _saveStep,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close,
+                                  size: 18),
+                              onPressed: () {
+                                setState(() {
+                                  _isAddingStep = false;
+                                  _stepController.clear();
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _editingStepIndex = null;
+                            _isAddingStep = true;
+                            _stepController.clear();
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.add,
+                                  color: Colors.blue, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                "Add step",
+                                style: TextStyle(
+                                    color: Colors.blue,
+                                    fontSize: 15),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 15),
+
                     const Text(
                       "Add note",
                       style: TextStyle(
@@ -1309,8 +1657,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       mainAxisAlignment:
                       MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Created: ${task.createdDate}",
+                         Text(
+                          "Created: ${task.createdDate}${task.createdBy != null && task.createdBy!.isNotEmpty ? ' by ${_getDisplayName(task.createdBy)}' : ''}",
                           style: TextStyle(
                             color: Colors.grey.shade700,
                             fontSize: 14,
@@ -1334,5 +1682,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         },
       ),
     );
+  }
+
+  String _getDisplayName(String? email) {
+    if (email == null || email.trim().isEmpty) return '';
+    final String rawName = email.split('@').first;
+    return rawName
+        .replaceAll('.', ' ')
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+        .join(' ');
   }
 }

@@ -504,7 +504,10 @@ class _CustomerRequestsScreenState
             ),
             child: TextField(
               controller: searchController,
-              onChanged: (_) => setState(() {}),
+              onChanged: (value) {
+                debugPrint("SEARCH TYPED IN CustomerRequestsScreen: $value");
+                setState(() {});
+              },
               decoration: InputDecoration(
                 hintText: 'Search by name, party, or job...',
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
@@ -544,16 +547,30 @@ class _CustomerRequestsScreenState
               }
 
               final query = searchController.text.trim().toLowerCase();
+
               final filteredDocs = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-                final name = (data["name"] ?? "").toString().toLowerCase();
-                final partyName = (data["partyName"] ?? "").toString().toLowerCase();
-                final particularJobName =
-                (data["particularJobName"] ?? "").toString().toLowerCase();
+
+                final searchableText = [
+                  data["name"],
+                  data["email"],
+                  data["Email"],
+                  data["partyName"],
+                  data["PartyName"],
+                  data["particularJobName"],
+                  data["ParticularJobName"],
+                  data["requestedDepartments"],
+                  data["departments"],
+                  data["department"],
+                  data["requested"],
+                  data["orderBy"],
+                  data["deliveryAt"],
+                  data["priority"],
+                ].join(" ").toLowerCase();
+
                 if (query.isEmpty) return true;
-                return name.contains(query) ||
-                    partyName.contains(query) ||
-                    particularJobName.contains(query);
+
+                return searchableText.contains(query);
               }).toList();
 
               if (filteredDocs.isEmpty) {
@@ -595,96 +612,101 @@ class _CustomerRequestsScreenState
   }
 
   Widget _buildQuotationsTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection("demo_customer_form")
-          .orderBy("submittedAt", descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final docs = snapshot.data!.docs;
-        if (docs.isEmpty) {
-          return const Center(
-            child: Text("No quotations available",
-                style: TextStyle(fontSize: 16, color: Colors.grey)),
-          );
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          itemCount: docs.length,
-          itemBuilder: (context, index) {
-            final data = docs[index].data() as Map<String, dynamic>;
-            final docId = docs[index].id;
-            final partyName = data["partyName"] ?? "No Party";
-            final jobName = data["jobName"] ?? "No Job";
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: InkWell(
-                  onTap: () => context.push('/customer-quotation-detail/$docId'),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE3F0FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.description_outlined,
-                              color: Color(0xFF4A90D9), size: 24),
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance
+          .collection("quotation_pending")
+          .get(),
+      builder: (context, pendingSnap) {
+        final submittedIds = pendingSnap.data?.docs
+            .map((d) => d.data() as Map<String, dynamic>)
+            .map((d) => d['sourceDocId']?.toString() ?? '')
+            .toSet() ?? {};
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection("demo_customer_form")
+              .orderBy("submittedAt", descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            // Filter out already submitted docs
+            final docs = snapshot.data!.docs
+                .where((d) => !submittedIds.contains(d.id))
+                .toList();
+
+            if (docs.isEmpty) {
+              return const Center(
+                child: Text("No quotations available",
+                    style: TextStyle(fontSize: 16, color: Colors.grey)),
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                final data = docs[index].data() as Map<String, dynamic>;
+                final docId = docs[index].id;
+                final partyName = data["partyName"] ?? "No Party";
+                final jobName = data["jobName"] ?? "No Job";
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                partyName.toString(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                  color: Color(0xFF1A1A2E),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Job: $jobName",
-                                style: const TextStyle(
-                                  color: Color(0xFF555555),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
                       ],
                     ),
+                    child: InkWell(
+                      onTap: () => context.push('/customer-quotation-detail/$docId'),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44, height: 44,
+                              decoration: const BoxDecoration(
+                                  color: Color(0xFFE3F0FF), shape: BoxShape.circle),
+                              child: const Icon(Icons.description_outlined,
+                                  color: Color(0xFF4A90D9), size: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(partyName.toString(),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                          color: Color(0xFF1A1A2E)),
+                                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  const SizedBox(height: 4),
+                                  Text("Job: $jobName",
+                                      style: const TextStyle(
+                                          color: Color(0xFF555555),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500),
+                                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             );
           },
         );

@@ -2,25 +2,30 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/bottom_navigation.dart';
+import '../screens/sidebar_menu.dart';
 
 class Home extends StatelessWidget {
   final Widget child;
   final String location;
   final List<dynamic>? departments;
 
-  const Home({
+  Home({
     super.key,
     required this.child,
     required this.location,
     this.departments,
   });
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
     final int currentIndex = _calculateIndex(location);
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,  // 👈 CHANGE back to false
+      key: _scaffoldKey,
+      resizeToAvoidBottomInset: false,
+      drawer: const SidebarMenu(),
       body: child,
       bottomNavigationBar: BottomNavBar(
         currentIndex: currentIndex,

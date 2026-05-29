@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lightatech/core/session/session_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:lightatech/core/theme/theme_provider.dart';
+import 'package:lightatech/services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -221,6 +222,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            _SectionCard(
+              isDark: isDark,
+              cardColor: cardColor,
+              children: [
+                ListTile(
+                  leading: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF2C2C2C)
+                          : const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active_outlined,
+                      color: Color(0xFFF8D94B),
+                      size: 18,
+                    ),
+                  ),
+                  title: Text(
+                    'Test Notifications',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Trigger a local push alert instantly',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: subTextColor,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right,
+                    color: subTextColor,
+                    size: 18,
+                  ),
+                  onTap: () async {
+                    try {
+                      final service = NotificationService();
+                      await service.showLocalNotification(
+                        "LPM Push Alert",
+                        "Notification triggers successfully on localhost!",
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Test notification triggered! Check your system tray."),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Failed to trigger: $e"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
                 ),
               ],
             ),
