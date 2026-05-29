@@ -785,7 +785,7 @@ class NewFormState extends State<NewForm> {
         await counterRef.set({"lastOrderNo": 0});
       }
 
-      final newOrderNo = (lastOrderNo + 1).toString().padLeft(3, '0');
+      final newOrderNo = (lastOrderNo + 1).toString();
       final fullLpm = "LPM-$newOrderNo";
 
       debugPrint("✅ Alternative LPM Generated: $fullLpm");
