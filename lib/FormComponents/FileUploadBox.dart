@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/firebase_upload_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class FileUploadBox extends StatefulWidget {
   final Function(PlatformFile) onFileSelected;
-  final String jobId;      // ✅ NEW
-  final String fieldName;  // ✅ NEW e.g. "DrawingAttachment"
+  final String jobId;
+  final String fieldName;
 
   const FileUploadBox({
     super.key,
@@ -19,7 +20,7 @@ class FileUploadBox extends StatefulWidget {
 }
 
 class _FileUploadBoxState extends State<FileUploadBox> {
-  bool    _isUploading    = false;
+  bool _isUploading = false;
   String? _uploadedFileName;
 
   Future<void> _pickAndUpload(BuildContext context) async {
@@ -53,7 +54,7 @@ class _FileUploadBoxState extends State<FileUploadBox> {
     if (context.mounted) {
       if (firebaseFileId != null) {
         setState(() {
-          _isUploading     = false;
+          _isUploading = false;
           _uploadedFileName = pickedFile.name;
         });
         widget.onFileSelected(pickedFile);
@@ -63,11 +64,13 @@ class _FileUploadBoxState extends State<FileUploadBox> {
             backgroundColor: Colors.green,
           ),
         );
-      } else {
+      }
+    } catch (e) {
+      if (context.mounted) {
         setState(() => _isUploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Upload failed. Please try again.'),
+          SnackBar(
+            content: Text('❌ Upload failed: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -102,12 +105,8 @@ class _FileUploadBoxState extends State<FileUploadBox> {
               )
             else
               Icon(
-                _uploadedFileName != null
-                    ? Icons.check_circle
-                    : Icons.upload_file,
-                color: _uploadedFileName != null
-                    ? Colors.green
-                    : Colors.grey.shade600,
+                _uploadedFileName != null ? Icons.check_circle : Icons.upload_file,
+                color: _uploadedFileName != null ? Colors.green : Colors.grey.shade600,
                 size: 24,
               ),
             const SizedBox(width: 8),
