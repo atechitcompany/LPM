@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/FormComponents/FileUploadBox.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -219,7 +220,7 @@ class _CustomerQuotationFormScreenState
           .doc(widget.docId)
           .get();
       final d = doc.data() ?? {};
-      final dd = <String, dynamic>{}; // demo_customer_form is flat, no nesting
+      final dd = <String, dynamic>{};
 
       setState(() {
         _partyName.text = d['partyName']?.toString() ?? dd['PartyName'] ?? '';
@@ -483,6 +484,31 @@ class _CustomerQuotationFormScreenState
       _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _sectionLabel('Female Emboss'),
         _tf(_femaleEmbossType, 'e.g. No'),
+      ])),
+      // ── File Attachments ──────────────────────────────────────────────────
+      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionLabel('Drawing Attachment'),
+        FileUploadBox(
+          jobId: widget.docId,
+          fieldName: 'DrawingAttachment',
+          onFileSelected: (file) => debugPrint('Drawing: ${file.name}'),
+        ),
+      ])),
+      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionLabel('Rubber Report'),
+        FileUploadBox(
+          jobId: widget.docId,
+          fieldName: 'RubberReport',
+          onFileSelected: (file) => debugPrint('Rubber: ${file.name}'),
+        ),
+      ])),
+      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionLabel('Punch Report'),
+        FileUploadBox(
+          jobId: widget.docId,
+          fieldName: 'PunchReport',
+          onFileSelected: (file) => debugPrint('Punch: ${file.name}'),
+        ),
       ])),
     ],
   );
