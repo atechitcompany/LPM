@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import '../services/firebase_upload_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class FileUploadBox extends StatefulWidget {
@@ -43,12 +44,15 @@ class _FileUploadBoxState extends State<FileUploadBox> {
 
     setState(() => _isUploading = true);
 
-    try {
-      final path = 'uploads/${widget.jobId}/${widget.fieldName}/${pickedFile.name}';
-      final ref = FirebaseStorage.instance.ref(path);
-      await ref.putData(pickedFile.bytes!);
+    final firebaseFileId = await FirebaseUploadService.uploadFile(
+      fileBytes: pickedFile.bytes!,
+      fileName:  pickedFile.name,
+      jobId:     widget.jobId,      // ✅ pass job ID
+      fieldName: widget.fieldName,  // ✅ pass field name
+    );
 
-      if (context.mounted) {
+    if (context.mounted) {
+      if (firebaseFileId != null) {
         setState(() {
           _isUploading = false;
           _uploadedFileName = pickedFile.name;
