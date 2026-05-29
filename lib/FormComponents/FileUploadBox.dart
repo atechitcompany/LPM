@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/drive_upload_service.dart';
+import '../services/firebase_upload_service.dart';
 
 class FileUploadBox extends StatefulWidget {
   final Function(PlatformFile) onFileSelected;
@@ -43,7 +43,7 @@ class _FileUploadBoxState extends State<FileUploadBox> {
 
     setState(() => _isUploading = true);
 
-    final driveFileId = await DriveUploadService.uploadFile(
+    final firebaseFileId = await FirebaseUploadService.uploadFile(
       fileBytes: pickedFile.bytes!,
       fileName:  pickedFile.name,
       jobId:     widget.jobId,      // ✅ pass job ID
@@ -51,7 +51,7 @@ class _FileUploadBoxState extends State<FileUploadBox> {
     );
 
     if (context.mounted) {
-      if (driveFileId != null) {
+      if (firebaseFileId != null) {
         setState(() {
           _isUploading     = false;
           _uploadedFileName = pickedFile.name;
