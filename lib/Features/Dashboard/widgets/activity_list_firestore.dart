@@ -23,6 +23,47 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
     if (!_isValidDepartment(widget.department)) {
       return const Center(child: Text("Invalid department"));
     }
+    if (widget.department == "Account") {
+      return DefaultTabController(
+        length: 3,
+        child: Column(
+          children: [
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                labelColor: Colors.black,
+                unselectedLabelColor: Colors.grey.shade500,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorWeight: 2,
+                indicatorColor: const Color(0xFFF8D94B),
+                dividerColor: Colors.black,
+                dividerHeight: 0.8,
+                tabs: const [
+                  Tab(text: "Jobs"),
+                  Tab(text: "Quotations"),
+                  Tab(text: "Quotation Pending"),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _KeepAliveTab(child: _FirestoreTab(
+                    department: widget.department,
+                    searchText: widget.searchText,
+                    isPending: false,
+                  )),
+                  _KeepAliveTab(child: _EmptyQuotations()),
+                  _KeepAliveTab(child: _QuotationPendingTab(searchText: widget.searchText)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (widget.department == "Designer") {
       return DefaultTabController(
@@ -79,9 +120,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                   ),
                   // ── Quotations tab ──────────────────────────────────
                   // ── Quotations tab ──────────────────────────────────
-                  _KeepAliveTab(
-                    child: _QuotationsTab(searchText: widget.searchText),
-                  ),
+                  _KeepAliveTab(child: _EmptyQuotations()),
                   _KeepAliveTab(
                     child: _QuotationPendingTab(searchText: widget.searchText),
                   ),
@@ -508,8 +547,7 @@ class _QuotationPendingTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection("quotations")
-          .where("status", isEqualTo: "pending")
+          .collection("quotation_pending")
           .orderBy("createdAt", descending: true)
           .snapshots(),
       builder: (context, snapshot) {
@@ -561,7 +599,7 @@ class _QuotationPendingTab extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               child: ListTile(
-                onTap: () => context.push('/quotation-detail/${doc.id}'),
+                onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
                 title: Text(
                   doc.id,
                   style: const TextStyle(

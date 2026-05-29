@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/FormComponents/FileUploadBox.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -219,7 +220,7 @@ class _CustomerQuotationFormScreenState
           .doc(widget.docId)
           .get();
       final d = doc.data() ?? {};
-      final dd = <String, dynamic>{}; // demo_customer_form is flat, no nesting
+      final dd = <String, dynamic>{};
 
       setState(() {
         _partyName.text = d['partyName']?.toString() ?? dd['PartyName'] ?? '';
@@ -322,15 +323,32 @@ class _CustomerQuotationFormScreenState
         'RubberOrWithout': _rubberOrWithout ?? '',
       };
 
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final year = (now.year % 100).toString().padLeft(2, '0');
+      final counterRef = FirebaseFirestore.instance
+          .collection("counters")
+          .doc("QUOTE_${now.year}_$month");
+
+      String quoteNumber = "";
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snap = await transaction.get(counterRef);
+        int lastNo = snap.exists ? (snap.data()?["lastNo"] ?? 0) : 0;
+        final newNo = lastNo + 1;
+        transaction.set(counterRef, {"lastNo": newNo}, SetOptions(merge: true));
+        quoteNumber = "QUOTE-${newNo.toString().padLeft(5, '0')}-$month-$year-01";
+      });
+
       await FirebaseFirestore.instance
           .collection('quotation_pending')
-          .doc(widget.docId)
+          .doc(quoteNumber)
           .set({
         ...designerData,
         'sourceDocId': widget.docId,
+        'quoteNumber': quoteNumber,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -466,6 +484,31 @@ class _CustomerQuotationFormScreenState
       _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _sectionLabel('Female Emboss'),
         _tf(_femaleEmbossType, 'e.g. No'),
+      ])),
+      // ── File Attachments ──────────────────────────────────────────────────
+      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionLabel('Drawing Attachment'),
+        FileUploadBox(
+          jobId: widget.docId,
+          fieldName: 'DrawingAttachment',
+          onFileSelected: (file) => debugPrint('Drawing: ${file.name}'),
+        ),
+      ])),
+      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionLabel('Rubber Report'),
+        FileUploadBox(
+          jobId: widget.docId,
+          fieldName: 'RubberReport',
+          onFileSelected: (file) => debugPrint('Rubber: ${file.name}'),
+        ),
+      ])),
+      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionLabel('Punch Report'),
+        FileUploadBox(
+          jobId: widget.docId,
+          fieldName: 'PunchReport',
+          onFileSelected: (file) => debugPrint('Punch: ${file.name}'),
+        ),
       ])),
     ],
   );
