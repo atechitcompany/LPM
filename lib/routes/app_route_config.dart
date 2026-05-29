@@ -34,6 +34,7 @@ import 'package:lightatech/Features/Dashboard/screens/pending_form_edit_screen.d
 
 // Order
 import '../Features/Dashboard/screens/customer_quotation_detail_screen.dart';
+import '../Features/Payment/screens/edit_payment_page.dart';
 import '../customer/intro/viewmodel/order_detail_view.dart';
 
 // Job Forms
@@ -285,6 +286,7 @@ class AppRoutes {
             builder: (context, state) => const EditMaterialPage(),
           ),
 
+
           GoRoute(
             path: '/job-summary/:lpm',
             builder: (context, state) =>
@@ -315,6 +317,17 @@ class AppRoutes {
             path: '/payment',
             name: AppRoutesName.PaymentScreen,
             builder: (context, state) => const PaymentPage(),
+          ),
+
+          GoRoute(
+            path: '/edit-payment',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>;
+              return EditPaymentPage(
+                docId: extra['docId'] as String,
+                data: extra['data'] as Map<String, dynamic>,
+              );
+            },
           ),
 
           GoRoute(
