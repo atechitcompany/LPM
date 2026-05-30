@@ -665,7 +665,7 @@ class _CustomerRequestsScreenState
                       ],
                     ),
                     child: InkWell(
-                      onTap: () => context.push('/customer-quotation-detail/$docId'),
+                      onTap: () => context.push('/customer-quotation-edit/$docId'),
                       borderRadius: BorderRadius.circular(16),
                       child: Padding(
                         padding: const EdgeInsets.all(14),
