@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/department_field_access.dart';
 import 'dart:convert';
-
+import 'package:http/http.dart' as http;
+import 'package:lightatech/services/department_email_template.dart';
 import 'new_form_scope.dart';
 
 enum Department {
@@ -1486,6 +1487,124 @@ class NewFormState extends State<NewForm> {
 
       transaction.update(docRef, updateMap);
     });
+
+    // --- BEGIN AUTOMATED DEPARTMENT EMAIL NOTIFICATION ---
+    try {
+      if (isDone) {
+        final partyName = PartyName.text.trim();
+        if (partyName.isNotEmpty) {
+          final clientSnap = await FirebaseFirestore.instance
+              .collection('customers')
+              .where('Party Names', isEqualTo: partyName)
+              .limit(1)
+              .get();
+
+          if (clientSnap.docs.isNotEmpty) {
+            final clientEmail = (clientSnap.docs.first.data()['Email'] ?? '').toString().trim();
+            if (clientEmail.isNotEmpty) {
+              // 1. Fetch the latest Job Document to calculate Live Status and Attachments
+              DocumentSnapshot? jobDoc;
+              try {
+                jobDoc = await docRef.get();
+              } catch (_) {}
+              
+              final jobData = jobDoc?.data() as Map<String, dynamic>? ?? {};
+              
+              bool checkStatus(String dept, String statusKey) {
+                final status = (jobData[dept]?['data']?[statusKey] ?? "").toString().toLowerCase();
+                return status == "done";
+              }
+              
+              final stepStatus = <String, bool>{
+                "Designing": checkStatus("designer", "DesigningStatus"),
+                "Laser Cutting": checkStatus("laserCutting", "LaserCuttingStatus"),
+                "Auto Bending": checkStatus("autoBending", "AutoBendingStatus"),
+                "Manual Bending": checkStatus("manualBending", "ManualBendingStatus"),
+                "Rubber": checkStatus("rubber", "RubberStatus"),
+                "Emboss": checkStatus("emboss", "EmbossStatus"),
+                "Delivered": checkStatus("delivery", "DeliveryStatus"),
+              };
+              
+              String doneBy = "";
+              String timestamp = DateTime.now().toString().split('.').first;
+              String? fileUrl;
+              String fileLabel = "ATTACHED FILE";
+
+              switch (currentDept) {
+                case "AutoBending":
+                  doneBy = AutoBendingCreatedByName.text.isNotEmpty ? AutoBendingCreatedByName.text : AutoBendingCreatedBy.text;
+                  timestamp = AutoBendingCreatedByTimestamp.text.isNotEmpty ? AutoBendingCreatedByTimestamp.text : timestamp;
+                  break;
+                case "ManualBending":
+                  doneBy = ManualBendingCreatedByName.text.isNotEmpty ? ManualBendingCreatedByName.text : ManualBendingCreatedBy.text;
+                  timestamp = ManualBendingCreatedByTimestamp.text.isNotEmpty ? ManualBendingCreatedByTimestamp.text : timestamp;
+                  break;
+                case "LaserCutting":
+                  doneBy = LaserCuttingCreatedByName.text.isNotEmpty ? LaserCuttingCreatedByName.text : LaserCuttingCreatedBy.text;
+                  timestamp = LaserCuttingCreatedByTimestamp.text.isNotEmpty ? LaserCuttingCreatedByTimestamp.text : timestamp;
+                  break;
+                case "Rubber":
+                  doneBy = RubberCreatedBy.text;
+                  break;
+                case "Emboss":
+                  doneBy = EmbossCreatedBy.text;
+                  break;
+                case "Account":
+                  doneBy = AccountsCreatedBy.text;
+                  break;
+                case "Delivery":
+                  doneBy = DeliveryCreatedBy.text;
+                  // Try to get delivery drawing attachment
+                  try {
+                    fileUrl = jobData['files']?['DrawingAttachment']?['viewUrl']?.toString();
+                    fileLabel = "DELIVERY ATTACHMENT";
+                  } catch (_) {}
+                  break;
+              }
+
+              // Generate HTML email using the generic template
+              final htmlBody = generateDepartmentEmailHtml(
+                departmentName: currentDept,
+                partyName: partyName,
+                productName: ParticularJobName.text,
+                lpmNumber: lpm,
+                actionDoneByLabel: "Done By",
+                actionDoneBy: doneBy,
+                actionTimestampLabel: "Done At",
+                actionTimestamp: timestamp,
+                stepStatus: stepStatus,
+                fileUrl: fileUrl,
+                fileLabel: fileLabel,
+              );
+
+              // Call the sendDispatchEmail Cloud Function via HTTP POST
+              final response = await http.post(
+                Uri.parse('https://senddispatchemail-3vvqs62r6q-uc.a.run.app'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                  'to': clientEmail,
+                  'subject': 'Your $currentDept is Ready! — $lpm',
+                  'htmlBody': htmlBody,
+                }),
+              );
+
+              if (response.statusCode == 200) {
+                debugPrint('✅ sendDispatchEmail called successfully for $currentDept ($clientEmail)');
+              } else {
+                debugPrint('⚠️ sendDispatchEmail failed with status ${response.statusCode}: ${response.body}');
+              }
+            } else {
+              debugPrint('⚠️ Client email is empty for party: $partyName');
+            }
+          } else {
+            debugPrint('⚠️ No customer found matching party name: $partyName');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Email notification failed (non-blocking): $e');
+    }
+    // --- END AUTOMATED DEPARTMENT EMAIL NOTIFICATION ---
 
     debugPrint("✅ $currentDept finished. isDone: $isDone");
   }
