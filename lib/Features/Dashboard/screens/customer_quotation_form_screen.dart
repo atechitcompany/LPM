@@ -6,7 +6,6 @@ import 'package:lightatech/FormComponents/AddableSearchDropdown.dart';
 import 'package:lightatech/FormComponents/TextInput.dart';
 import 'package:lightatech/FormComponents/FlexibleToggle.dart';
 import 'package:lightatech/FormComponents/PrioritySelector.dart';
-import 'package:lightatech/FormComponents/FileUploadBox.dart';
 
 // ── Helpers (reuse from designer_widgets) ─────────────────────────────────────
 
@@ -204,12 +203,6 @@ class _CustomerQuotationFormScreenState extends State<CustomerQuotationFormScree
       final items = snap.docs.map((d) => (d.data()['Males Embosse '] ?? d.data()['Males Embosse'] ?? '').toString().trim()).where((v) => v.isNotEmpty && v != "No").toList();
       if (mounted) setState(() => _maleEmbossItems = ["No", ...items]);
     } catch (e) { debugPrint("❌ Males Embosse: $e"); }
-      final doc = await FirebaseFirestore.instance
-          .collection('demo_customer_form')
-          .doc(widget.docId)
-          .get();
-      final d = doc.data() ?? {};
-      final dd = <String, dynamic>{};
 
     try {
       final snap = await FirebaseFirestore.instance.collection("Females Emobosse").get();
@@ -372,259 +365,14 @@ class _CustomerQuotationFormScreenState extends State<CustomerQuotationFormScree
 
   // ── Pages ─────────────────────────────────────────────────────────────────
 
-  Widget _page1() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Party Name *'),
-        _tf(_partyName, 'Party name'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Job Name'),
-        _tf(_jobName, 'Enter job name'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Priority'),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _priorityOptions.map((p) {
-            final selected = _priority == p;
-            return GestureDetector(
-              onTap: () => setState(() => _priority = selected ? null : p),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: selected ? const Color(0xFFF8D94B) : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: selected ? const Color(0xFFF8D94B) : Colors.grey.shade300),
-                ),
-                child: Text(p,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
-              ),
-            );
-          }).toList(),
-        ),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Remark'),
-        _tf(_remark, 'Add a remark', maxLines: 2),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Delivery At'),
-        _tf(_deliveryAt, 'Address'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Order By'),
-        _tf(_orderBy, 'Name'),
-      ])),
-    ],
-  );
-
-  Widget _page2() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Ply Type'),
-        _tf(_plyType, 'e.g. No, Single, Double'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Blade'),
-        _tf(_blade, 'e.g. No, Type A'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Creasing'),
-        _tf(_creasing, 'e.g. No'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Perforation'),
-        _tf(_perforation, 'Perforation details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Zig Zag Blade'),
-        _tf(_zigZagBlade, 'e.g. No'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Rubber Type'),
-        _tf(_rubberType, 'e.g. No'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Hole Type'),
-        _tf(_holeType, 'e.g. No'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Stripping Type'),
-        _tf(_strippingType, 'e.g. No'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Capsule Type'),
-        _tf(_capsuleType, 'e.g. No'),
-      ])),
-    ],
-  );
-
-  Widget _page3() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Emboss'),
-        _buildToggle(
-          value: _embossStatus.text.toLowerCase() == 'yes',
-          onChanged: (v) => setState(() => _embossStatus.text = v ? 'Yes' : 'No'),
-          inactiveText: 'No',
-          activeText: 'Yes',
-        ),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Emboss Pcs'),
-        _tf(_embossPcs, 'No of Pcs'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Male Emboss'),
-        _tf(_maleEmbossType, 'e.g. No'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Female Emboss'),
-        _tf(_femaleEmbossType, 'e.g. No'),
-      ])),
-      // ── File Attachments ──────────────────────────────────────────────────
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Drawing Attachment'),
-        FileUploadBox(
-          jobId: widget.docId,
-          fieldName: 'DrawingAttachment',
-          onFileSelected: (file) => debugPrint('Drawing: ${file.name}'),
-        ),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Rubber Report'),
-        FileUploadBox(
-          jobId: widget.docId,
-          fieldName: 'RubberReport',
-          onFileSelected: (file) => debugPrint('Rubber: ${file.name}'),
-        ),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Punch Report'),
-        FileUploadBox(
-          jobId: widget.docId,
-          fieldName: 'PunchReport',
-          onFileSelected: (file) => debugPrint('Punch: ${file.name}'),
-        ),
-      ])),
-    ],
-  );
-
-  Widget _page4() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Machine Name'),
-        _tf(_machineName, 'Machine name'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Ply Wood Size & Griper'),
-        _tf(_plywoodSizeGriper, 'e.g. 30x40, Griper 5mm'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Rubber Or Without Rubber'),
-        DropdownButtonFormField<String>(
-          value: _rubberOrWithout,
-          hint: Text('Select option',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
-          decoration: _inputDeco(''),
-          items: _rubberOptions
-              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-              .toList(),
-          onChanged: (v) => setState(() => _rubberOrWithout = v),
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
-        ),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Cutting Rule'),
-        _tf(_cuttingRule, 'Cutting rule details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Creasing Rule'),
-        _tf(_creasingRule, 'Creasing rule details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Material To Punch'),
-        _tf(_materialToPunch, 'Material description'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Flute'),
-        _tf(_flute, 'Flute type'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Board Compressed Thickness'),
-        _tf(_boardCompressedThickness, 'e.g. 4mm'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Center Notch'),
-        _tf(_centerNotch, 'Center notch details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Ply Wood Thickness'),
-        _tf(_plywoodThickness, 'e.g. 18mm'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Partinex'),
-        _tf(_partinex, 'Partinex details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Nicking'),
-        _tf(_nicking, 'Nicking details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Broaching'),
-        _tf(_broaching, 'Broaching details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Blade Welding'),
-        _tf(_bladeWelding, 'Blade welding details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Stripping Male & Female'),
-        _tf(_strippingMaleFemale, 'Stripping details'),
-      ])),
-      _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionLabel('Sanwitch Die'),
-        _tf(_sanwitchDie, 'Sanwitch die details'),
-      ])),
-    ],
-  );
-
-  Widget _buildToggle({
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required String inactiveText,
-    required String activeText,
-  }) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-          color: const Color(0xFFF7F8FA),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(value ? activeText : inactiveText,
-                style: const TextStyle(fontSize: 14, color: Colors.black87)),
-            Switch(
-              value: value,
-              onChanged: onChanged,
-              activeColor: const Color(0xFFF8D94B),
-            ),
-          ],
-        ),
+  Widget _page1() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _sectionLabel('Party Name *'),
+      SearchableDropdownWithInitial(
+        label: "",
+        items: _customerNames,
+        initialValue: _partyName.text.isEmpty ? null : _partyName.text,
+        onChanged: (v) => setState(() => _partyName.text = (v ?? '').trim()),
       ),
     ])),
     _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
