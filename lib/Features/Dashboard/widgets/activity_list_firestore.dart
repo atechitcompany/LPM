@@ -393,7 +393,7 @@ class _QuotationPendingTab extends StatelessWidget {
 
         final filtered = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          if (data['quoteDesignDone'] == true) return false;
+          if (data['quoteDesignDone'] != true) return false;
           if (query.isEmpty) return true;
           return doc.id.toLowerCase().contains(query) ||
               (data["PartyName"] ?? data["partyName"] ?? "").toString().toLowerCase().contains(query);
