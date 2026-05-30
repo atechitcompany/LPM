@@ -1,9 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:lightatech/routes/app_route_constants.dart';
 import 'package:lightatech/Features/Dashboard/screens/sidebar_menu.dart';
 import 'package:lightatech/Features/Dashboard/widgets/dashboard_appbar.dart';
+// --- BEGIN ADMIN DASHBOARD OVERVIEW SECTIONS ---
+import 'package:lightatech/Features/adminAccess/widgets/admin_dashboard_overview.dart';
+// --- END ADMIN DASHBOARD OVERVIEW SECTIONS ---
 
 class Admin extends StatefulWidget {
   const Admin({super.key});
@@ -44,16 +44,9 @@ class _AdminState extends State<Admin> {
         },
       ),
 
-      body: const Center(
-        child: Text(
-          "Admin Dashboard",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey,
-          ),
-        ),
-      ),
+// --- BEGIN ADMIN DASHBOARD OVERVIEW SECTIONS ---
+      body: AdminDashboardOverview(searchText: searchController.text),
+// --- END ADMIN DASHBOARD OVERVIEW SECTIONS ---
     );
   }
 // --- END ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECTION ---
