@@ -315,7 +315,7 @@ class _QuotationsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection("quotation_pending")
+          .collection("quotations")
           .orderBy("createdAt", descending: true)
           .snapshots(),
       builder: (context, snapshot) {
