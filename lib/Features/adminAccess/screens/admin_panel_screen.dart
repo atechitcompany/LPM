@@ -141,6 +141,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             color: Colors.orange,
             type: "Material",
           ),
+// --- BEGIN ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECIION ---
+          const SizedBox(height: 16),
+          _buildCard(
+            context,
+            title: "Departmental Access",
+            icon: Icons.admin_panel_settings,
+            color: Colors.purple,
+            type: "DepartmentalAccess",
+          ),
+// --- END ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECTION ---
         ],
       ),
     );
@@ -279,6 +289,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       }) {
     return GestureDetector(
       onTap: () {
+// --- BEGIN ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECIION ---
+        if (type == "DepartmentalAccess") {
+          context.push('/departmental-access');
+          return;
+        }
+// --- END ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECTION ---
+
         if (type == "Staff" || type == "Customer") {
           context.push('/admin-users?type=$type');
           return;
