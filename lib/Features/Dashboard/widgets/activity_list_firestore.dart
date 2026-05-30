@@ -146,6 +146,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       "AutoBending",
       "ManualBending",
       "LaserCutting",
+      "Lasercut",
       "Emboss",
       "Rubber",
       "Account",
@@ -233,9 +234,10 @@ class _FirestoreTabState extends State<_FirestoreTab> {
 
     setState(() => _isLoadingMore = true);
 
+    String queryDept = widget.department == "Lasercut" ? "LaserCutting" : widget.department;
     Query query = FirebaseFirestore.instance
         .collection("jobs")
-        .where("visibleTo", arrayContains: widget.department)
+        .where("visibleTo", arrayContains: queryDept)
         .orderBy("updatedAt", descending: true)
         .startAfterDocument(_lastDoc!)
         .limit(20);
@@ -319,6 +321,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
     _lastDoc = null;
     _hasMore = true;
 
+    String queryDept = widget.department == "Lasercut" ? "LaserCutting" : widget.department;
     if (widget.department == "Designer" && widget.isPending) {
       _stream = FirebaseFirestore.instance
           .collection("jobs")
@@ -337,7 +340,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
       // All other departments
       _stream = FirebaseFirestore.instance
           .collection("jobs")
-          .where("visibleTo", arrayContains: widget.department)
+          .where("visibleTo", arrayContains: queryDept)
           .orderBy("updatedAt", descending: true)
           .limit(20).snapshots();
       }
