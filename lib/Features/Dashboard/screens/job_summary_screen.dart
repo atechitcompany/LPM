@@ -19,6 +19,7 @@ class JobSummaryScreen extends StatefulWidget {
     "AutoBending": "/jobform/autobending",
     "ManualBending": "/jobform/manualbending",
     "LaserCutting": "/jobform/laser",
+    "Lasercut": "/jobform/laser",
     "Rubber": "/jobform/rubber",
     "Emboss": "/jobform/emboss",
   };
@@ -28,6 +29,7 @@ class JobSummaryScreen extends StatefulWidget {
     "AutoBending": "autoBending",
     "ManualBending": "manualBending",
     "LaserCutting": "laserCutting",
+    "Lasercut": "laserCutting",
     "Rubber": "rubber",
     "Emboss": "emboss",
   };
