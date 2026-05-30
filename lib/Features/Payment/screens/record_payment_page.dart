@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 import 'package:lightatech/FormComponents/SearchableDropdownWithInitial.dart';
 import '../models/payment_material_model.dart';
 import '../services/payment_material_service.dart';
@@ -16,7 +15,6 @@ class RecordPaymentPage extends StatefulWidget {
 class _RecordPaymentPageState extends State<RecordPaymentPage> {
   String selectedClient = "No";
   String selectedJob = "No";
-  String selectedJobDocId = "";
   String selectedLpmNumber = "";
   List<String> filteredJobs = [];
   bool isLoadingJobs = false;
@@ -24,8 +22,6 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
   final PaymentMaterialService _paymentMaterialService = PaymentMaterialService();
   List<PaymentMaterialModel> billMaterials = [];
   bool isLoadingBill = false;
-
-  final GlobalKey<PaymentBillTableState> _billTableKey = GlobalKey<PaymentBillTableState>();
 
   Future<void> fetchBillMaterials() async {
     if (selectedJob == "No") {
@@ -35,10 +31,7 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
     setState(() { isLoadingBill = true; });
     try {
       final materials = await _paymentMaterialService.fetchMaterialsForJob(selectedJob);
-      setState(() {
-        billMaterials = materials;
-        isLoadingBill = false;
-      });
+      setState(() { billMaterials = materials; isLoadingBill = false; });
     } catch (e) {
       debugPrint("❌ Error loading bill: $e");
       setState(() { isLoadingBill = false; });
@@ -47,12 +40,7 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
 
   Future<void> fetchJobsForClient(String clientName) async {
     if (clientName == "No" || clientName.trim().isEmpty) {
-      setState(() {
-        filteredJobs = [];
-        selectedJob = "No";
-        selectedJobDocId = "";
-        selectedLpmNumber = "";
-      });
+      setState(() { filteredJobs = []; selectedJob = "No"; selectedLpmNumber = ""; });
       return;
     }
     setState(() { isLoadingJobs = true; });
@@ -62,21 +50,23 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
           .where("designer.data.PartyName", isEqualTo: clientName)
           .get();
 
+      // Fetch already recorded payment doc IDs
+      final paymentsSnapshot = await FirebaseFirestore.instance.collection("payments").get();
+      final recordedLpms = paymentsSnapshot.docs.map((d) => d.id).toSet();
+
       final List<String> jobs = [];
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final designerData = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
         final jobName = (designerData["particularJobName"] ?? "").toString().trim();
-        if (jobName.isNotEmpty) jobs.add(jobName);
+        final lpm = (designerData["LPMNumber"] ?? designerData["lpmNumber"] ?? designerData["lpm"] ?? "").toString().trim();
+        // Only include jobs whose LPM is not already in payments
+        if (jobName.isNotEmpty && !recordedLpms.contains(lpm.isNotEmpty ? lpm : doc.id)) {
+          jobs.add(jobName);
+        }
       }
       jobs.sort();
-      setState(() {
-        filteredJobs = jobs;
-        selectedJob = "No";
-        selectedJobDocId = "";
-        selectedLpmNumber = "";
-        isLoadingJobs = false;
-      });
+      setState(() { filteredJobs = jobs; selectedJob = "No"; selectedLpmNumber = ""; isLoadingJobs = false; });
     } catch (e) {
       debugPrint("❌ Error fetching jobs: $e");
       setState(() { isLoadingJobs = false; });
@@ -91,16 +81,11 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
           .where("designer.data.PartyName", isEqualTo: selectedClient)
           .limit(1)
           .get();
-
       if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
-        final data = doc.data();
+        final data = snapshot.docs.first.data();
         final designerData = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
         final lpm = (designerData["LPMNumber"] ?? designerData["lpmNumber"] ?? designerData["lpm"] ?? "").toString().trim();
-        setState(() {
-          selectedJobDocId = doc.id;
-          selectedLpmNumber = lpm.isNotEmpty ? lpm : doc.id;
-        });
+        setState(() { selectedLpmNumber = lpm.isNotEmpty ? lpm : snapshot.docs.first.id; });
       }
     } catch (e) {
       debugPrint("❌ Error fetching LPM: $e");
@@ -146,7 +131,6 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
               const Center(child: CircularProgressIndicator())
             else if (billMaterials.isNotEmpty)
               PaymentBillTable(
-                key: _billTableKey,
                 materials: billMaterials,
                 selectedClient: selectedClient,
                 selectedJob: selectedJob,
