@@ -268,7 +268,11 @@ class _DesignerPage4State extends State<DesignerPage4> {
     });
 
     final data = form.buildFormData();
-    await FirebaseFirestore.instance.collection("quotations").doc(quoteNumber).set({
+
+    await FirebaseFirestore.instance
+        .collection("quotation_pending")
+        .doc(quoteNumber)
+        .set({
       "quoteNumber": quoteNumber,
       "partyName": form.PartyName.text,
       "createdAt": FieldValue.serverTimestamp(),
@@ -344,7 +348,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                         setState(() {});
                       },
                     ),
-                  ],
+                   ],
                 ),
               ),
 
