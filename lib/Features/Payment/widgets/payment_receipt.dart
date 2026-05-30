@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -18,8 +19,6 @@ class PaymentReceiptWidget extends StatefulWidget {
 
 class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
   bool _isGenerating = false;
-  bool _isSaving = false;
-  Uint8List? _pdfBytes;
 
   double get _grandTotal => (widget.data["grandTotal"] ?? 0.0).toDouble();
   double get _subTotal => (widget.data["subTotal"] ?? 0.0).toDouble();
@@ -81,22 +80,13 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
       );
     }
 
-    pw.Widget borderRow(
-        List<pw.Widget> children, {
-          bool topBorder = false,
-          bool bottomBorder = true,
-          PdfColor? bg,
-        }) {
+    pw.Widget borderRow(List<pw.Widget> children, {bool topBorder = false, bool bottomBorder = true, PdfColor? bg}) {
       return pw.Container(
         decoration: pw.BoxDecoration(
-          color: bg, // move color inside BoxDecoration
+          color: bg,
           border: pw.Border(
-            top: topBorder
-                ? pw.BorderSide(color: borderColor)
-                : pw.BorderSide.none,
-            bottom: bottomBorder
-                ? pw.BorderSide(color: borderColor)
-                : pw.BorderSide.none,
+            top: topBorder ? pw.BorderSide(color: borderColor) : pw.BorderSide.none,
+            bottom: bottomBorder ? pw.BorderSide(color: borderColor) : pw.BorderSide.none,
             left: pw.BorderSide(color: borderColor),
             right: pw.BorderSide(color: borderColor),
           ),
@@ -118,12 +108,8 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(20),
       build: (ctx) => [
-        // Title
-        pw.Center(child: pw.Text('TAX INVOICE',
-            style: pw.TextStyle(font: boldFont, fontSize: 14))),
+        pw.Center(child: pw.Text('TAX INVOICE', style: pw.TextStyle(font: boldFont, fontSize: 14))),
         pw.SizedBox(height: 6),
-
-        // Company header
         pw.Container(
           decoration: pw.BoxDecoration(border: pw.Border.all(color: borderColor)),
           child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
@@ -178,8 +164,6 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
             ),
           ]),
         ),
-
-        // Buyer info
         pw.Container(
           decoration: pw.BoxDecoration(
             border: pw.Border(bottom: pw.BorderSide(color: borderColor), left: pw.BorderSide(color: borderColor), right: pw.BorderSide(color: borderColor)),
@@ -192,10 +176,7 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
             pw.Text('Job: $_job', style: pw.TextStyle(font: font, fontSize: 8)),
           ]),
         ),
-
         pw.SizedBox(height: 8),
-
-        // Materials table header
         borderRow([
           cell('Sr', bold: true, flex: 1),
           cell('Description of Goods', bold: true, flex: 5),
@@ -203,8 +184,6 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
           cell('Rate', bold: true, flex: 2),
           cell('Amount', bold: true, flex: 2, align: pw.Alignment.centerRight),
         ], topBorder: true, bg: headerGrey),
-
-        // Material rows
         ..._materials.asMap().entries.map((e) {
           final m = e.value as Map<String, dynamic>;
           return borderRow([
@@ -215,15 +194,11 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
             cell('₹ ${(m["amount"] ?? 0).toStringAsFixed(2)}', flex: 2, align: pw.Alignment.centerRight),
           ], topBorder: false);
         }),
-
-        // Sub total
         borderRow([
           cell('', flex: 6),
           cell('Sub Total', bold: true, flex: 3),
           cell('₹ ${_subTotal.toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
         ], topBorder: false),
-
-        // GST rows
         if (_gstType == "GST") ...[
           borderRow([
             cell('', flex: 6),
@@ -241,14 +216,11 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
             cell('IGST (18%)', flex: 3),
             cell('₹ ${_gstAmount.toStringAsFixed(2)}', flex: 2, align: pw.Alignment.centerRight),
           ]),
-
-        // Grand Total
         borderRow([
           cell('', flex: 6),
           cell('TOTAL', bold: true, flex: 3),
           cell('₹ ${_grandTotal.toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
         ], bg: headerGrey),
-
         pw.SizedBox(height: 4),
         pw.Container(
           decoration: pw.BoxDecoration(border: pw.Border.all(color: borderColor)),
@@ -256,8 +228,6 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
           child: pw.Text('Amount Chargeable (In Words): ${_amountInWords(_grandTotal)}',
               style: pw.TextStyle(font: boldFont, fontSize: 8)),
         ),
-
-        // GST Summary table
         if (_gstType != "No GST") ...[
           pw.SizedBox(height: 8),
           borderRow([
@@ -282,10 +252,7 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
             cell('₹ ${_gstAmount.toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
           ], bg: headerGrey),
         ],
-
         pw.SizedBox(height: 8),
-
-        // Payment installments table
         pw.Text('Payment Schedule', style: pw.TextStyle(font: boldFont, fontSize: 9)),
         pw.SizedBox(height: 4),
         borderRow([
@@ -317,10 +284,7 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
           cell('UNPAID', bold: true, flex: 3),
           cell('₹ ${totalUnpaid.toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
         ]),
-
         pw.SizedBox(height: 8),
-
-        // Bank details & terms
         pw.Container(
           decoration: pw.BoxDecoration(border: pw.Border.all(color: borderColor)),
           child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
@@ -368,25 +332,20 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
     return pdf.save();
   }
 
-  Future<void> _generateReceipt() async {
+  Future<void> _generateAndSaveReceipt() async {
     setState(() => _isGenerating = true);
     try {
       final bytes = await _buildPdf();
-      setState(() { _pdfBytes = bytes; _isGenerating = false; });
-      if (mounted) {
-        await Printing.layoutPdf(onLayout: (_) => bytes, name: 'Receipt_$_lpmNumber.pdf');
-      }
-    } catch (e) {
-      setState(() => _isGenerating = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
-  }
 
-  Future<void> _saveReceiptToFirebase() async {
-    if (_pdfBytes == null) return;
-    setState(() => _isSaving = true);
-    try {
-      final base64Pdf = Uri.dataFromBytes(_pdfBytes!, mimeType: 'application/pdf').toString();
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('receipts/$_lpmNumber.pdf');
+      final uploadTask = storageRef.putData(bytes, SettableMetadata(contentType: 'application/pdf'));
+      await uploadTask;
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Save download URL to Firestore
       await FirebaseFirestore.instance.collection('receipts').doc(_lpmNumber).set({
         'lpmNumber': _lpmNumber,
         'client': _client,
@@ -394,17 +353,21 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
         'grandTotal': _grandTotal,
         'gstType': _gstType,
         'generatedAt': FieldValue.serverTimestamp(),
-        'pdfBase64': base64Pdf,
+        'pdfUrl': downloadUrl,
         'installments': _installments,
         'materials': _materials,
       });
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Receipt saved to Firebase!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Receipt generated & saved to Storage!')),
+        );
+        await Printing.layoutPdf(onLayout: (_) => bytes, name: 'Receipt_$_lpmNumber.pdf');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save error: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) setState(() => _isGenerating = false);
     }
   }
 
@@ -423,12 +386,12 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton.icon(
-            onPressed: _isGenerating ? null : _generateReceipt,
+            onPressed: _isGenerating ? null : _generateAndSaveReceipt,
             icon: _isGenerating
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                 : const Icon(Icons.print, color: Colors.white),
             label: Text(
-              _isGenerating ? 'Generating...' : 'Print Receipt',
+              _isGenerating ? 'Generating & Saving...' : 'Print & Save Receipt',
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             style: ElevatedButton.styleFrom(
@@ -437,27 +400,6 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
             ),
           ),
         ),
-        if (_pdfBytes != null) ...[
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: _isSaving ? null : _saveReceiptToFirebase,
-              icon: _isSaving
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.cloud_upload, color: Colors.white),
-              label: Text(
-                _isSaving ? 'Saving...' : 'Save Receipt to Firebase',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ),
-        ],
         if (allPaid)
           Padding(
             padding: const EdgeInsets.only(top: 8),
