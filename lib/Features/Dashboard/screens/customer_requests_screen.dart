@@ -198,6 +198,23 @@ class _CustomerRequestsScreenState
       "RubberSelectedBy": "",
       "HoleSelectedBy": "",
       "Timestamp": DateTime.now().toIso8601String(),
+
+      "MachineName": customerData["machineName"] ?? "",
+      "PlywoodSizeGriper": customerData["plywoodSizeGriper"] ?? "",
+      "CuttingRule": customerData["cuttingRule"] ?? "",
+      "CreasingRule": customerData["creasingRule"] ?? "",
+      "MaterialToPunch": customerData["materialToPunch"] ?? "",
+      "Flute": customerData["flute"] ?? "",
+      "BoardCompressedThickness": customerData["boardCompressedThickness"] ?? "",
+      "CenterNotch": customerData["centerNotch"] ?? "",
+      "PlywoodThickness": customerData["plywoodThickness"] ?? "",
+      "Partinex": customerData["partinex"] ?? "",
+      "Nicking": customerData["nicking"] ?? "",
+      "Broaching": customerData["broaching"] ?? "",
+      "BladeWelding": customerData["bladeWelding"] ?? "",
+      "StrippingMaleFemale": customerData["strippingMaleFemale"] ?? "",
+      "SanwitchDie": customerData["sanwitchDie"] ?? "",
+      "RubberOrWithout": customerData["rubberOrWithout"] ?? "",
     };
   }
 

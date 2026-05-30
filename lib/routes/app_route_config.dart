@@ -18,6 +18,9 @@ import 'package:lightatech/Features/adminAccess/screens/admin_panel_screen.dart'
 import 'package:lightatech/Features/adminAccess/screens/add_staff_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/add_customer_screen.dart';
 import 'package:lightatech/Features/adminAccess/screens/admin_user_list_screen.dart';
+// --- BEGIN ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECIION ---
+import 'package:lightatech/Features/adminAccess/screens/departmental_access_screen.dart';
+// --- END ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECTION ---
 
 // Login
 import 'package:lightatech/Login/LoginScreen.dart';
@@ -225,6 +228,14 @@ class AppRoutes {
             redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const AdminPanelScreen(),
           ),
+
+// --- BEGIN ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECIION ---
+          GoRoute(
+            path: '/departmental-access',
+            redirect: (context, state) => _adminOnlyRedirect(),
+            builder: (context, state) => const DepartmentalAccessScreen(),
+          ),
+// --- END ADMIN RESTRUCTURE: DEPARTMENTAL ACCESS SECTION ---
 
           GoRoute(
             path: '/add-staff',
