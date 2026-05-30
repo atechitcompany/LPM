@@ -72,19 +72,6 @@ class _CustomerRequestsScreenState
 
   Future<String> _generateLpm() async {
     try {
-      // ORIGINAL LPM LOGIC COMMENTED OUT:
-      // final now = DateTime.now();
-      // final month = now.month.toString().padLeft(2, '0');
-      // final year = (now.year % 100).toString().padLeft(2, '0');
-      // final counterDocId = "${now.year}_$month";
-      // final counterRef = FirebaseFirestore.instance.collection("counters").doc(counterDocId);
-      // final snap = await counterRef.get().timeout(const Duration(seconds: 8), onTimeout: () => throw Exception("Firestore timeout"));
-      // int lastOrderNo = 0;
-      // if (snap.exists) { lastOrderNo = snap.data()?["lastOrderNo"] ?? 0; } else { await counterRef.set({"lastOrderNo": 0}); }
-      // final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
-      // final fullLpm = "LPM-$newOrderNo-$month-$year-01";
-      // return fullLpm;
-
       final counterRef = FirebaseFirestore.instance
           .collection("counters")
           .doc("demo_counter");
@@ -103,18 +90,6 @@ class _CustomerRequestsScreenState
   }
 
   Future<void> _incrementMonthlyCounter() async {
-    // ORIGINAL LOGIC COMMENTED OUT:
-    // final now = DateTime.now();
-    // final month = now.month.toString().padLeft(2, '0');
-    // final counterDocId = "${now.year}_$month";
-    // final counterRef = FirebaseFirestore.instance.collection("counters").doc(counterDocId);
-    // await FirebaseFirestore.instance.runTransaction((transaction) async {
-    //   final snap = await transaction.get(counterRef);
-    //   int lastOrderNo = 0;
-    //   if (snap.exists) lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
-    //   transaction.set(counterRef, {"lastOrderNo": lastOrderNo + 1}, SetOptions(merge: true));
-    // });
-
     final counterRef = FirebaseFirestore.instance
         .collection("counters")
         .doc("demo_counter");
@@ -226,20 +201,35 @@ class _CustomerRequestsScreenState
     };
   }
 
-  Future<void> _acceptRequest(
-      BuildContext context, String docId, Map<String, dynamic> customerData) async {
+  // ✅ FIX: Always re-fetch the full document from Firestore using docId.
+  // This ensures all fields are available regardless of whether accept was
+  // triggered from the card list or from inside the detail page.
+  Future<void> _acceptRequest(BuildContext context, String docId,
+      [Map<String, dynamic>? passedData]) async {
     try {
       debugPrint("🚀 Starting Accept Request...");
 
-      final fullLpm = await _generateLpm();
+      // Always fetch fresh data from Firestore
+      final docSnap = await FirebaseFirestore.instance
+          .collection("demo_customer_form")
+          .doc(docId)
+          .get();
 
-      // ORIGINAL PARSING COMMENTED OUT:
-      // final parts = fullLpm.split("-");
-      // final orderNo = parts[1];
-      // final month = parts[2];
-      // final year = parts[3];
-      // final subOrderNo = parts[4];
-      // final mainOrderId = "LPM-$orderNo-$month-$year";
+      if (!docSnap.exists) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Request no longer exists'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final customerData = docSnap.data() as Map<String, dynamic>;
+
+      final fullLpm = await _generateLpm();
 
       final mainOrderId = fullLpm;
       final subOrderNo = "01";
@@ -378,7 +368,7 @@ class _CustomerRequestsScreenState
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              _acceptRequest(context, docId, data);
+              _acceptRequest(context, docId);
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green, foregroundColor: Colors.white),
@@ -439,7 +429,7 @@ class _CustomerRequestsScreenState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/dashboard'),
         ),
         title: const Text(
           'Customer Requests',
@@ -528,7 +518,6 @@ class _CustomerRequestsScreenState
 
               final filteredDocs = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-                // Show only sendForQuotation == false or missing (not true)
                 final sendForQuotation = data["sendForQuotation"];
                 if (sendForQuotation == true || sendForQuotation == "true") return false;
                 final searchableText = [

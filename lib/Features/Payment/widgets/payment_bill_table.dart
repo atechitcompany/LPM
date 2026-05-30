@@ -77,13 +77,28 @@ class PaymentBillTableState extends State<PaymentBillTable> {
     for (final c in _amountControllers) c.text = each;
   }
 
-  void _onPayment1Changed(String value) {
+  void _onAmountChanged(int index, String value) {
     final count = _numberOfPayments.toInt();
     if (count <= 1) return;
-    final entered = double.tryParse(value) ?? 0.0;
-    final remaining = _finalAmount - entered;
-    final each = (remaining / (count - 1)).toStringAsFixed(2);
-    for (int i = 1; i < count; i++) _amountControllers[i].text = each;
+    double enteredSum = 0;
+    for (int i = 0; i <= index; i++) {
+      enteredSum += (i == index)
+          ? (double.tryParse(value) ?? 0.0)
+          : (double.tryParse(_amountControllers[i].text) ?? 0.0);
+    }
+    final remaining = _finalAmount - enteredSum;
+    final futureCount = count - index - 1;
+    if (futureCount > 0) {
+      final each = (remaining / futureCount).toStringAsFixed(2);
+      setState(() {
+        for (int i = index + 1; i < count; i++) _amountControllers[i].text = each;
+      });
+    }
+  }
+
+  bool get _amountValid {
+    final sum = _amountControllers.fold(0.0, (a, c) => a + (double.tryParse(c.text) ?? 0.0));
+    return (sum - _finalAmount).abs() < 0.01;
   }
 
   @override
@@ -131,14 +146,10 @@ class PaymentBillTableState extends State<PaymentBillTable> {
 
   Future<void> _submitPayment() async {
     if (widget.lpmNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("LPM number not found for selected job.")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("LPM number not found.")));
       return;
     }
-
     setState(() { _isSubmitting = true; });
-
     try {
       final count = _numberOfPayments.toInt();
       final installments = List.generate(count, (i) => {
@@ -151,52 +162,30 @@ class PaymentBillTableState extends State<PaymentBillTable> {
       final materialsData = List.generate(widget.materials.length, (i) {
         final item = widget.materials[i];
         final dims = <String, double>{};
-        _controllers[i].forEach((field, ctrl) {
-          dims[field] = double.tryParse(ctrl.text) ?? 0.0;
-        });
+        _controllers[i].forEach((field, ctrl) { dims[field] = double.tryParse(ctrl.text) ?? 0.0; });
         return {
-          "srNo": item.srNo,
-          "material": item.material,
-          "materialName": item.materialName,
-          "rate": item.rate,
-          "quantity": _quantities[i],
-          "amount": item.rate * _quantities[i],
+          "srNo": item.srNo, "material": item.material,
+          "materialName": item.materialName, "rate": item.rate,
+          "quantity": _quantities[i], "amount": item.rate * _quantities[i],
           "dimensions": dims,
         };
       });
 
-      final docData = {
-        "client": widget.selectedClient,
-        "job": widget.selectedJob,
-        "lpmNumber": widget.lpmNumber,
-        "gstType": _selectedGST,
-        "subTotal": _totalAmount,
-        "gstAmount": _gstAmount,
-        "cgstAmount": _cgstAmount,
-        "sgstAmount": _sgstAmount,
-        "grandTotal": _finalAmount,
-        "materials": materialsData,
-        "installments": installments,
-        "createdAt": FieldValue.serverTimestamp(),
-      };
-
-      await FirebaseFirestore.instance
-          .collection("payments")
-          .doc(widget.lpmNumber)
-          .set(docData);
+      await FirebaseFirestore.instance.collection("payments").doc(widget.lpmNumber).set({
+        "client": widget.selectedClient, "job": widget.selectedJob,
+        "lpmNumber": widget.lpmNumber, "gstType": _selectedGST,
+        "subTotal": _totalAmount, "gstAmount": _gstAmount,
+        "cgstAmount": _cgstAmount, "sgstAmount": _sgstAmount,
+        "grandTotal": _finalAmount, "materials": materialsData,
+        "installments": installments, "createdAt": FieldValue.serverTimestamp(),
+      });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Payment recorded successfully!")),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("✅ Payment recorded!")));
+        Navigator.pop(context);
       }
     } catch (e) {
-      debugPrint("❌ Submit error: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) setState(() { _isSubmitting = false; });
     }
@@ -207,13 +196,11 @@ class PaymentBillTableState extends State<PaymentBillTable> {
     if (widget.materials.isEmpty) {
       return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("No bill materials found")));
     }
-
     final count = _numberOfPayments.toInt();
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white, borderRadius: BorderRadius.circular(18),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
       ),
       child: Column(
@@ -226,9 +213,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                 DropdownButtonFormField<String>(
                   value: _selectedGST,
                   decoration: InputDecoration(
-                    labelText: "GST Type",
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
+                    labelText: "GST Type", filled: true, fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   items: const [
@@ -236,16 +221,12 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                     DropdownMenuItem(value: "GST", child: Text("GST")),
                     DropdownMenuItem(value: "IGST", child: Text("IGST")),
                   ],
-                  onChanged: (v) => setState(() {
-                    _selectedGST = v!;
-                    _redistributeAmounts();
-                  }),
+                  onChanged: (v) => setState(() { _selectedGST = v!; _redistributeAmounts(); }),
                 ),
                 const SizedBox(height: 20),
                 Text("Payments : $count", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Slider(
-                  value: _numberOfPayments,
-                  min: 1, max: 10, divisions: 9,
+                  value: _numberOfPayments, min: 1, max: 10, divisions: 9,
                   label: count.toString(),
                   onChanged: (v) {
                     final newCount = v.toInt();
@@ -306,8 +287,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                             controller: _controllers[i][field],
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             decoration: InputDecoration(
-                              labelText: field,
-                              isDense: true,
+                              labelText: field, isDense: true,
                               border: const OutlineInputBorder(),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             ),
@@ -329,8 +309,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.blue.shade100),
                 ),
                 child: Column(
@@ -372,8 +351,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(14),
+                    color: Colors.grey.shade100, borderRadius: BorderRadius.circular(14),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,14 +362,12 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                         controller: _amountControllers[i],
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
-                          labelText: "Amount",
-                          prefixText: "₹ ",
-                          filled: true,
+                          labelText: "Amount", prefixText: "₹ ", filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onChanged: i == 0 ? _onPayment1Changed : null,
-                        readOnly: i != 0 && count > 1,
+                        onChanged: (v) { _onAmountChanged(i, v); setState(() {}); },
+                        readOnly: i != 0 && count > 1 && i == count - 1,
                       ),
                       const SizedBox(height: 12),
                       InkWell(
@@ -399,36 +375,29 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                           final picked = await showDatePicker(
                             context: context,
                             initialDate: _paymentDates[i] ?? DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
+                            firstDate: DateTime(2000), lastDate: DateTime(2100),
                           );
                           if (picked != null) _onDateSelected(i, picked);
                         },
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white, borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Colors.grey.shade400),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.date_range),
-                              const SizedBox(width: 12),
-                              Text(_paymentDates[i] == null
-                                  ? "Select Date"
-                                  : "${_paymentDates[i]!.day}/${_paymentDates[i]!.month}/${_paymentDates[i]!.year}"),
-                            ],
-                          ),
+                          child: Row(children: [
+                            const Icon(Icons.date_range), const SizedBox(width: 12),
+                            Text(_paymentDates[i] == null
+                                ? "Select Date"
+                                : "${_paymentDates[i]!.day}/${_paymentDates[i]!.month}/${_paymentDates[i]!.year}"),
+                          ]),
                         ),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: _paymentStatuses[i],
                         decoration: InputDecoration(
-                          labelText: "Payment Status",
-                          filled: true,
-                          fillColor: Colors.white,
+                          labelText: "Payment Status", filled: true, fillColor: Colors.white,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         items: const [
@@ -450,27 +419,30 @@ class PaymentBillTableState extends State<PaymentBillTable> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(18),
-              ),
+              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
             ),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Text("Grand Total : ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text("₹ ${_finalAmount.toStringAsFixed(2)}",
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  const Text("Grand Total : ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("₹ ${_finalAmount.toStringAsFixed(2)}",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
+                ]),
+                const SizedBox(height: 4),
+                if (!_amountValid)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      "Sum of installments must equal Grand Total (₹ ${_finalAmount.toStringAsFixed(2)})",
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                const SizedBox(height: 8),
                 SizedBox(
-                  width: double.infinity,
-                  height: 52,
+                  width: double.infinity, height: 52,
                   child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submitPayment,
+                    onPressed: (_isSubmitting || !_amountValid) ? null : _submitPayment,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

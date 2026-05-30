@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../viewmodels/payment_viewmodel.dart';
 import '../widgets/record_payment_button.dart';
-import 'record_payment_page.dart';
 import 'package:lightatech/Features/Dashboard/screens/sidebar_menu.dart';
 
 class PaymentPage extends StatefulWidget {
@@ -53,48 +52,48 @@ class _PaymentPageState extends State<PaymentPage> {
               final job = data["job"] ?? "";
               final gstType = data["gstType"] ?? "No GST";
               final createdAt = data["createdAt"] as Timestamp?;
-              final dateStr = createdAt != null
-                  ? DateFormat('dd/MM/yyyy').format(createdAt.toDate())
-                  : "—";
+              final dateStr = createdAt != null ? DateFormat('dd/MM/yyyy').format(createdAt.toDate()) : "—";
               final installments = (data["installments"] as List<dynamic>?) ?? [];
               final paidCount = installments.where((e) => e["status"] == "Yes").length;
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(docId, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                        Text(dateStr, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(client, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text(job, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("GST: $gstType", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-                        Text("₹ ${grandTotal.toStringAsFixed(2)}",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
-                      ],
-                    ),
-                    if (installments.isNotEmpty) ...[
+              return GestureDetector(
+                onTap: () => context.push('/edit-payment', extra: {'docId': docId, 'data': data}),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(docId, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                          Text(dateStr, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                        ],
+                      ),
                       const SizedBox(height: 6),
-                      Text("Installments: $paidCount/${installments.length} paid",
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                      Text(client, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(job, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("GST: $gstType", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                          Text("₹ ${grandTotal.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
+                        ],
+                      ),
+                      if (installments.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text("Installments: $paidCount/${installments.length} paid",
+                            style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               );
             },

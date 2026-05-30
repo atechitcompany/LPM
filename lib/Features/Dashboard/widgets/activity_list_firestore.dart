@@ -119,8 +119,15 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
 
   bool _isValidDepartment(String dept) {
     return const [
-      "Designer", "AutoBending", "ManualBending", "LaserCutting",
-      "Emboss", "Rubber", "Account", "Delivery",
+      "Designer",
+      "AutoBending",
+      "ManualBending",
+      "LaserCutting",
+      "Lasercut",
+      "Emboss",
+      "Rubber",
+      "Account",
+      "Delivery",
     ].contains(dept);
   }
 }
@@ -169,9 +176,11 @@ class _FirestoreTabState extends State<_FirestoreTab> {
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore || _lastDoc == null) return;
     setState(() => _isLoadingMore = true);
+
+    String queryDept = widget.department == "Lasercut" ? "LaserCutting" : widget.department;
     Query query = FirebaseFirestore.instance
         .collection("jobs")
-        .where("visibleTo", arrayContains: widget.department)
+        .where("visibleTo", arrayContains: queryDept)
         .orderBy("updatedAt", descending: true)
         .startAfterDocument(_lastDoc!)
         .limit(20);
@@ -230,13 +239,19 @@ class _FirestoreTabState extends State<_FirestoreTab> {
     _lastDoc = null;
     _hasMore = true;
 
+    String queryDept = widget.department == "Lasercut" ? "LaserCutting" : widget.department;
     if (widget.department == "Designer" && widget.isPending) {
       _stream = FirebaseFirestore.instance.collection("jobs").where("visibleTo", arrayContains: "Designer").orderBy("updatedAt", descending: true).limit(20).snapshots();
     } else if (widget.department == "Designer" && !widget.isPending) {
       _stream = FirebaseFirestore.instance.collection("jobs").where("visibleTo", arrayContains: "Designer").where("designer.data.DesigningStatus", isEqualTo: "Done").orderBy("updatedAt", descending: true).limit(20).snapshots();
     } else {
-      _stream = FirebaseFirestore.instance.collection("jobs").where("visibleTo", arrayContains: widget.department).orderBy("updatedAt", descending: true).limit(20).snapshots();
-    }
+      // All other departments
+      _stream = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("visibleTo", arrayContains: queryDept)
+          .orderBy("updatedAt", descending: true)
+          .limit(20).snapshots();
+      }
   }
 
   @override
