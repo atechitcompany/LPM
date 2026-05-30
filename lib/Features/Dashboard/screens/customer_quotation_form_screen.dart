@@ -94,6 +94,7 @@ class _CustomerQuotationFormScreenState extends State<CustomerQuotationFormScree
   final _deliveryAt = TextEditingController();
   final _orderBy = TextEditingController();
   final _remark = TextEditingController();
+  String? _priority;
 
   // ── Page 2 ──
   final _plyType = TextEditingController();
@@ -303,12 +304,14 @@ class _CustomerQuotationFormScreenState extends State<CustomerQuotationFormScree
   }
 
   Future<void> _save() async {
+
     if (_partyName.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Party Name is required')));
       return;
     }
     setState(() => _saving = true);
     try {
+
       final data = {
         'PartyName': _partyName.text.trim(),
         'ParticularJobName': _jobName.text.trim(),
@@ -346,11 +349,35 @@ class _CustomerQuotationFormScreenState extends State<CustomerQuotationFormScree
         'RubberOrWithout': _rubberOrWithout ?? '',
       };
 
-      await FirebaseFirestore.instance.collection('quotation_pending').doc(widget.docId).set({
+
+
+      String saveDocId = widget.docId;
+      if (!widget.docId.startsWith('QUOTE-')) {
+        final now = DateTime.now();
+        final month = now.month.toString().padLeft(2, '0');
+        final year = (now.year % 100).toString().padLeft(2, '0');
+        final counterRef = FirebaseFirestore.instance.collection("counters").doc("QUOTE_${now.year}_$month");
+        await FirebaseFirestore.instance.runTransaction((tx) async {
+          final snap = await tx.get(counterRef);
+          int lastNo = snap.exists ? (snap.data()?["lastNo"] ?? 0) : 0;
+          final newNo = lastNo + 1;
+          tx.set(counterRef, {"lastNo": newNo}, SetOptions(merge: true));
+          saveDocId = "QUOTE-${newNo.toString().padLeft(5, '0')}-$month-$year-01";
+        });
+      }
+      await FirebaseFirestore.instance.collection('quotation_pending').doc(saveDocId).set({
         ...data,
         'quoteDesignDone': _quoteDesignDone,
+        'createdAt': FieldValue.serverTimestamp(),  // ADD THIS
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      // Mark original demo_customer_form doc as submitted
+      if (!widget.docId.startsWith('QUOTE-')) {
+        await FirebaseFirestore.instance
+            .collection('demo_customer_form')
+            .doc(widget.docId)
+            .update({'quotationSubmitted': true});
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Quotation updated'), backgroundColor: Colors.green));
@@ -382,8 +409,8 @@ class _CustomerQuotationFormScreenState extends State<CustomerQuotationFormScree
     _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _sectionLabel('Priority'),
       PrioritySelector(
-        initialValue: '', // no priority field in original; pass empty or add a controller
-        onChanged: (v) {},
+        initialValue: _priority ?? '',
+        onChanged: (v) => setState(() => _priority = v),
       ),
     ])),
     _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
