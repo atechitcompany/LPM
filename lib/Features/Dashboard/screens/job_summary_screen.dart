@@ -22,6 +22,7 @@ class JobSummaryScreen extends StatefulWidget {
     "Lasercut": "/jobform/laser",
     "Rubber": "/jobform/rubber",
     "Emboss": "/jobform/emboss",
+    "Delivery": "/jobform/delivery",
   };
 
   static const Map<String, String> departmentFirestoreKey = {
@@ -32,6 +33,7 @@ class JobSummaryScreen extends StatefulWidget {
     "Lasercut": "laserCutting",
     "Rubber": "rubber",
     "Emboss": "emboss",
+    "Delivery": "delivery",
   };
 
   @override
