@@ -577,10 +577,13 @@ class _CustomerRequestsScreenState
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
+        // Change to:
         final docs = snapshot.data!.docs.where((d) {
           final data = d.data() as Map<String, dynamic>;
           final val = data["sendForQuotation"];
-          return val == true || val == "true";
+          if (!(val == true || val == "true")) return false;
+          if (data["quotationSubmitted"] == true) return false;
+          return true;
         }).toList();
 
         if (docs.isEmpty) {
