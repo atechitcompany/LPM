@@ -16,6 +16,11 @@ import 'dart:convert';
 import 'designer_page_1.dart';
 import 'designer_widgets.dart';
 
+// --- BEGIN AUTOMATED CLIENT EMAIL NOTIFICATION ---
+import 'package:lightatech/services/designer_email_template.dart';
+import 'package:http/http.dart' as http;
+// --- END AUTOMATED CLIENT EMAIL NOTIFICATION ---
+
 class DesignerPage4 extends StatefulWidget {
   const DesignerPage4({super.key});
 
@@ -494,6 +499,77 @@ class _DesignerPage4State extends State<DesignerPage4> {
                       } else {
                         await form.submitDesignerForm();
                       }
+
+                      // --- BEGIN AUTOMATED CLIENT EMAIL NOTIFICATION ---
+                      // --- BEGIN DESIGNER EMAIL PAYLOAD ---
+                      try {
+                        if (form.DesigningStatus.text.trim().toLowerCase() == 'done') {
+                          final partyName = form.PartyName.text.trim();
+                          if (partyName.isNotEmpty) {
+                            // Optimized Firestore query: WHERE + LIMIT(1)
+                            final clientSnap = await FirebaseFirestore.instance
+                                .collection('customers')
+                                .where('Party Names', isEqualTo: partyName)
+                                .limit(1)
+                                .get();
+
+                            if (clientSnap.docs.isNotEmpty) {
+                              final clientEmail = (clientSnap.docs.first.data()['Email'] ?? '').toString().trim();
+                              if (clientEmail.isNotEmpty) {
+                                // Fetch design file URL from job document
+                                final emailLpm = form.LpmAutoIncrement.text.trim();
+                                final emailMainJobId = emailLpm.contains('-')
+                                    ? emailLpm.split('-').take(4).join('-')
+                                    : emailLpm;
+                                String? designFileUrl;
+                                try {
+                                  final jobDoc = await FirebaseFirestore.instance
+                                      .collection('jobs')
+                                      .doc(emailMainJobId)
+                                      .get();
+                                  designFileUrl = jobDoc.data()?['files']?['DrawingAttachment']?['viewUrl']?.toString();
+                                } catch (_) {}
+
+                                // Generate HTML email
+                                final htmlBody = generateDesignerEmailHtml(
+                                  partyName: partyName,
+                                  productName: form.ParticularJobName.text,
+                                  lpmNumber: emailLpm,
+                                  orderDate: DateTime.now().toString().split('.').first,
+                                  designedBy: form.DesignedBy.text,
+                                  designedByTimestamp: form.DesignedByTimestamp.text,
+                                  designFileUrl: designFileUrl,
+                                );
+
+                                // Call the sendDispatchEmail Cloud Function via HTTP POST
+                                final response = await http.post(
+                                  Uri.parse('https://senddispatchemail-3vvqs62r6q-uc.a.run.app'),
+                                  headers: {'Content-Type': 'application/json'},
+                                  body: jsonEncode({
+                                    'to': clientEmail,
+                                    'subject': 'Your Design is Ready! — $emailLpm',
+                                    'htmlBody': htmlBody,
+                                  }),
+                                );
+                                
+                                if (response.statusCode == 200) {
+                                  debugPrint('✅ sendDispatchEmail called successfully for $clientEmail');
+                                } else {
+                                  debugPrint('⚠️ sendDispatchEmail failed with status ${response.statusCode}: ${response.body}');
+                                }
+                              } else {
+                                debugPrint('⚠️ Client email is empty for party: $partyName');
+                              }
+                            } else {
+                              debugPrint('⚠️ No customer found matching party name: $partyName');
+                            }
+                          }
+                        }
+                      } catch (e) {
+                        debugPrint('⚠️ Email notification failed (non-blocking): $e');
+                      }
+                      // --- END DESIGNER EMAIL PAYLOAD ---
+                      // --- END AUTOMATED CLIENT EMAIL NOTIFICATION ---
 
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

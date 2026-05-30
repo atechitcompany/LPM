@@ -30,6 +30,14 @@ class _FlexibleToggleState extends State<FlexibleToggle> {
   }
 
   @override
+  void didUpdateWidget(covariant FlexibleToggle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue) {
+      value = widget.initialValue;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/drive_upload_service.dart';
+import '../services/firebase_upload_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class FileUploadBox extends StatefulWidget {
   final Function(PlatformFile) onFileSelected;
-  final String jobId;      // ✅ NEW
-  final String fieldName;  // ✅ NEW e.g. "DrawingAttachment"
+  final String jobId;
+  final String fieldName;
 
   const FileUploadBox({
     super.key,
@@ -19,7 +20,7 @@ class FileUploadBox extends StatefulWidget {
 }
 
 class _FileUploadBoxState extends State<FileUploadBox> {
-  bool    _isUploading    = false;
+  bool _isUploading = false;
   String? _uploadedFileName;
 
   Future<void> _pickAndUpload(BuildContext context) async {
@@ -43,7 +44,7 @@ class _FileUploadBoxState extends State<FileUploadBox> {
 
     setState(() => _isUploading = true);
 
-    final driveFileId = await DriveUploadService.uploadFile(
+    final firebaseFileId = await FirebaseUploadService.uploadFile(
       fileBytes: pickedFile.bytes!,
       fileName:  pickedFile.name,
       jobId:     widget.jobId,      // ✅ pass job ID
@@ -51,9 +52,9 @@ class _FileUploadBoxState extends State<FileUploadBox> {
     );
 
     if (context.mounted) {
-      if (driveFileId != null) {
+      if (firebaseFileId != null) {
         setState(() {
-          _isUploading     = false;
+          _isUploading = false;
           _uploadedFileName = pickedFile.name;
         });
         widget.onFileSelected(pickedFile);
@@ -63,6 +64,7 @@ class _FileUploadBoxState extends State<FileUploadBox> {
             backgroundColor: Colors.green,
           ),
         );
+      }
       } else {
         setState(() => _isUploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -72,7 +74,6 @@ class _FileUploadBoxState extends State<FileUploadBox> {
           ),
         );
       }
-    }
   }
 
   @override
@@ -102,12 +103,8 @@ class _FileUploadBoxState extends State<FileUploadBox> {
               )
             else
               Icon(
-                _uploadedFileName != null
-                    ? Icons.check_circle
-                    : Icons.upload_file,
-                color: _uploadedFileName != null
-                    ? Colors.green
-                    : Colors.grey.shade600,
+                _uploadedFileName != null ? Icons.check_circle : Icons.upload_file,
+                color: _uploadedFileName != null ? Colors.green : Colors.grey.shade600,
                 size: 24,
               ),
             const SizedBox(width: 8),

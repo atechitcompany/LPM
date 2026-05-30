@@ -28,8 +28,8 @@ class _CustomerRequestsScreenState
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _customerRequestsStream = FirebaseFirestore.instance
-        .collection("customer_requests")
-        .orderBy("createdAt", descending: true)
+        .collection("demo_customer_form")
+        .orderBy("submittedAt", descending: true)
         .limit(50)
         .snapshots();
 
@@ -54,8 +54,8 @@ class _CustomerRequestsScreenState
     setState(() => _isLoadingMore = true);
 
     final snap = await FirebaseFirestore.instance
-        .collection("customer_requests")
-        .orderBy("createdAt", descending: true)
+        .collection("demo_customer_form")
+        .orderBy("submittedAt", descending: true)
         .startAfterDocument(_lastDoc!)
         .limit(50)
         .get();
@@ -72,65 +72,57 @@ class _CustomerRequestsScreenState
 
   Future<String> _generateLpm() async {
     try {
-      final now = DateTime.now();
-      final month = now.month.toString().padLeft(2, '0');
-      final year = (now.year % 100).toString().padLeft(2, '0');
-      final counterDocId = "${now.year}_$month";
-
-      debugPrint("⏳ Generating LPM... counterDoc=$counterDocId");
+      // ORIGINAL LPM LOGIC COMMENTED OUT:
+      // final now = DateTime.now();
+      // final month = now.month.toString().padLeft(2, '0');
+      // final year = (now.year % 100).toString().padLeft(2, '0');
+      // final counterDocId = "${now.year}_$month";
+      // final counterRef = FirebaseFirestore.instance.collection("counters").doc(counterDocId);
+      // final snap = await counterRef.get().timeout(const Duration(seconds: 8), onTimeout: () => throw Exception("Firestore timeout"));
+      // int lastOrderNo = 0;
+      // if (snap.exists) { lastOrderNo = snap.data()?["lastOrderNo"] ?? 0; } else { await counterRef.set({"lastOrderNo": 0}); }
+      // final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
+      // final fullLpm = "LPM-$newOrderNo-$month-$year-01";
+      // return fullLpm;
 
       final counterRef = FirebaseFirestore.instance
           .collection("counters")
-          .doc(counterDocId);
-
-      final snap = await counterRef.get().timeout(
-        const Duration(seconds: 8),
-        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
-      );
-
-      int lastOrderNo = 0;
+          .doc("demo_counter");
+      final snap = await counterRef.get();
+      int lastNo = 0;
       if (snap.exists) {
-        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
-      } else {
-        await counterRef.set({"lastOrderNo": 0});
+        lastNo = snap.data()?["lastNo"] ?? 0;
       }
-
-      final newOrderNo = (lastOrderNo + 1).toString().padLeft(5, '0');
-      final fullLpm = "LPM-$newOrderNo-$month-$year-01";
-
-      debugPrint("✅ LPM Generated: $fullLpm");
+      final fullLpm = "demo${lastNo + 1}";
+      debugPrint("✅ Demo LPM: $fullLpm");
       return fullLpm;
     } catch (e) {
-      debugPrint("❌ LPM Generation Error: $e");
-      final now = DateTime.now();
-      final month = now.month.toString().padLeft(2, '0');
-      final year = (now.year % 100).toString().padLeft(2, '0');
-      final tempNo = now.millisecondsSinceEpoch.toString().substring(7);
-      final fallbackLpm = "LPM-TEMP$tempNo-$month-$year-01";
-      debugPrint("⚠️ Using fallback LPM: $fallbackLpm");
-      return fallbackLpm;
+      debugPrint("❌ Demo LPM error: $e");
+      return "demo_fallback_${DateTime.now().millisecondsSinceEpoch}";
     }
   }
 
   Future<void> _incrementMonthlyCounter() async {
-    final now = DateTime.now();
-    final month = now.month.toString().padLeft(2, '0');
-    final counterDocId = "${now.year}_$month";
+    // ORIGINAL LOGIC COMMENTED OUT:
+    // final now = DateTime.now();
+    // final month = now.month.toString().padLeft(2, '0');
+    // final counterDocId = "${now.year}_$month";
+    // final counterRef = FirebaseFirestore.instance.collection("counters").doc(counterDocId);
+    // await FirebaseFirestore.instance.runTransaction((transaction) async {
+    //   final snap = await transaction.get(counterRef);
+    //   int lastOrderNo = 0;
+    //   if (snap.exists) lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
+    //   transaction.set(counterRef, {"lastOrderNo": lastOrderNo + 1}, SetOptions(merge: true));
+    // });
 
-    final counterRef =
-    FirebaseFirestore.instance.collection("counters").doc(counterDocId);
-
+    final counterRef = FirebaseFirestore.instance
+        .collection("counters")
+        .doc("demo_counter");
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
-      int lastOrderNo = 0;
-      if (snap.exists) {
-        lastOrderNo = snap.data()?["lastOrderNo"] ?? 0;
-      }
-      transaction.set(
-        counterRef,
-        {"lastOrderNo": lastOrderNo + 1},
-        SetOptions(merge: true),
-      );
+      int lastNo = 0;
+      if (snap.exists) lastNo = snap.data()?["lastNo"] ?? 0;
+      transaction.set(counterRef, {"lastNo": lastNo + 1}, SetOptions(merge: true));
     });
   }
 
@@ -214,7 +206,7 @@ class _CustomerRequestsScreenState
       "DeliveryCreatedBy": "",
       "GSTType": "",
       "PartyName": customerData["partyName"] ?? "",
-      "particularJobName": customerData["particularJobName"] ?? "",
+      "particularJobName": customerData["jobName"] ?? "",
       "Priority": customerData["priority"] ?? "Normal",
       "PlyType": "No",
       "Amounts3": "",
@@ -240,12 +232,17 @@ class _CustomerRequestsScreenState
       debugPrint("🚀 Starting Accept Request...");
 
       final fullLpm = await _generateLpm();
-      final parts = fullLpm.split("-");
-      final orderNo = parts[1];
-      final month = parts[2];
-      final year = parts[3];
-      final subOrderNo = parts[4];
-      final mainOrderId = "LPM-$orderNo-$month-$year";
+
+      // ORIGINAL PARSING COMMENTED OUT:
+      // final parts = fullLpm.split("-");
+      // final orderNo = parts[1];
+      // final month = parts[2];
+      // final year = parts[3];
+      // final subOrderNo = parts[4];
+      // final mainOrderId = "LPM-$orderNo-$month-$year";
+
+      final mainOrderId = fullLpm;
+      final subOrderNo = "01";
 
       debugPrint("📋 Main Order ID: $mainOrderId");
       debugPrint("📦 Full LPM: $fullLpm");
@@ -257,9 +254,7 @@ class _CustomerRequestsScreenState
       final itemRef = jobRef.collection("items").doc(subOrderNo);
 
       await jobRef.set({
-        "orderNo": orderNo,
-        "month": month,
-        "year": year,
+        "orderNo": fullLpm,
         "currentDepartment": "Designer",
         "visibleTo": ["Designer"],
         "status": "pending_designer_review",
@@ -281,8 +276,6 @@ class _CustomerRequestsScreenState
         "updatedAt": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      debugPrint("✅ Main order document created in jobs collection");
-
       await itemRef.set({
         "fullLpm": fullLpm,
         "subOrderNo": subOrderNo,
@@ -299,17 +292,12 @@ class _CustomerRequestsScreenState
         "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      debugPrint("✅ Sub-order item document created");
-
       await _incrementMonthlyCounter();
-      debugPrint("✅ Monthly counter incremented");
 
       await FirebaseFirestore.instance
-          .collection("customer_requests")
+          .collection("demo_customer_form")
           .doc(docId)
           .delete();
-
-      debugPrint("✅ Request deleted from customer_requests collection");
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -333,8 +321,6 @@ class _CustomerRequestsScreenState
   Future<void> _rejectRequest(BuildContext context, String docId,
       Map<String, dynamic> customerData) async {
     try {
-      debugPrint("🚫 Starting Reject Request...");
-
       await FirebaseFirestore.instance.collection("rejected_requests").add({
         ...customerData,
         "originalDocId": docId,
@@ -342,14 +328,10 @@ class _CustomerRequestsScreenState
         "status": "rejected",
       });
 
-      debugPrint("✅ Request saved to rejected_requests collection");
-
       await FirebaseFirestore.instance
-          .collection("customer_requests")
+          .collection("demo_customer_form")
           .doc(docId)
           .delete();
-
-      debugPrint("✅ Request deleted from customer_requests collection");
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -361,7 +343,6 @@ class _CustomerRequestsScreenState
         );
       }
     } catch (e) {
-      debugPrint("❌ Error in _rejectRequest: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -383,11 +364,11 @@ class _CustomerRequestsScreenState
             const SizedBox(height: 12),
             Text("Customer: ${data['partyName'] ?? 'N/A'}",
                 style: const TextStyle(fontWeight: FontWeight.w500)),
-            Text("Job: ${data['particularJobName'] ?? 'N/A'}",
+            Text("Job: ${data['jobName'] ?? 'N/A'}",
                 style: const TextStyle(fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
             const Text(
-              "A unique LPM number will be generated automatically.",
+              "A demo LPM number will be generated (demo1, demo2, ...).",
               style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
             ),
           ],
@@ -424,7 +405,7 @@ class _CustomerRequestsScreenState
             const SizedBox(height: 12),
             Text("Customer: ${data['partyName'] ?? 'N/A'}",
                 style: const TextStyle(fontWeight: FontWeight.w500)),
-            Text("Job: ${data['particularJobName'] ?? 'N/A'}",
+            Text("Job: ${data['jobName'] ?? 'N/A'}",
                 style: const TextStyle(fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
             const Text(
@@ -504,10 +485,7 @@ class _CustomerRequestsScreenState
             ),
             child: TextField(
               controller: searchController,
-              onChanged: (value) {
-                debugPrint("SEARCH TYPED IN CustomerRequestsScreen: $value");
-                setState(() {});
-              },
+              onChanged: (value) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Search by name, party, or job...',
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
@@ -550,26 +528,15 @@ class _CustomerRequestsScreenState
 
               final filteredDocs = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-
+                // Show only sendForQuotation == false or missing (not true)
+                final sendForQuotation = data["sendForQuotation"];
+                if (sendForQuotation == true || sendForQuotation == "true") return false;
                 final searchableText = [
-                  data["name"],
-                  data["email"],
-                  data["Email"],
-                  data["partyName"],
-                  data["PartyName"],
-                  data["particularJobName"],
-                  data["ParticularJobName"],
-                  data["requestedDepartments"],
-                  data["departments"],
-                  data["department"],
-                  data["requested"],
-                  data["orderBy"],
-                  data["deliveryAt"],
-                  data["priority"],
+                  data["partyName"], data["jobName"], data["machineName"],
+                  data["deliveryAt"], data["flute"], data["cuttingRule"],
+                  data["creasingRule"], data["materialToPunch"], data["priority"],
                 ].join(" ").toLowerCase();
-
                 if (query.isEmpty) return true;
-
                 return searchableText.contains(query);
               }).toList();
 
@@ -612,101 +579,91 @@ class _CustomerRequestsScreenState
   }
 
   Widget _buildQuotationsTab() {
-    return FutureBuilder<QuerySnapshot>(
-      future: FirebaseFirestore.instance
-          .collection("quotation_pending")
-          .get(),
-      builder: (context, pendingSnap) {
-        final submittedIds = pendingSnap.data?.docs
-            .map((d) => d.data() as Map<String, dynamic>)
-            .map((d) => d['sourceDocId']?.toString() ?? '')
-            .toSet() ?? {};
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("demo_customer_form")
+          .orderBy("submittedAt", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        // Only show sendForQuotation == true
+        final docs = snapshot.data!.docs.where((d) {
+          final data = d.data() as Map<String, dynamic>;
+          final val = data["sendForQuotation"];
+          return val == true || val == "true";
+        }).toList();
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection("demo_customer_form")
-              .orderBy("submittedAt", descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            // Filter out already submitted docs
-            final docs = snapshot.data!.docs
-                .where((d) => !submittedIds.contains(d.id))
-                .toList();
-
-            if (docs.isEmpty) {
-              return const Center(
-                child: Text("No quotations available",
-                    style: TextStyle(fontSize: 16, color: Colors.grey)),
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: docs.length,
-              itemBuilder: (context, index) {
-                final data = docs[index].data() as Map<String, dynamic>;
-                final docId = docs[index].id;
-                final partyName = data["partyName"] ?? "No Party";
-                final jobName = data["jobName"] ?? "No Job";
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+        if (docs.isEmpty) {
+          return const Center(
+            child: Text("No quotations available",
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final docId = docs[index].id;
+            final partyName = data["partyName"] ?? "No Party";
+            final jobName = data["jobName"] ?? "No Job";
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: () => context.push('/customer-quotation-detail/$docId'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44, height: 44,
+                          decoration: const BoxDecoration(
+                              color: Color(0xFFE3F0FF), shape: BoxShape.circle),
+                          child: const Icon(Icons.description_outlined,
+                              color: Color(0xFF4A90D9), size: 24),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(partyName.toString(),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      color: Color(0xFF1A1A2E)),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                              const SizedBox(height: 4),
+                              Text("Job: $jobName",
+                                  style: const TextStyle(
+                                      color: Color(0xFF555555),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
                       ],
                     ),
-                    child: InkWell(
-                      onTap: () => context.push('/customer-quotation-edit/$docId'),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44, height: 44,
-                              decoration: const BoxDecoration(
-                                  color: Color(0xFFE3F0FF), shape: BoxShape.circle),
-                              child: const Icon(Icons.description_outlined,
-                                  color: Color(0xFF4A90D9), size: 24),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(partyName.toString(),
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 16,
-                                          color: Color(0xFF1A1A2E)),
-                                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                                  const SizedBox(height: 4),
-                                  Text("Job: $jobName",
-                                      style: const TextStyle(
-                                          color: Color(0xFF555555),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500),
-                                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                    ),
                   ),
-                );
-              },
+                ),
+              ),
             );
           },
         );
@@ -716,14 +673,14 @@ class _CustomerRequestsScreenState
 
   Widget _buildCard(BuildContext context, Map<String, dynamic> data, String docId) {
     final partyName = data["partyName"] ?? "No Party";
-    final particularJobName = data["particularJobName"] ?? "No Job";
+    final jobName = data["jobName"] ?? "No Job";
     final priority = data["priority"] ?? "Normal";
     final deliveryAt = data["deliveryAt"] ?? "Not specified";
-    final createdAt = data["createdAt"];
+    final submittedAt = data["submittedAt"];
 
     String formattedDate = "N/A";
-    if (createdAt != null) {
-      final dateTime = (createdAt as Timestamp).toDate();
+    if (submittedAt != null) {
+      final dateTime = (submittedAt as Timestamp).toDate();
       formattedDate = "${dateTime.day}/${dateTime.month}/${dateTime.year}";
     }
 
@@ -810,7 +767,7 @@ class _CustomerRequestsScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Job: $particularJobName",
+                                "Job: $jobName",
                                 style: const TextStyle(
                                   color: Color(0xFF555555),
                                   fontSize: 14,
@@ -883,39 +840,25 @@ class _CustomerRequestsScreenState
 
   Color _getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
-      case "urgent":
-        return const Color(0xFFE74C3C);
-      case "high":
-        return const Color(0xFFE74C3C);
-      case "important":
-        return const Color(0xFF27AE60);
-      case "medium":
-        return const Color(0xFFF39C12);
-      case "emergency":
-        return const Color(0xFFF39C12);
-      case "low":
-        return const Color(0xFF27AE60);
-      default:
-        return const Color(0xFF3498DB);
+      case "urgent": return const Color(0xFFE74C3C);
+      case "high": return const Color(0xFFE74C3C);
+      case "important": return const Color(0xFF27AE60);
+      case "medium": return const Color(0xFFF39C12);
+      case "emergency": return const Color(0xFFF39C12);
+      case "low": return const Color(0xFF27AE60);
+      default: return const Color(0xFF3498DB);
     }
   }
 
   String _getPriorityLabel(String priority) {
     switch (priority.toLowerCase()) {
-      case "high":
-        return "URGENT";
-      case "urgent":
-        return "URGENT";
-      case "important":
-        return "IMPORTANT";
-      case "medium":
-        return "EMERGENCY";
-      case "emergency":
-        return "EMERGENCY";
-      case "low":
-        return "IMPORTANT";
-      default:
-        return priority.toUpperCase();
+      case "high": return "URGENT";
+      case "urgent": return "URGENT";
+      case "important": return "IMPORTANT";
+      case "medium": return "EMERGENCY";
+      case "emergency": return "EMERGENCY";
+      case "low": return "IMPORTANT";
+      default: return priority.toUpperCase();
     }
   }
 }
