@@ -29,85 +29,142 @@ class _CustomerRequestDetailScreenState
         .get();
   }
 
-  // ✅ LPM GENERATION - demo1, demo2, demo3... format
   Future<String> _generateLpm() async {
     try {
       final counterRef = FirebaseFirestore.instance
           .collection("counters")
           .doc("demo_counter");
-
       final snap = await counterRef.get().timeout(
         const Duration(seconds: 8),
-        onTimeout: () => throw Exception("Firestore timeout — no internet?"),
+        onTimeout: () => throw Exception("Firestore timeout"),
       );
-
       int lastNo = 0;
       if (snap.exists) {
         lastNo = snap.data()?["lastNo"] ?? 0;
       } else {
         await counterRef.set({"lastNo": 0});
       }
-
-      final newNo = lastNo + 1;
-      final lpm = "demo$newNo";
-
+      final lpm = "demo${lastNo + 1}";
       debugPrint("✅ LPM Generated: $lpm");
       return lpm;
     } catch (e) {
       debugPrint("❌ LPM Generation Error: $e");
-      final fallback = "demo_temp_${DateTime.now().millisecondsSinceEpoch}";
-      debugPrint("⚠️ Using fallback LPM: $fallback");
-      return fallback;
+      return "demo_temp_${DateTime.now().millisecondsSinceEpoch}";
     }
   }
 
-  // ✅ INCREMENT DEMO COUNTER
   Future<void> _incrementDemoCounter() async {
     final counterRef = FirebaseFirestore.instance
         .collection("counters")
         .doc("demo_counter");
-
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
       int lastNo = 0;
-      if (snap.exists) {
-        lastNo = snap.data()?["lastNo"] ?? 0;
-      }
+      if (snap.exists) lastNo = snap.data()?["lastNo"] ?? 0;
       transaction.set(counterRef, {"lastNo": lastNo + 1}, SetOptions(merge: true));
     });
   }
 
-  // ✅ BUILD DESIGNER DATA from demo_customer_form fields
-  Map<String, dynamic> _buildDesignerData(Map<String, dynamic> data) {
+  Map<String, dynamic> _buildDesignerData(Map<String, dynamic> customerData) {
     return {
       "LpmAutoIncrement": "",
-      "jobName": data["jobName"] ?? "",
-      "machineName": data["machineName"] ?? "",
-      "partyName": data["partyName"] ?? "",
-      "deliveryAt": data["deliveryAt"] ?? "",
-      "cuttingRule": data["cuttingRule"] ?? "",
-      "creasingRule": data["creasingRule"] ?? "",
-      "bladeWelding": data["bladeWelding"] ?? "",
-      "boardCompressedThickness": data["boardCompressedThickness"] ?? "",
-      "broaching": data["broaching"] ?? "",
-      "centerNotch": data["centerNotch"] ?? "",
-      "flute": data["flute"] ?? "",
-      "materialToPunch": data["materialToPunch"] ?? "",
-      "nicking": data["nicking"] ?? "",
-      "partinex": data["partinex"] ?? "",
-      "perforation": data["perforation"] ?? "",
-      "plywoodSizeGriper": data["plywoodSizeGriper"] ?? "",
-      "plywoodThickness": data["plywoodThickness"] ?? "",
-      "rubberOrWithout": data["rubberOrWithout"] ?? "",
-      "sanwitchDie": data["sanwitchDie"] ?? "",
-      "strippingMaleFemale": data["strippingMaleFemale"] ?? "",
-      "sendForQuotation": data["sendForQuotation"] ?? false,
+      "BuyerOrderNo": customerData["buyerOrderNo"] ?? "",
+      "DeliveryAt": customerData["deliveryAt"] ?? "",
+      "Orderby": customerData["orderBy"] ?? "",
+      "Remark": customerData["remark"] ?? "NO REMARK",
+      "Ups": "NO",
+      "PartyworkName": "NO",
+      "Size": "NO",
+      "Size2": "NO",
+      "Size3": "NO",
+      "Size4": "NO",
+      "Size5": "NO",
+      "Ups_32": "",
+      "PlyLength": "",
+      "PlyBreadth": "",
+      "Blade": "No",
+      "BladeSize": "",
+      "Extra": "",
+      "Creasing": "No",
+      "CreasingSize": "",
+      "CapsuleType": customerData["capsuleType"] ?? "",
+      "CapsuleRate": "",
+      "CapsulePcs": "",
+      "CapsuleAmt": "",
+      "ZigZagBlade": "No",
+      "PerforationSize": "",
+      "ZigZagBladeType": "",
+      "ZigZagBladeSize": "",
+      "RubberType": "No",
+      "RubberSize": "",
+      "RubberDoneBy": "",
+      "HoleType": "No",
+      "EmbossPcs": "No",
+      "TotalSize": "No",
+      "MinimumChargeApply": "",
+      "MaleEmbossType": "No",
+      "MaleRate": "",
+      "X": "",
+      "Y": "",
+      "XYSize": "",
+      "FemaleEmbossType": "No",
+      "FemaleRate": "",
+      "X2": "",
+      "Y2": "",
+      "XY2Size": "",
+      "StrippingType": "No",
+      "StrippingSize": "",
+      "CourierCharges": "",
+      "LaserPunchNew": "No",
+      "LaserRate": "",
+      "LaserDoneBy": "",
+      "LaserCuttingStatus": "Pending",
+      "AutoBendingDoneBy": "",
+      "FullAddress": "",
+      "DeliveryURL": "URL",
+      "Unknown": "",
+      "DesignSendBy": "",
+      "ReceiverName": "",
+      "TransportName": "",
       "DesigningStatus": "Pending",
+      "ManualBendingStatus": "Pending",
+      "AutobendingStatus": "Pending",
+      "DeliveryStatus": "Pending",
+      "EmbossStatus": "No",
+      "AutoCreasingStatus": "",
+      "InvoiceStatus": "Pending",
+      "InvoicePrintedBy": "",
+      "CreatedBy": "",
+      "DesignerCreatedBy": "",
+      "AutoBendingCreatedBy": "",
+      "LaserCuttingCreatedBy": "",
+      "AccountsCreatedBy": "",
+      "EmbossCreatedBy": "",
+      "ManualBendingCreatedBy": "",
+      "ManualBendingFittingDoneBy": "",
+      "DeliveryCreatedBy": "",
+      "GSTType": "",
+      "PartyName": customerData["partyName"] ?? "",
+      "particularJobName": customerData["jobName"] ?? "",
+      "Priority": customerData["priority"] ?? "Normal",
+      "PlyType": "No",
+      "Amounts3": "",
+      "ParticularSlider": "",
+      "RubberFixingDone": "No",
+      "WhiteProfileRubber": "No",
+      "Perforation": "No",
+      "DesignedBy": "",
+      "PlySelectedBy": "",
+      "BladeSelectedBy": "",
+      "CreasingSelectedBy": "",
+      "PerforationSelectedBy": "",
+      "ZigZagBladeSelectedBy": "",
+      "RubberSelectedBy": "",
+      "HoleSelectedBy": "",
       "Timestamp": DateTime.now().toIso8601String(),
     };
   }
 
-  // ✅ ACCEPT LOGIC
   Future<void> _acceptRequest(Map<String, dynamic> customerData) async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
@@ -115,15 +172,18 @@ class _CustomerRequestDetailScreenState
     try {
       debugPrint("🚀 Starting Accept Request...");
 
-      final lpm = await _generateLpm();
-      debugPrint("📋 LPM: $lpm");
+      final fullLpm = await _generateLpm();
+      const subOrderNo = "01";
+      debugPrint("📋 LPM: $fullLpm");
 
       final designerData = _buildDesignerData(customerData);
+      designerData['LpmAutoIncrement'] = fullLpm;
 
-      final jobRef = FirebaseFirestore.instance.collection("jobs").doc(lpm);
+      final jobRef = FirebaseFirestore.instance.collection("jobs").doc(fullLpm);
+      final itemRef = jobRef.collection("items").doc(subOrderNo);
 
       await jobRef.set({
-        "lpm": lpm,
+        "orderNo": fullLpm,
         "currentDepartment": "Designer",
         "visibleTo": ["Designer"],
         "status": "pending_designer_review",
@@ -145,46 +205,54 @@ class _CustomerRequestDetailScreenState
         "updatedAt": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      debugPrint("✅ Job document created: $lpm");
+      await itemRef.set({
+        "fullLpm": fullLpm,
+        "subOrderNo": subOrderNo,
+        "currentDepartment": "Designer",
+        "visibleTo": ["Designer"],
+        "status": "InProgress",
+        "designer": {
+          "submitted": false,
+          "submittedAt": null,
+          "submittedBy": "",
+          "data": designerData,
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      });
 
       await _incrementDemoCounter();
-      debugPrint("✅ Demo counter incremented");
 
       await FirebaseFirestore.instance
           .collection("demo_customer_form")
           .doc(widget.docId)
           .delete();
 
-      debugPrint("✅ Request deleted from demo_customer_form");
+      debugPrint("✅ Done. Navigating to /customer-requests");
 
       if (mounted) {
+        context.go('/customer-requests');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Request accepted! LPM: $lpm'),
+            content: Text('✅ Accepted! LPM: $fullLpm'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
         );
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) context.pop();
       }
     } catch (e) {
-      debugPrint("❌ Error in _acceptRequest: $e");
+      debugPrint("❌ Error: $e");
       if (mounted) {
+        setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
-  // ✅ REJECT LOGIC
   Future<void> _rejectRequest(Map<String, dynamic> customerData) async {
     try {
-      debugPrint("🚫 Starting Reject Request...");
-
       await FirebaseFirestore.instance.collection("rejected_requests").add({
         ...customerData,
         "originalDocId": widget.docId,
@@ -197,9 +265,8 @@ class _CustomerRequestDetailScreenState
           .doc(widget.docId)
           .delete();
 
-      debugPrint("✅ Request rejected and deleted");
-
       if (mounted) {
+        context.go('/customer-requests');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('❌ Request rejected and saved'),
@@ -207,11 +274,8 @@ class _CustomerRequestDetailScreenState
             duration: Duration(seconds: 2),
           ),
         );
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) context.pop();
       }
     } catch (e) {
-      debugPrint("❌ Error in _rejectRequest: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
@@ -223,7 +287,7 @@ class _CustomerRequestDetailScreenState
   void _showConfirmationDialog(Map<String, dynamic> customerData) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text("Confirm Accept"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -237,19 +301,20 @@ class _CustomerRequestDetailScreenState
                 style: const TextStyle(fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
             const Text(
-              "A unique LPM number will be generated automatically.",
+              "A demo LPM number will be generated (demo1, demo2, ...).",
               style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _acceptRequest(customerData);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green, foregroundColor: Colors.white),
             child: const Text("Accept"),
           ),
         ],
@@ -260,7 +325,7 @@ class _CustomerRequestDetailScreenState
   void _showRejectConfirmationDialog(Map<String, dynamic> customerData) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text("Confirm Rejection"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -275,19 +340,20 @@ class _CustomerRequestDetailScreenState
                 style: const TextStyle(fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
             const Text(
-              "This action cannot be undone. The request will be saved in rejected records.",
+              "This action cannot be undone.",
               style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _rejectRequest(customerData);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text("Reject"),
           ),
         ],
@@ -302,7 +368,7 @@ class _CustomerRequestDetailScreenState
         backgroundColor: Colors.blueGrey.shade50,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/customer-requests'),
         ),
         title: const Text('Customer Request Details',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -314,7 +380,6 @@ class _CustomerRequestDetailScreenState
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return const Center(child: Text("Request not found"));
           }
@@ -326,7 +391,6 @@ class _CustomerRequestDetailScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ HEADER
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -363,10 +427,8 @@ class _CustomerRequestDetailScreenState
                             border: Border.all(color: Colors.orange),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text(
-                            "Quotation",
-                            style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
-                          ),
+                          child: const Text("Quotation",
+                              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
                         ),
                     ],
                   ),
@@ -374,7 +436,6 @@ class _CustomerRequestDetailScreenState
 
                 const SizedBox(height: 20),
 
-                // ✅ ACTION BUTTONS
                 Row(
                   children: [
                     Expanded(
@@ -412,7 +473,6 @@ class _CustomerRequestDetailScreenState
 
                 const SizedBox(height: 20),
 
-                // ✅ BASIC INFO
                 _buildSectionHeader("Basic Information"),
                 _buildDetailRow("Job Name", data["jobName"]),
                 _buildDetailRow("Machine Name", data["machineName"]),
@@ -423,7 +483,6 @@ class _CustomerRequestDetailScreenState
 
                 const SizedBox(height: 20),
 
-                // ✅ DIE DETAILS
                 _buildSectionHeader("Die Details"),
                 _buildDetailRow("Cutting Rule", data["cuttingRule"]),
                 _buildDetailRow("Creasing Rule", data["creasingRule"]),
@@ -436,18 +495,15 @@ class _CustomerRequestDetailScreenState
 
                 const SizedBox(height: 20),
 
-                // ✅ MATERIAL
                 _buildSectionHeader("Material Details"),
                 _buildDetailRow("Material To Punch", data["materialToPunch"]),
                 _buildDetailRow("Flute", data["flute"]),
-                _buildDetailRow("Board Compressed Thickness",
-                    data["boardCompressedThickness"]),
+                _buildDetailRow("Board Compressed Thickness", data["boardCompressedThickness"]),
                 _buildDetailRow("Plywood Thickness", data["plywoodThickness"]),
                 _buildDetailRow("Plywood Size Griper", data["plywoodSizeGriper"]),
 
                 const SizedBox(height: 20),
 
-                // ✅ FINISHING
                 _buildSectionHeader("Finishing"),
                 _buildDetailRow("Perforation", data["perforation"]),
                 _buildDetailRow("Rubber Or Without", data["rubberOrWithout"]),
@@ -455,7 +511,6 @@ class _CustomerRequestDetailScreenState
 
                 const SizedBox(height: 20),
 
-                // ✅ METADATA
                 _buildSectionHeader("Metadata"),
                 _buildDetailRow("Submitted At", _formatTimestamp(data["submittedAt"])),
               ],
@@ -477,7 +532,6 @@ class _CustomerRequestDetailScreenState
   Widget _buildDetailRow(String label, dynamic value) {
     final displayValue =
     value == null || value.toString().isEmpty ? "Not specified" : value;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
