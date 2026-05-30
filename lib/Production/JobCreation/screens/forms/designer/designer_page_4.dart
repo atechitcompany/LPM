@@ -262,7 +262,7 @@ class _DesignerPage4State extends State<DesignerPage4> {
                         setState(() {});
                       },
                     ),
-                  ],
+                   ],
                 ),
               ),
             // --- END ALTERNATIVE LPM TOGGLE FEATURE ---
