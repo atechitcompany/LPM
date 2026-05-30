@@ -134,24 +134,3 @@ class _CustomerQuotationDetailScreenState
     );
   }
 }
-
-
-// ══════════════════════════════════════════════════════════════════════════════
-// ROUTE CONFIG — add this GoRoute inside AppRoutes.router routes list
-// (alongside the existing '/customer-quotation-detail/:id' route)
-// ══════════════════════════════════════════════════════════════════════════════
-
-/*
-
-import 'package:lightatech/Features/Dashboard/screens/customer_quotation_form_screen.dart';
-
-// Add this route next to '/customer-quotation-detail/:id':
-
-GoRoute(
-  path: '/customer-quotation-edit/:id',
-  builder: (context, state) => CustomerQuotationFormScreen(
-    docId: state.pathParameters['id']!,
-  ),
-),
-
-*/
