@@ -7,6 +7,8 @@ class PaymentBillTable extends StatefulWidget {
   final String selectedClient;
   final String selectedJob;
   final String lpmNumber;
+  final double clientDiscount;
+  final VoidCallback? onPaymentRecorded;
 
   const PaymentBillTable({
     super.key,
@@ -14,6 +16,8 @@ class PaymentBillTable extends StatefulWidget {
     required this.selectedClient,
     required this.selectedJob,
     required this.lpmNumber,
+    this.clientDiscount = 0.0,
+    this.onPaymentRecorded,
   });
 
   @override
@@ -137,7 +141,8 @@ class PaymentBillTableState extends State<PaymentBillTable> {
   double get _gstAmount => _selectedGST == "No GST" ? 0.0 : _totalAmount * 0.18;
   double get _cgstAmount => _gstAmount / 2;
   double get _sgstAmount => _gstAmount / 2;
-  double get _finalAmount => _totalAmount + _gstAmount;
+  double get _discountAmount => widget.clientDiscount > 0 ? (_totalAmount + _gstAmount) * (widget.clientDiscount / 100) : 0.0;
+  double get _finalAmount => _totalAmount + _gstAmount - _discountAmount;
 
   void _onDateSelected(int index, DateTime picked) {
     setState(() {
@@ -284,12 +289,15 @@ class PaymentBillTableState extends State<PaymentBillTable> {
         "lpmNumber": widget.lpmNumber, "gstType": _selectedGST,
         "subTotal": _totalAmount, "gstAmount": _gstAmount,
         "cgstAmount": _cgstAmount, "sgstAmount": _sgstAmount,
+        "discountPercent": widget.clientDiscount,
+        "discountAmount": _discountAmount,
         "grandTotal": _finalAmount, "materials": materialsData,
         "installments": installments, "createdAt": FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("✅ Payment recorded!")));
+        widget.onPaymentRecorded?.call();
         Navigator.pop(context);
       }
     } catch (e) {
@@ -690,6 +698,27 @@ class PaymentBillTableState extends State<PaymentBillTable> {
             ),
             child: Column(
               children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text("Sub Total", style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                  Text("₹${_totalAmount.toStringAsFixed(2)}", style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                ]),
+                if (_selectedGST != "No GST") ...[
+                  const SizedBox(height: 4),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text("GST", style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                    Text("₹${_gstAmount.toStringAsFixed(2)}", style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                  ]),
+                ],
+                if (widget.clientDiscount > 0) ...[
+                  const SizedBox(height: 4),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text("Special Discount (${widget.clientDiscount.toStringAsFixed(0)}%)",
+                        style: TextStyle(fontSize: 14, color: Colors.orange.shade700, fontWeight: FontWeight.w500)),
+                    Text("- ₹${_discountAmount.toStringAsFixed(2)}",
+                        style: TextStyle(fontSize: 14, color: Colors.orange.shade700, fontWeight: FontWeight.w500)),
+                  ]),
+                ],
+                const Divider(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Text("Grand Total", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
                   Text("₹${_finalAmount.toStringAsFixed(2)}",

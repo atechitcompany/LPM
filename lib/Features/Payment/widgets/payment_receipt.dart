@@ -53,7 +53,7 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
     if (rupees >= 1000) { result += '${convert(rupees ~/ 1000)} Thousand '; rupees %= 1000; }
     result += convert(rupees);
     result = result.trim();
-    if (paise > 0) result += ' and $paise/100';
+    if (paise > 0) result += ' and ${convert(paise)} Paise';
     return 'INR $result Only';
   }
 
@@ -219,8 +219,21 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
         borderRow([
           cell('', flex: 6),
           cell('TOTAL', bold: true, flex: 3),
-          cell('₹ ${_grandTotal.toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
+          cell('₹ ${(_subTotal + _gstAmount).toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
         ], bg: headerGrey),
+        if ((widget.data["discountAmount"] ?? 0.0) > 0) ...[
+          borderRow([
+            cell('', flex: 6),
+            cell('Special Discount (${(widget.data["discountPercent"] ?? 0).toStringAsFixed(0)}%)', bold: true, flex: 3),
+            cell('- ₹ ${(widget.data["discountAmount"] as num).toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
+          ]),
+          borderRow([
+            cell('', flex: 6),
+            cell('NET TOTAL', bold: true, flex: 3),
+            cell('₹ ${_grandTotal.toStringAsFixed(2)}', bold: true, flex: 2, align: pw.Alignment.centerRight),
+          ], bg: headerGrey),
+        ],
+
         pw.SizedBox(height: 4),
         pw.Container(
           decoration: pw.BoxDecoration(border: pw.Border.all(color: borderColor)),
