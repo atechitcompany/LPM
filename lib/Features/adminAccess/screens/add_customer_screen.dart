@@ -185,28 +185,28 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             buildTextField("Email A4", emailA4Controller),
             buildTextField("Address", addressController),
             buildTextField("Discount (%)", discountController, isNumber: true),
-            const SizedBox(height: 10),
+            // const SizedBox(height: 10),
 
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Delivery Agents",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            // const Align(
+            //   alignment: Alignment.centerLeft,
+            //   child: Text(
+            //     // "Delivery Agents",
+            //     style: TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.bold,
+            //     ),
+            //   ),
+            // ),
 
-            const SizedBox(height: 12),
+            // const SizedBox(height: 12),
 
             buildTextField(
-              "Agent Name",
+              "Delivery Agent Name",
               agentNameController,
             ),
 
             buildTextField(
-              "Agent Contact",
+              "Delivery Agent Contact",
               agentContactController,
               isNumber: true,
             ),

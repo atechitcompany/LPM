@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lightatech/core/theme/theme_provider.dart';
+import 'package:lightatech/core/session/session_manager.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -12,25 +13,72 @@ class BottomNavBar extends StatelessWidget {
     required this.onNavTap,
   });
 
-  static const List<IconData> _icons = [
-    Icons.home_outlined,
-    Icons.map_outlined,
-    Icons.chat_outlined,
-    Icons.auto_graph_outlined,
-    Icons.golf_course,
-  ];
-
-  static const List<String> _labels = [
-    "Home",
-    "Map",
-    "Payment",
-    "Graph",
-    "Target",
-  ];
+  // static const List<IconData> _icons = [
+  //   Icons.home_outlined,
+  //   Icons.map_outlined,
+  //   Icons.chat_outlined,
+  //   Icons.auto_graph_outlined,
+  //   Icons.golf_course,
+  // ];
+  //
+  // static const List<String> _labels = [
+  //   "Home",
+  //   "Map",
+  //   "Payment",
+  //   "Graph",
+  //   "Target",
+  // ];
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final dept = SessionManager.getDepartment();
+
+    final isAdmin = dept == "Admin";
+    final isAccount = dept == "Account";
+
+
+    final icons = isAdmin
+        ? [
+      Icons.home_outlined,
+      Icons.map_outlined,
+      Icons.chat_outlined,
+      Icons.auto_graph_outlined,
+      Icons.golf_course,
+    ]
+        : isAccount
+        ? [
+      Icons.home_outlined,
+      Icons.map_outlined,
+      Icons.chat_outlined,
+      Icons.golf_course,
+    ]
+        : [
+      Icons.home_outlined,
+      Icons.map_outlined,
+      Icons.golf_course,
+    ];
+
+    final labels = isAdmin
+        ? [
+      "Home",
+      "Map",
+      "Payment",
+      "Graph",
+      "Target",
+    ]
+        : isAccount
+        ? [
+      "Home",
+      "Map",
+      "Payment",
+      "Target",
+    ]
+        : [
+      "Home",
+      "Map",
+      "Target",
+    ];
     final isDark = themeProvider.isDarkMode;
 
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -52,7 +100,7 @@ class BottomNavBar extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_icons.length, (index) {
+          children: List.generate(icons.length, (index) {
             final isSelected = currentIndex == index;
 
             return Flexible(
@@ -76,12 +124,16 @@ class BottomNavBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(_icons[index], size: 22, color: iconColor),
+                      Icon(
+                        icons[index],
+                        size: 22,
+                        color: iconColor,
+                      ),
                       if (isSelected) ...[
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            _labels[index],
+                            labels[index],
                             overflow: TextOverflow.ellipsis,
                             softWrap: false,
                             maxLines: 1,

@@ -108,6 +108,20 @@ String _normalizeDepartment(String d) {
 }
 
 // ADMIN ONLY PROTECTION
+String? _paymentAccessRedirect() {
+  if (!SessionManager.isLoggedIn()) {
+    return '/login';
+  }
+
+  final dept = SessionManager.getDepartment();
+
+  if (dept != 'Admin' && dept != 'Account') {
+    return '/dashboard';
+  }
+
+  return null;
+}
+
 String? _adminOnlyRedirect() {
   if (!SessionManager.isLoggedIn()) {
     return '/login';
@@ -327,6 +341,7 @@ class AppRoutes {
           GoRoute(
             path: '/payment',
             name: AppRoutesName.PaymentScreen,
+            redirect: (context, state) => _paymentAccessRedirect(),
             builder: (context, state) => const PaymentPage(),
           ),
 
@@ -348,6 +363,7 @@ class AppRoutes {
 
           GoRoute(
             path: '/graph',
+            redirect: (context, state) => _adminOnlyRedirect(),
             builder: (context, state) => const GraphPage(),
           ),
 
