@@ -14,8 +14,25 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final contactController = TextEditingController();
-  final roleController = TextEditingController();
+  String? selectedRole;
+  final List<String> roles = [
+    "Designer",
+    "LaserCutting",
+    "AutoBending",
+    "ManualBending",
+    "Rubber",
+    "Emboss",
+    "Account",
+    "Delivery",
+    "Admin",
+    "Creasing",
+  ];  // final roleController = TextEditingController();
   final keyController = TextEditingController();
+  final aadhaarController = TextEditingController();
+  final panController = TextEditingController();
+  final bankNameController = TextEditingController();
+  final accountNoController = TextEditingController();
+  final ifscController = TextEditingController();
 
   bool isLoading = false;
 
@@ -36,7 +53,14 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
         "Email": emailController.text.trim(),
         "Password": passwordController.text.trim(),
         "Contact": contactController.text.trim(),
-        "Role": roleController.text.trim(),
+        "Role": selectedRole ?? "",
+        "Aadhaar": aadhaarController.text.trim(),
+        "PAN": panController.text.trim(),
+        "BankDetails": {
+          "BankName": bankNameController.text.trim(),
+          "AccountNo": accountNoController.text.trim(),
+          "IFSC": ifscController.text.trim(),
+        },
         "key": int.tryParse(keyController.text.trim()) ?? 0,
       });
 
@@ -107,7 +131,65 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
             buildTextField("Email", emailController),
             buildTextField("Password", passwordController),
             buildTextField("Contact", contactController),
-            buildTextField("Role", roleController),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String>(
+                value: selectedRole,
+                decoration: InputDecoration(
+                  labelText: "Role",
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFF8D94B),
+                      width: 2,
+                    ),
+                  ),
+                ),
+                items: roles.map((role) {
+                  return DropdownMenuItem(
+                    value: role,
+                    child: Text(role),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedRole = value;
+                  });
+                },
+              ),
+            ),
+            buildTextField("Aadhaar Number", aadhaarController),
+            buildTextField("PAN Number", panController),
+
+            const SizedBox(height: 10),
+
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Bank Details",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            buildTextField("Bank Name", bankNameController),
+            buildTextField("Account Number", accountNoController),
+            buildTextField("IFSC Code", ifscController),
+
             buildTextField("Key", keyController, isNumber: true),
             const SizedBox(height: 20),
             SizedBox(
