@@ -107,6 +107,8 @@ class PaymentBillTableState extends State<PaymentBillTable> {
     return (sum - _finalAmount).abs() < 0.01;
   }
 
+  bool get _allDatesSelected => _paymentDates.every((d) => d != null);
+
   @override
   void dispose() {
     for (final map in _controllers) for (final c in map.values) c.dispose();
@@ -258,6 +260,12 @@ class PaymentBillTableState extends State<PaymentBillTable> {
   }
 
   Future<void> _submitPayment() async {
+    if (!_allDatesSelected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select dates for all payment installments.")),
+      );
+      return;
+    }
     if (widget.lpmNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("LPM number not found.")));
       return;
@@ -268,7 +276,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
       final installments = List.generate(count, (i) => {
         "installmentNumber": i + 1,
         "amount": double.tryParse(_amountControllers[i].text) ?? 0.0,
-        "date": _paymentDates[i] != null ? Timestamp.fromDate(_paymentDates[i]!) : null,
+        "date": Timestamp.fromDate(_paymentDates[i]!),
         "status": _paymentStatuses[i],
       });
 
@@ -296,9 +304,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("✅ Payment recorded!")));
         widget.onPaymentRecorded?.call();
-        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
@@ -638,22 +644,39 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade50,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey.shade300),
+                                    border: Border.all(
+                                      color: _paymentDates[i] == null ? Colors.red.shade300 : Colors.grey.shade300,
+                                      width: _paymentDates[i] == null ? 1.5 : 1.0,
+                                    ),
                                   ),
                                   child: Row(children: [
-                                    Icon(Icons.calendar_today, size: 18, color: Colors.indigo.shade400),
+                                    Icon(Icons.calendar_today, size: 18,
+                                        color: _paymentDates[i] == null ? Colors.red.shade400 : Colors.indigo.shade400),
                                     const SizedBox(width: 12),
                                     Text(
                                       _paymentDates[i] == null
-                                          ? "Select Date"
+                                          ? "Select Date *"
                                           : "${_paymentDates[i]!.day}/${_paymentDates[i]!.month}/${_paymentDates[i]!.year}",
-                                      style: TextStyle(color: _paymentDates[i] == null ? Colors.grey.shade400 : Colors.grey.shade800),
+                                      style: TextStyle(
+                                        color: _paymentDates[i] == null ? Colors.red.shade400 : Colors.grey.shade800,
+                                        fontWeight: _paymentDates[i] == null ? FontWeight.w500 : FontWeight.normal,
+                                      ),
                                     ),
                                     const Spacer(),
-                                    Icon(Icons.arrow_drop_down, color: Colors.grey.shade400),
+                                    Icon(Icons.arrow_drop_down,
+                                        color: _paymentDates[i] == null ? Colors.red.shade300 : Colors.grey.shade400),
                                   ]),
                                 ),
                               ),
+                              if (_paymentDates[i] == null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 4),
+                                  child: Row(children: [
+                                    Icon(Icons.info_outline, size: 12, color: Colors.red.shade400),
+                                    const SizedBox(width: 4),
+                                    Text("Date is required", style: TextStyle(fontSize: 11, color: Colors.red.shade400)),
+                                  ]),
+                                ),
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 value: _paymentStatuses[i],
@@ -736,11 +759,23 @@ class PaymentBillTableState extends State<PaymentBillTable> {
                     ]),
                   ),
                 ],
+                if (!_allDatesSelected && _materials.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade200)),
+                    child: Row(children: [
+                      Icon(Icons.calendar_today, size: 16, color: Colors.red.shade400),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text("Please select dates for all installments", style: TextStyle(color: Colors.red.shade600, fontSize: 12))),
+                    ]),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity, height: 52,
                   child: ElevatedButton(
-                    onPressed: (_isSubmitting || !_amountValid || _materials.isEmpty) ? null : _submitPayment,
+                    onPressed: (_isSubmitting || !_amountValid || _materials.isEmpty || !_allDatesSelected) ? null : _submitPayment,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.indigo,
                       disabledBackgroundColor: Colors.grey.shade300,
