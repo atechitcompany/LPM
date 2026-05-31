@@ -11,6 +11,7 @@ String generateDesignerEmailHtml({
   required String designedBy,
   required String designedByTimestamp,
   String? designFileUrl,
+  List<Map<String, String>>? attachments,
 }) {
   // ── Colors from the reference screenshot ───────────────────────────────
   const headerBg = '#2C3E50';
@@ -28,18 +29,42 @@ String generateDesignerEmailHtml({
 
   // ── Logo URL (replace with your hosted logo) ──────────────────────────
   const logoUrl = 'https://firebasestorage.googleapis.com/v0/b/light-punch-maker-atech1.firebasestorage.app/o/public_assets%2FLPM.jpg?alt=media&token=7f6679c1-11f2-4c80-a705-5863d3255224';
-  final designFileSection = (designFileUrl != null && designFileUrl.isNotEmpty)
-      ? '''
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; border: 1px solid $cardSolidBorder; border-radius: 6px; background-color: #FFFFFF;">
-        <tr>
-          <td style="padding: 24px; text-align: center;">
-            <p style="margin: 0 0 16px 0; font-size: 14px; color: $textPrimary; font-weight: bold; font-family: Arial, sans-serif;">DESIGN DRAWING</p>
-            <a href="$designFileUrl" target="_blank" style="display: inline-block; background-color: $buttonBg; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">📄 View / Download File</a>
-          </td>
-        </tr>
-      </table>
-      '''
-      : '';
+  // --- BEGIN DEPT-WISE EMAIL ATTACHMENTS FILTER ---
+  String designFileSection = '';
+  if (attachments != null && attachments.isNotEmpty) {
+    final buttonsHtml = attachments.map((att) {
+      final label = att['label'] ?? 'View / Download File';
+      final url = att['url'] ?? '';
+      return '''
+      <div style="margin-bottom: 12px;">
+        <a href="$url" target="_blank" style="display: inline-block; background-color: $buttonBg; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">📄 $label</a>
+      </div>
+      ''';
+    }).join('\n');
+
+    designFileSection = '''
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; border: 1px solid $cardSolidBorder; border-radius: 6px; background-color: #FFFFFF;">
+      <tr>
+        <td style="padding: 24px; text-align: center;">
+          <p style="margin: 0 0 16px 0; font-size: 14px; color: $textPrimary; font-weight: bold; font-family: Arial, sans-serif;">Download Designing Files</p>
+          $buttonsHtml
+        </td>
+      </tr>
+    </table>
+    ''';
+  } else if (designFileUrl != null && designFileUrl.isNotEmpty) {
+    designFileSection = '''
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; border: 1px solid $cardSolidBorder; border-radius: 6px; background-color: #FFFFFF;">
+      <tr>
+        <td style="padding: 24px; text-align: center;">
+          <p style="margin: 0 0 16px 0; font-size: 14px; color: $textPrimary; font-weight: bold; font-family: Arial, sans-serif;">DESIGN DRAWING</p>
+          <a href="$designFileUrl" target="_blank" style="display: inline-block; background-color: $buttonBg; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">📄 View / Download File</a>
+        </td>
+      </tr>
+    </table>
+    ''';
+  }
+  // --- END DEPT-WISE EMAIL ATTACHMENTS FILTER ---
 
   // ── Build the full HTML ────────────────────────────────────────────────
   return '''

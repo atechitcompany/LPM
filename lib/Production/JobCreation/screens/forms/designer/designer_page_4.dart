@@ -692,30 +692,49 @@ class _DesignerPage4State extends State<DesignerPage4> {
                                 final emailMainJobId = emailLpm.contains('-')
                                     ? emailLpm.split('-').take(4).join('-')
                                     : emailLpm;
-                                String? designFileUrl;
-                                try {
-                                  final jobDoc = await FirebaseFirestore.instance
-                                      .collection('jobs')
-                                      .doc(emailMainJobId)
-                                      .get();
-                                  designFileUrl = jobDoc.data()?['files']
-                                  ?['DrawingAttachment']?['viewUrl']
-                                      ?.toString();
-                                } catch (_) {}
+                                  // --- BEGIN DEPT-WISE EMAIL ATTACHMENTS FILTER ---
+                                  final List<Map<String, String>> attachments = [];
+                                  try {
+                                    final jobDoc = await FirebaseFirestore.instance
+                                        .collection('jobs')
+                                        .doc(emailMainJobId)
+                                        .get();
+                                    final filesMap = Map<String, dynamic>.from(jobDoc.data()?['files'] ?? {});
+                                    
+                                    if (filesMap['DrawingAttachment']?['viewUrl'] != null) {
+                                      attachments.add({
+                                        'url': filesMap['DrawingAttachment']['viewUrl'].toString(),
+                                        'label': 'Download Design Drawing',
+                                      });
+                                    }
+                                    if (filesMap['RubberReport']?['viewUrl'] != null) {
+                                      attachments.add({
+                                        'url': filesMap['RubberReport']['viewUrl'].toString(),
+                                        'label': 'Download Rubber Report',
+                                      });
+                                    }
+                                    if (filesMap['PunchReport']?['viewUrl'] != null) {
+                                      attachments.add({
+                                        'url': filesMap['PunchReport']['viewUrl'].toString(),
+                                        'label': 'Download Punch Report',
+                                      });
+                                    }
+                                  } catch (_) {}
+                                  // --- END DEPT-WISE EMAIL ATTACHMENTS FILTER ---
 
-                                final htmlBody = generateDesignerEmailHtml(
-                                  partyName: partyName,
-                                  productName: form.ParticularJobName.text,
-                                  lpmNumber: emailLpm,
-                                  orderDate: DateTime.now()
-                                      .toString()
-                                      .split('.')
-                                      .first,
-                                  designedBy: form.DesignedBy.text,
-                                  designedByTimestamp:
-                                  form.DesignedByTimestamp.text,
-                                  designFileUrl: designFileUrl,
-                                );
+                                  final htmlBody = generateDesignerEmailHtml(
+                                    partyName: partyName,
+                                    productName: form.ParticularJobName.text,
+                                    lpmNumber: emailLpm,
+                                    orderDate: DateTime.now()
+                                        .toString()
+                                        .split('.')
+                                        .first,
+                                    designedBy: form.DesignedBy.text,
+                                    designedByTimestamp:
+                                    form.DesignedByTimestamp.text,
+                                    attachments: attachments,
+                                  );
 
                                 final response = await http.post(
                                   Uri.parse(

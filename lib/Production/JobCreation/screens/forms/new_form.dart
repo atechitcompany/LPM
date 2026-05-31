@@ -1554,13 +1554,29 @@ class NewFormState extends State<NewForm> {
                   break;
                 case "Delivery":
                   doneBy = DeliveryCreatedBy.text;
-                  // Try to get delivery drawing attachment
-                  try {
-                    fileUrl = jobData['files']?['DrawingAttachment']?['viewUrl']?.toString();
-                    fileLabel = "DELIVERY ATTACHMENT";
-                  } catch (_) {}
                   break;
               }
+
+              // --- BEGIN DEPT-WISE EMAIL ATTACHMENTS FILTER ---
+              final List<Map<String, String>> attachments = [];
+              if (jobData['files'] != null) {
+                final filesMap = Map<String, dynamic>.from(jobData['files']);
+                if (currentDept == "Delivery") {
+                  if (filesMap['DeliveryBillPhoto']?['viewUrl'] != null) {
+                    attachments.add({
+                      'url': filesMap['DeliveryBillPhoto']['viewUrl'].toString(),
+                      'label': 'Download Delivery Bill Photo',
+                    });
+                  }
+                  if (filesMap['DeliveryProductImage']?['viewUrl'] != null) {
+                    attachments.add({
+                      'url': filesMap['DeliveryProductImage']['viewUrl'].toString(),
+                      'label': 'Download Delivery Product Image',
+                    });
+                  }
+                }
+              }
+              // --- END DEPT-WISE EMAIL ATTACHMENTS FILTER ---
 
               // Generate HTML email using the generic template
               final htmlBody = generateDepartmentEmailHtml(
@@ -1573,8 +1589,7 @@ class NewFormState extends State<NewForm> {
                 actionTimestampLabel: "Done At",
                 actionTimestamp: timestamp,
                 stepStatus: stepStatus,
-                fileUrl: fileUrl,
-                fileLabel: fileLabel,
+                attachments: attachments,
               );
 
               // Call the sendDispatchEmail Cloud Function via HTTP POST
