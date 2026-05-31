@@ -35,6 +35,8 @@ import 'package:lightatech/Features/Dashboard/screens/customer_request_detail_sc
 import 'package:lightatech/Features/Dashboard/screens/customer_requests_screen.dart';
 import 'package:lightatech/Features/Dashboard/screens/pending_form_edit_screen.dart';
 
+import 'package:lightatech/Features/Dashboard/screens/account_quotation_detail_screen.dart';
+
 // Order
 import '../Features/Dashboard/screens/customer_quotation_detail_screen.dart';
 import '../Features/Payment/screens/edit_payment_page.dart';
@@ -53,6 +55,7 @@ import 'package:lightatech/Production/JobCreation/screens/forms/emboss/emboss_pa
 import 'package:lightatech/Production/JobCreation/screens/forms/rubber/rubber_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/delivery/delivery_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/account/account_quotation_form.dart';
+
 
 // Map
 import 'package:lightatech/Features/MapScreen/screens/map_screen.dart';
@@ -311,6 +314,12 @@ class AppRoutes {
               return QuotationDetailScreen(quoteId: id);
             },
           ),
+          GoRoute(
+            path: '/account-quotation-detail/:docId',
+            builder: (context, state) => AccountQuotationDetailScreen(
+              docId: state.pathParameters['docId']!,
+            ),
+          ),
 
           GoRoute(
             path: '/map',
@@ -458,6 +467,12 @@ class AppRoutes {
       GoRoute(
         path: '/account-quotation-form/:docId',
         builder: (context, state) => AccountQuotationForm(
+          docId: state.pathParameters['docId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/account-quotation-detail/:docId',
+        builder: (context, state) => AccountQuotationDetailScreen(
           docId: state.pathParameters['docId']!,
         ),
       ),
