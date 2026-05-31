@@ -8,7 +8,9 @@ import '../../../customer/intro/widgets/order_status_card.dart';
 import '../../../customer/intro/viewmodel/order_detail_viewmodel.dart';
 import 'job_summary_field_config.dart';
 import 'package:intl/intl.dart';
-
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 class JobSummaryScreen extends StatefulWidget {
 
   final String lpm;
@@ -148,6 +150,106 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
     ).trim();
   }
 
+  // --- BEGIN DELIVERY LABEL PRINT UI & PDF LOGIC ---
+  Future<void> _generateAndPrintLabel(Map<String, dynamic> data, String partyName) async {
+    try {
+      final pdf = pw.Document();
+
+      final deliveryData = Map<String, dynamic>.from(data["delivery"]?["data"] ?? {});
+      
+      final String deliveryAddress = (deliveryData["DeliveryAddress"] ?? "").toString().trim();
+      final String contactNumber = (deliveryData["ContactNumber"] ?? "").toString().trim();
+      final String lpmNumber = widget.lpm;
+      
+      final designerData = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+      final String jobName = (designerData["ParticularJobName"] ?? "").toString().trim();
+      final String currentDate = DateFormat('dd MMM yyyy').format(DateTime.now());
+
+      final dispPartyName = partyName.isNotEmpty ? partyName : "N/A";
+      final dispDeliveryAddress = deliveryAddress.isNotEmpty ? deliveryAddress : "N/A";
+      final dispContactNumber = contactNumber.isNotEmpty ? contactNumber : "N/A";
+      final dispJobName = jobName.isNotEmpty ? jobName : "N/A";
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a6,
+          build: (pw.Context context) {
+            return pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  pw.Center(
+                    child: pw.Column(
+                      children: [
+                        pw.Text("LIGHT PUNCH MAKER", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 2),
+                        pw.Text("Wooden Punch Maker", style: const pw.TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: 15),
+                  pw.Divider(thickness: 1),
+                  pw.SizedBox(height: 10),
+
+                  // Deliver To
+                  pw.Text("DELIVER TO:", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 8),
+                  pw.Text("Party Name: $dispPartyName", style: const pw.TextStyle(fontSize: 12)),
+                  pw.SizedBox(height: 4),
+                  pw.Text("Address: $dispDeliveryAddress", style: const pw.TextStyle(fontSize: 12)),
+                  pw.SizedBox(height: 4),
+                  pw.Text("Contact: $dispContactNumber", style: const pw.TextStyle(fontSize: 12)),
+                  pw.SizedBox(height: 15),
+
+                  // Job Details
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(width: 1, color: PdfColors.black),
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text("Tracking ID: $lpmNumber", style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 4),
+                        pw.Text("Job Name: $dispJobName", style: const pw.TextStyle(fontSize: 12)),
+                        pw.SizedBox(height: 4),
+                        pw.Text("Date: $currentDate", style: const pw.TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+
+                  pw.Spacer(),
+                  pw.Divider(thickness: 1),
+                  pw.SizedBox(height: 8),
+
+                  // Footer
+                  pw.Text("From: Light Punch Maker", style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("Gala No. F-16 & F-17, Vasai (East), Dist. Palghar 401-208", style: const pw.TextStyle(fontSize: 9)),
+                  pw.Text("Mob: 9320033034 / 9320033035", style: const pw.TextStyle(fontSize: 9)),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: 'LPM-$lpmNumber-Label.pdf',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Error generating PDF: $e"), backgroundColor: Colors.red),
+      );
+    }
+  }
+  // --- END DELIVERY LABEL PRINT UI & PDF LOGIC ---
+
   @override
   Widget build(BuildContext context) {
     final currentDept = SessionManager.getDepartment() ?? "";
@@ -246,6 +348,66 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
                 ),
 
                 const SizedBox(height: 16),
+
+                // --- BEGIN DELIVERY LABEL PRINT UI & PDF LOGIC ---
+                if (currentDept.toLowerCase() == 'delivery') ...[
+                  Builder(
+                    builder: (context) {
+                      final deliveryData = Map<String, dynamic>.from(data["delivery"]?["data"] ?? {});
+                      final receiverName = (deliveryData["ReceiverName"] ?? "").toString().trim();
+                      final deliveryAddress = (deliveryData["DeliveryAddress"] ?? "").toString().trim();
+                      final contactNumber = (deliveryData["ContactNumber"] ?? "").toString().trim();
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _generateAndPrintLabel(data, partyName),
+                                icon: const Icon(Icons.print, color: Colors.white),
+                                label: const Text("Print Delivery Label", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1E88E5),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text("DELIVERY ADDRESS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(partyName.isNotEmpty ? partyName : "No Party Name", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  const SizedBox(height: 4),
+                                  Text(receiverName.isNotEmpty ? receiverName : "No Receiver Name", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                                  const SizedBox(height: 4),
+                                  Text(deliveryAddress.isNotEmpty ? deliveryAddress : "No Delivery Address", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                                  const SizedBox(height: 4),
+                                  Text(contactNumber.isNotEmpty ? "Contact: $contactNumber" : "No Contact Number", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                // --- END DELIVERY LABEL PRINT UI & PDF LOGIC ---
 
                 if (filesMap.isNotEmpty) ...[
                   _buildAttachmentsRow(context, filesMap),
