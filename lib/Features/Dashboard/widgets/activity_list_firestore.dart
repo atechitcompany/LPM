@@ -215,13 +215,33 @@ class _FirestoreTabState extends State<_FirestoreTab> {
     if (_isLoadingMore || !_hasMore || _lastDoc == null) return;
     setState(() => _isLoadingMore = true);
 
-    String queryDept = widget.department == "Lasercut" ? "LaserCutting" : widget.department;
-    Query query = FirebaseFirestore.instance
-        .collection("jobs")
-        .where("visibleTo", arrayContains: queryDept)
-        .orderBy("updatedAt", descending: true)
-        .startAfterDocument(_lastDoc!)
-        .limit(20);
+    // --- BEGIN ACCOUNTANT JOBS VISIBILITY FIX ---
+    Query query;
+    if (widget.department == "Account") {
+      query = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("visibleTo", arrayContainsAny: [
+            "AutoBending", 
+            "ManualBending", 
+            "LaserCutting", 
+            "Rubber", 
+            "Emboss", 
+            "Account", 
+            "Delivery"
+          ])
+          .orderBy("updatedAt", descending: true)
+          .startAfterDocument(_lastDoc!)
+          .limit(20);
+    } else {
+      String queryDept = widget.department == "Lasercut" ? "LaserCutting" : widget.department;
+      query = FirebaseFirestore.instance
+          .collection("jobs")
+          .where("visibleTo", arrayContains: queryDept)
+          .orderBy("updatedAt", descending: true)
+          .startAfterDocument(_lastDoc!)
+          .limit(20);
+    }
+    // --- END ACCOUNTANT JOBS VISIBILITY FIX ---
     final snap = await query.get();
     if (snap.docs.isNotEmpty) {
       _olderDocs.addAll(snap.docs);
@@ -283,12 +303,30 @@ class _FirestoreTabState extends State<_FirestoreTab> {
     } else if (widget.department == "Designer" && !widget.isPending) {
       _stream = FirebaseFirestore.instance.collection("jobs").where("visibleTo", arrayContains: "Designer").where("designer.data.DesigningStatus", isEqualTo: "Done").orderBy("updatedAt", descending: true).limit(20).snapshots();
     } else {
-      // All other departments
-      _stream = FirebaseFirestore.instance
-          .collection("jobs")
-          .where("visibleTo", arrayContains: queryDept)
-          .orderBy("updatedAt", descending: true)
-          .limit(20).snapshots();
+      // --- BEGIN ACCOUNTANT JOBS VISIBILITY FIX ---
+      if (widget.department == "Account") {
+        _stream = FirebaseFirestore.instance
+            .collection("jobs")
+            .where("visibleTo", arrayContainsAny: [
+              "AutoBending", 
+              "ManualBending", 
+              "LaserCutting", 
+              "Rubber", 
+              "Emboss", 
+              "Account", 
+              "Delivery"
+            ])
+            .orderBy("updatedAt", descending: true)
+            .limit(20).snapshots();
+      } else {
+        // All other departments
+        _stream = FirebaseFirestore.instance
+            .collection("jobs")
+            .where("visibleTo", arrayContains: queryDept)
+            .orderBy("updatedAt", descending: true)
+            .limit(20).snapshots();
+      }
+      // --- END ACCOUNTANT JOBS VISIBILITY FIX ---
       }
   }
 
