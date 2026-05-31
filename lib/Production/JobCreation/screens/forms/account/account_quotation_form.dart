@@ -75,7 +75,8 @@ class _AccountQuotationFormState extends State<AccountQuotationForm> {
         "quotationSentTo": toEmail,
         "quotationSentAt": FieldValue.serverTimestamp(),
         "createdAt": FieldValue.serverTimestamp(),
-      });
+        "updatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
       await FirebaseFirestore.instance.collection("quotation_pending").doc(widget.docId).delete();
 
       if (mounted) {
