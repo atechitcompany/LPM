@@ -51,7 +51,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       if (snap.exists) {
         final designer = Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
         _partyName = designer["PartyName"] ?? "";
-        _jobName = designer["ParticularJobName"] ?? "";
+        _jobName = designer["particularJobName"] ?? "";
       }
     } catch (e) {
       debugPrint("❌ Error loading data: $e");

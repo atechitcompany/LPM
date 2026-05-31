@@ -439,7 +439,7 @@ class AppRoutes {
             builder: (_, __) => const RubberPage(),
           ),
           GoRoute(
-            path: '/jobform/account1',
+            path: '/jobform/account-1',
             builder: (_, __) => const AccountFormFlow(),
           ),
           GoRoute(
