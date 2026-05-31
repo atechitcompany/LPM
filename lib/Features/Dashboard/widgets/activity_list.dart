@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/common/utils/date_grouping_util.dart';
 
 /// Pure UI widget.
 /// Receives already-filtered [docs] from ActivityListFirestore.
@@ -78,14 +79,18 @@ class ActivityList extends StatelessWidget {
 
           // ── List ──────────────────────────────────────────────────────
           Expanded(
-            child: ListView.builder(
-              controller: scrollController,
-              padding: const EdgeInsets.only(bottom: 6),
-              itemCount:
-              docs.length + (hasMore || isLoadingMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                // Bottom loader
-                if (index == docs.length) {
+            child: Builder(
+              builder: (context) {
+                final groupedDocs = DateGroupingUtil.groupDataByDate(docs);
+                final groupedKeys = groupedDocs.keys.toList();
+                
+                return ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.only(bottom: 6),
+                  itemCount: groupedKeys.length + (hasMore || isLoadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    // Bottom loader
+                    if (index == groupedKeys.length) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Center(
@@ -100,159 +105,205 @@ class ActivityList extends StatelessWidget {
                       )
                           : const SizedBox.shrink(),
                     ),
-                  );
-                }
+                    );
+                  }
 
-                final data =
-                docs[index].data() as Map<String, dynamic>;
-                final designerData =
-                    data["designer"]?["data"] ?? {};
-                final lpm = docs[index].id;
+                  final dateKey = groupedKeys[index];
+                  final groupItems = groupedDocs[dateKey]!;
 
-                // ── Display fields ─────────────────────────────────────
-                final String partyName =
-                (designerData["partyName"] ??
-                    designerData["PartyName"] ??
-                    "No Party")
-                    .toString();
-
-                // ── Priority for left circle ───────────────────────────
-                final String rawPriority =
-                (designerData["priority"] ??
-                    designerData["Priority"] ??
-                    "")
-                    .toString();
-                final _PriorityStyle priority =
-                _resolvePriority(rawPriority);
-
-                // ── Dynamic department pill ────────────────────────────
-                final String currentDept =
-                _resolveCurrentDepartment(data);
-                final Color deptColor = _resolveDeptTextColor(currentDept);
-
-                return InkWell(
-                  // Both pending and jobs go to job-summary
-                  onTap: () =>
-                      context.push('/job-summary/$lpm'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border(
-                        bottom: BorderSide(
-                            color: Colors.grey.shade100, width: 1),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // ── Priority Circle ─────────────────────────
-                        _PriorityCircle(
-                          label: priority.label,
-                          bgColor: priority.bgColor,
-                          textColor: priority.textColor,
-                        ),
-                        const SizedBox(width: 14),
-
-                        // ── LPM + Party Name ───────────────────────
-                        Expanded(
-                          child: Text(
-                            '$lpm  -  $partyName',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13.5,
-                              color: Color(0xFF1A3A5C),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // ── Right side: Dept pill + Call + WhatsApp ──
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- BEGIN DATE-WISE GROUPING UI ---
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
                           children: [
-                            // Department badge (white bg + colored border + colored text)
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 110),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: deptColor,
-                                    width: 1.4,
-                                  ),
-                                ),
-                                child: Text(
-                                  currentDept,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: deptColor,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                            const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFF6A7B8C)),
+                            const SizedBox(width: 8),
+                            Text(
+                              dateKey,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF4A5568),
                               ),
                             ),
-                            const SizedBox(width: 8),
-
-                            // Call icon
-                            GestureDetector(
-                              onTap: () {
-                                // Call action placeholder
-                              },
-                              child: SizedBox(
-                                width: 34,
-                                height: 34,
-                                child: Center(
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF54A5D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.phone,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE2E8F0),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-
-                            // WhatsApp icon
-                            GestureDetector(
-                              onTap: () {
-                                // WhatsApp action placeholder
-                              },
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/TextWhatsappLogo.png',
-                                  width: 40,
-                                  height: 39,
-                                  fit: BoxFit.cover,
+                              child: Text(
+                                "${groupItems.length} Entries",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2D3748),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      ),
+                      // --- END DATE-WISE GROUPING UI ---
+                      
+                      ...groupItems.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final designerData = data["designer"]?["data"] ?? {};
+                        final lpm = doc.id;
+
+                        // ── Display fields ─────────────────────────────────────
+                        final String partyName =
+                        (designerData["partyName"] ??
+                            designerData["PartyName"] ??
+                            "No Party")
+                            .toString();
+
+                        // ── Priority for left circle ───────────────────────────
+                        final String rawPriority =
+                        (designerData["priority"] ??
+                            designerData["Priority"] ??
+                            "")
+                            .toString();
+                        final _PriorityStyle priority =
+                        _resolvePriority(rawPriority);
+
+                        // ── Dynamic department pill ────────────────────────────
+                        final String currentDept =
+                        _resolveCurrentDepartment(data);
+                        final Color deptColor = _resolveDeptTextColor(currentDept);
+
+                        return InkWell(
+                          // Both pending and jobs go to job-summary
+                          onTap: () =>
+                              context.push('/job-summary/$lpm'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border(
+                                bottom: BorderSide(
+                                    color: Colors.grey.shade100, width: 1),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // ── Priority Circle ─────────────────────────
+                                _PriorityCircle(
+                                  label: priority.label,
+                                  bgColor: priority.bgColor,
+                                  textColor: priority.textColor,
+                                ),
+                                const SizedBox(width: 14),
+
+                                // ── LPM + Party Name ───────────────────────
+                                Expanded(
+                                  child: Text(
+                                    '$lpm  -  $partyName',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13.5,
+                                      color: Color(0xFF1A3A5C),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+
+                                // ── Right side: Dept pill + Call + WhatsApp ──
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Department badge (white bg + colored border + colored text)
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(maxWidth: 110),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: deptColor,
+                                            width: 1.4,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          currentDept,
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: deptColor,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // Call icon
+                                    GestureDetector(
+                                      onTap: () {
+                                        // Call action placeholder
+                                      },
+                                      child: SizedBox(
+                                        width: 34,
+                                        height: 34,
+                                        child: Center(
+                                          child: Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF54A5D9),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.phone,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // WhatsApp icon
+                                    GestureDetector(
+                                      onTap: () {
+                                        // WhatsApp action placeholder
+                                      },
+                                      child: ClipOval(
+                                        child: Image.asset(
+                                          'assets/TextWhatsappLogo.png',
+                                          width: 40,
+                                          height: 39,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
           ),
         ],
       ),

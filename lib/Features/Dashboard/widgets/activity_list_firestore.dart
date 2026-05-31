@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'activity_list.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lightatech/common/utils/date_grouping_util.dart';
 
 class ActivityListFirestore extends StatefulWidget {
   final String searchText;
@@ -343,25 +344,73 @@ class _QuotationsTab extends StatelessWidget {
           ]));
         }
 
+        final groupedDocs = DateGroupingUtil.groupDataByDate(filtered);
+        final groupedKeys = groupedDocs.keys.toList();
+
         return ListView.builder(
           padding: const EdgeInsets.all(12),
-          itemCount: filtered.length,
+          itemCount: groupedKeys.length,
           itemBuilder: (context, index) {
-            final doc = filtered[index];
-            final data = doc.data() as Map<String, dynamic>;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              child: ListTile(
-                onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
-                title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFF8D94B).withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
-                  child: const Text("DONE", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+            final dateKey = groupedKeys[index];
+            final groupItems = groupedDocs[dateKey]!;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- BEGIN DATE-WISE GROUPING UI ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFF6A7B8C)),
+                      const SizedBox(width: 8),
+                      Text(
+                        dateKey,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4A5568),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "${groupItems.length} Entries",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                // --- END DATE-WISE GROUPING UI ---
+
+                ...groupItems.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    child: ListTile(
+                      onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
+                      title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: const Color(0xFFF8D94B).withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                        child: const Text("DONE", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
             );
           },
         );
@@ -407,25 +456,73 @@ class _QuotationPendingTab extends StatelessWidget {
           ]));
         }
 
+        final groupedDocs = DateGroupingUtil.groupDataByDate(filtered);
+        final groupedKeys = groupedDocs.keys.toList();
+
         return ListView.builder(
           padding: const EdgeInsets.all(12),
-          itemCount: filtered.length,
+          itemCount: groupedKeys.length,
           itemBuilder: (context, index) {
-            final doc = filtered[index];
-            final data = doc.data() as Map<String, dynamic>;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              child: ListTile(
-                onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
-                title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                  child: const Text("PENDING", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+            final dateKey = groupedKeys[index];
+            final groupItems = groupedDocs[dateKey]!;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- BEGIN DATE-WISE GROUPING UI ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFF6A7B8C)),
+                      const SizedBox(width: 8),
+                      Text(
+                        dateKey,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4A5568),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "${groupItems.length} Entries",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                // --- END DATE-WISE GROUPING UI ---
+
+                ...groupItems.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    child: ListTile(
+                      onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
+                      title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                        child: const Text("PENDING", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
             );
           },
         );
