@@ -7,12 +7,18 @@ class FileUploadBox extends StatefulWidget {
   final Function(PlatformFile) onFileSelected;
   final String jobId;
   final String fieldName;
+  // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
+  final String? initialFileName;
+  // --- END MULTI-STEP ATTACHMENT STATE FIX ---
 
   const FileUploadBox({
     super.key,
     required this.onFileSelected,
     required this.jobId,
     required this.fieldName,
+    // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
+    this.initialFileName,
+    // --- END MULTI-STEP ATTACHMENT STATE FIX ---
   });
 
   @override
@@ -22,6 +28,24 @@ class FileUploadBox extends StatefulWidget {
 class _FileUploadBoxState extends State<FileUploadBox> {
   bool _isUploading = false;
   String? _uploadedFileName;
+
+  // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
+  @override
+  void initState() {
+    super.initState();
+    _uploadedFileName = widget.initialFileName;
+  }
+
+  @override
+  void didUpdateWidget(covariant FileUploadBox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialFileName != oldWidget.initialFileName) {
+      setState(() {
+        _uploadedFileName = widget.initialFileName;
+      });
+    }
+  }
+  // --- END MULTI-STEP ATTACHMENT STATE FIX ---
 
   Future<void> _pickAndUpload(BuildContext context) async {
     final result = await FilePicker.platform.pickFiles(

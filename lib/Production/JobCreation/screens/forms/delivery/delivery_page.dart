@@ -223,21 +223,37 @@ class _DeliveryPageState extends State<DeliveryPage> {
             // ── Bill Photo / Invoice ──────────────────────────────────────
             _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _label("Bill Photo / Invoice (PDF or Image)"),
+              // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
               FileUploadBox(
                 jobId: lpmParam,
                 fieldName: 'BillInvoice',
-                onFileSelected: (file) => debugPrint("Bill: ${file.name}"),
+                initialFileName: form.selectedFiles['BillInvoice'],
+                onFileSelected: (file) {
+                  setState(() {
+                    form.selectedFiles['BillInvoice'] = file.name;
+                  });
+                  debugPrint("Bill: ${file.name}");
+                },
               ),
+              // --- END MULTI-STEP ATTACHMENT STATE FIX ---
             ])),
 
             // ── Product Photo ─────────────────────────────────────────────
             _fieldCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _label("Product Photo (Image only)"),
+              // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
               FileUploadBox(
                 jobId: lpmParam,
                 fieldName: 'ProductPhoto',
-                onFileSelected: (file) => debugPrint("Product: ${file.name}"),
+                initialFileName: form.selectedFiles['ProductPhoto'],
+                onFileSelected: (file) {
+                  setState(() {
+                    form.selectedFiles['ProductPhoto'] = file.name;
+                  });
+                  debugPrint("Product: ${file.name}");
+                },
               ),
+              // --- END MULTI-STEP ATTACHMENT STATE FIX ---
             ])),
 
             // ── Delivery Status ───────────────────────────────────────────
