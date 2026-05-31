@@ -18,6 +18,7 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
   List<String> selectedJobs = [];
   Map<String, String> jobLpmMap = {};
   bool isLoadingJobs = false;
+  double _clientDiscount = 0.0;
 
   final PaymentMaterialService _paymentMaterialService = PaymentMaterialService();
   List<PaymentMaterialModel> billMaterials = [];
@@ -171,7 +172,7 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
 
   Future<void> fetchJobsForClient(String clientName) async {
     if (clientName == "No" || clientName.trim().isEmpty) {
-      setState(() { filteredJobs = []; selectedJobs = []; jobLpmMap = {}; billMaterials = []; });
+      setState(() { filteredJobs = []; selectedJobs = []; jobLpmMap = {}; billMaterials = []; _clientDiscount = 0.0; });
       return;
     }
     setState(() { isLoadingJobs = true; });
@@ -182,22 +183,61 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
           .get();
 
       final paymentsSnapshot = await FirebaseFirestore.instance.collection("payments").get();
-      final recordedLpms = paymentsSnapshot.docs.map((d) => d.id).toSet();
+      final recordedLpms = <String>{};
+      for (final doc in paymentsSnapshot.docs) {
+        // Split combined IDs like "LPM1_LPM2_LPM3" into individual LPMs
+        for (final part in doc.id.split("_")) {
+          if (part.isNotEmpty) recordedLpms.add(part);
+        }
+        // Also check lpmNumber field in case it differs from doc ID
+        final lpmField = (doc.data()["lpmNumber"] ?? "").toString();
+        for (final part in lpmField.split("_")) {
+          if (part.isNotEmpty) recordedLpms.add(part);
+        }
+      }
 
-      final List<String> jobs = [];
-      final Map<String, String> lpmMap = {};
+      final customerSnapshot = await FirebaseFirestore.instance
+          .collection("customers")
+          .where("Party Names", isEqualTo: clientName)
+          .limit(1)
+          .get();
+
+      if (customerSnapshot.docs.isNotEmpty) {
+        final customerData = customerSnapshot.docs.first.data();
+        _clientDiscount = (customerData["Discount"] ?? 0.0).toDouble();
+      } else {
+        _clientDiscount = 0.0;
+      }
+
+      final Map<String, String> lpmToJobName = {};
+      final Set<String> seenLpms = {};
+
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final designerData = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
         final jobName = (designerData["particularJobName"] ?? "").toString().trim();
         final lpm = (designerData["LPMNumber"] ?? designerData["lpmNumber"] ?? designerData["lpm"] ?? "").toString().trim();
         final docId = lpm.isNotEmpty ? lpm : doc.id;
-        if (jobName.isNotEmpty && !recordedLpms.contains(docId)) {
-          jobs.add(jobName);
-          lpmMap[jobName] = docId;
+
+        if (jobName.isNotEmpty && !recordedLpms.contains(docId) && !seenLpms.contains(docId)) {
+          seenLpms.add(docId);
+          lpmToJobName[docId] = jobName;
         }
       }
-      jobs.sort();
+
+      // Sort LPM numbers descending (latest first)
+      final sortedLpms = lpmToJobName.keys.toList()
+        ..sort((a, b) => b.compareTo(a));
+
+      final List<String> jobs = [];
+      final Map<String, String> lpmMap = {};
+
+      for (final lpm in sortedLpms) {
+        final jobName = lpmToJobName[lpm]!;
+        jobs.add(jobName);
+        lpmMap[jobName] = lpm;
+      }
+
       setState(() { filteredJobs = jobs; jobLpmMap = lpmMap; selectedJobs = []; isLoadingJobs = false; });
     } catch (e) {
       debugPrint("❌ Error fetching jobs: $e");
@@ -312,6 +352,8 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
                   selectedClient: selectedClient,
                   selectedJob: selectedJobs.join(", "),
                   lpmNumber: combinedLpmNumber,
+                  clientDiscount: _clientDiscount,
+                  onPaymentRecorded: () => fetchJobsForClient(selectedClient),
                 ),
             ],
           ),
