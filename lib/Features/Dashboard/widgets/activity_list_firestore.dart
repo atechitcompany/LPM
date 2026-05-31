@@ -304,7 +304,11 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           return const Center(child: CircularProgressIndicator());
         }
         final latestDocs = List<QueryDocumentSnapshot>.from(snapshot.data?.docs ?? []);
-        if (latestDocs.isNotEmpty) _lastDoc = latestDocs.last;
+        if (_olderDocs.isNotEmpty) {
+          _lastDoc = _olderDocs.last;
+        } else if (latestDocs.isNotEmpty) {
+          _lastDoc = latestDocs.last;
+        }
         final Map<String, QueryDocumentSnapshot> uniqueDocs = {};
         for (var d in latestDocs) uniqueDocs[d.id] = d;
         for (var d in _olderDocs) uniqueDocs[d.id] = d;
@@ -312,7 +316,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
         final query = widget.searchText.trim().toLowerCase();
         final filtered = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          final designer = (data["designer"]?["data"] ?? {}) as Map<String, dynamic>;
+          final designer = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
           final matchesSearch = doc.id.toLowerCase().contains(query) ||
               (designer["PartyName"] ?? "").toString().toLowerCase().contains(query) ||
               (designer["ParticularJobName"] ?? "").toString().toLowerCase().contains(query);
@@ -321,11 +325,16 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           final approvalStatus = (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
           
           if (widget.department == "Delivery") {
-            final deliveryStatus = (data["status"] ?? "").toString().toLowerCase();
+            final deliveryData = Map<String, dynamic>.from(data["delivery"]?["data"] ?? {});
+            final deliveryStatus = (deliveryData["DeliveryStatus"] ?? "").toString().toLowerCase();
+            final jobDone = (deliveryData["JobDone"] ?? "").toString().toLowerCase();
+            
+            final isCompleted = deliveryStatus == "done" || jobDone == "yes" || (data["currentDepartment"] == "Completed");
+            
             if (widget.isPending) {
-              if (deliveryStatus == "delivered") return false;
+              if (isCompleted) return false;
             } else {
-              if (deliveryStatus != "delivered") return false;
+              if (!isCompleted) return false;
             }
             return true;
           }
@@ -350,6 +359,14 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           
           return true;
         }).toList();
+
+        // Automatically fetch more if frontend filtering aggressively reduced the list
+        if (filtered.length < 10 && _hasMore && !_isLoadingMore) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _loadMore();
+          });
+        }
+
         return ActivityList(
           docs: filtered,
           isPending: widget.isPending,
