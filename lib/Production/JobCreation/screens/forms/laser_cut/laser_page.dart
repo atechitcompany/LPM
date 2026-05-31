@@ -90,6 +90,17 @@ class _LaserPageState extends State<LaserPage> {
 
     laserDone = form.LaserCuttingStatus.text.toLowerCase() == "done";
 
+    if (laserDone && form.LaserCuttingCreatedByName.text.isEmpty) {
+      _getCurrentUserName().then((userName) {
+        if (mounted) {
+          setState(() {
+            form.LaserCuttingCreatedByName.text = userName;
+            form.LaserCuttingCreatedByTimestamp.text = DateTime.now().toString();
+          });
+        }
+      });
+    }
+
     setState(() => loading = false);
   }
 
@@ -294,6 +305,12 @@ class _LaserPageState extends State<LaserPage> {
                         .trim()
                         .toLowerCase() ==
                         "done";
+
+                    if (isDone && form.LaserCuttingCreatedByName.text.isEmpty) {
+                      final userName = await _getCurrentUserName();
+                      form.LaserCuttingCreatedByName.text = userName;
+                      form.LaserCuttingCreatedByTimestamp.text = DateTime.now().toString();
+                    }
 
                     final updateData = {
                       "laserCutting": {

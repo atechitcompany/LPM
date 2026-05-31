@@ -217,7 +217,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
 
     // --- BEGIN ACCOUNTANT JOBS VISIBILITY FIX ---
     Query query;
-    if (widget.department == "Account") {
+    if (widget.department == "Account" || widget.department == "Delivery") {
       query = FirebaseFirestore.instance
           .collection("jobs")
           .where("visibleTo", arrayContainsAny: [
@@ -259,7 +259,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
     if (visibleTo.length > 1) return;
     if (approvalStatus == "approved" && visibleTo.length == 1) {
       await FirebaseFirestore.instance.collection("jobs").doc(doc.id).update({
-        "visibleTo": ["Designer", "AutoBending", "ManualBending", "LaserCutting", "Rubber", "Emboss"],
+        "visibleTo": ["Designer", "AutoBending", "ManualBending", "LaserCutting", "Rubber", "Emboss", "Delivery"],
         "currentDepartment": "InProgress",
         "status": "approved",
       });
@@ -304,7 +304,7 @@ class _FirestoreTabState extends State<_FirestoreTab> {
       _stream = FirebaseFirestore.instance.collection("jobs").where("visibleTo", arrayContains: "Designer").where("designer.data.DesigningStatus", isEqualTo: "Done").orderBy("updatedAt", descending: true).limit(20).snapshots();
     } else {
       // --- BEGIN ACCOUNTANT JOBS VISIBILITY FIX ---
-      if (widget.department == "Account") {
+      if (widget.department == "Account" || widget.department == "Delivery") {
         _stream = FirebaseFirestore.instance
             .collection("jobs")
             .where("visibleTo", arrayContainsAny: [

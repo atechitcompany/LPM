@@ -1278,7 +1278,8 @@ class NewFormState extends State<NewForm> {
             "ManualBending",
             "LaserCutting",
             "Rubber",
-            "Emboss"
+            "Emboss",
+            "Delivery"
           ];
           currentDepartment = "InProgress";
         }
@@ -1417,6 +1418,8 @@ class NewFormState extends State<NewForm> {
         deptData = {
           "AutoBendingStatus": AutoBendingStatus.text,
           "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
+          "AutoBendingCreatedByName": AutoBendingCreatedByName.text,
+          "AutoBendingCreatedByTimestamp": AutoBendingCreatedByTimestamp.text,
           "AutoCreasing": AutoCreasing,
           "AutoCreasingStatus": AutoCreasingStatus.text,
         };
@@ -1425,12 +1428,16 @@ class NewFormState extends State<NewForm> {
         deptData = {
           "ManualBendingStatus": ManualBendingStatus.text,
           "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
+          "ManualBendingCreatedByName": ManualBendingCreatedByName.text,
+          "ManualBendingCreatedByTimestamp": ManualBendingCreatedByTimestamp.text,
         };
         break;
       case "LaserCutting":
         deptData = {
           "LaserCuttingStatus": LaserCuttingStatus.text,
           "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
+          "LaserCuttingCreatedByName": LaserCuttingCreatedByName.text,
+          "LaserCuttingCreatedByTimestamp": LaserCuttingCreatedByTimestamp.text,
         };
         break;
       case "Rubber":
@@ -1610,15 +1617,17 @@ class NewFormState extends State<NewForm> {
               if (jobData['files'] != null) {
                 final filesMap = Map<String, dynamic>.from(jobData['files']);
                 if (currentDept == "Delivery") {
-                  if (filesMap['DeliveryBillPhoto']?['viewUrl'] != null) {
+                  final billPhoto = filesMap['DeliveryBillPhoto'] ?? filesMap['BillInvoice'];
+                  if (billPhoto != null && billPhoto['viewUrl'] != null) {
                     attachments.add({
-                      'url': filesMap['DeliveryBillPhoto']['viewUrl'].toString(),
+                      'url': billPhoto['viewUrl'].toString(),
                       'label': 'Download Delivery Bill Photo',
                     });
                   }
-                  if (filesMap['DeliveryProductImage']?['viewUrl'] != null) {
+                  final productPhoto = filesMap['DeliveryProductImage'] ?? filesMap['ProductPhoto'];
+                  if (productPhoto != null && productPhoto['viewUrl'] != null) {
                     attachments.add({
-                      'url': filesMap['DeliveryProductImage']['viewUrl'].toString(),
+                      'url': productPhoto['viewUrl'].toString(),
                       'label': 'Download Delivery Product Image',
                     });
                   }

@@ -70,6 +70,17 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
     manualDone =
         form.ManualBendingStatus.text.toLowerCase() == "done";
 
+    if (manualDone && form.ManualBendingCreatedByName.text.isEmpty) {
+      _getCurrentUserName().then((userName) {
+        if (mounted) {
+          setState(() {
+            form.ManualBendingCreatedByName.text = userName;
+            form.ManualBendingCreatedByTimestamp.text = DateTime.now().toString();
+          });
+        }
+      });
+    }
+
     setState(() => loading = false);
   }
 
@@ -281,6 +292,12 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
                       final isDone =
                           form.ManualBendingStatus.text.trim().toLowerCase() ==
                               "done";
+
+                      if (isDone && form.ManualBendingCreatedByName.text.isEmpty) {
+                        final userName = await _getCurrentUserName();
+                        form.ManualBendingCreatedByName.text = userName;
+                        form.ManualBendingCreatedByTimestamp.text = DateTime.now().toString();
+                      }
 
                       final updateData = {
                         "manualBending": {

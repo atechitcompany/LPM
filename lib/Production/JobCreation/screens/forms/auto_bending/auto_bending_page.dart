@@ -113,6 +113,17 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
 
       autobendingstatus = form.AutoBendingStatus.text.toLowerCase() == "done";
 
+      if (autobendingstatus && form.AutoBendingCreatedByName.text.isEmpty) {
+        _getCurrentUserName().then((userName) {
+          if (mounted) {
+            setState(() {
+              form.AutoBendingCreatedByName.text = userName;
+              form.AutoBendingCreatedByTimestamp.text = DateTime.now().toString();
+            });
+          }
+        });
+      }
+
       debugPrint("🔍 AutoBending - autobendingstatus: $autobendingstatus");
 
       setState(() => loading = false);
@@ -362,6 +373,12 @@ class _AutoBendingPageState extends State<AutoBendingPage> {
                     final isDone =
                         form.AutoBendingStatus.text.trim().toLowerCase() ==
                         "done";
+
+                    if (isDone && form.AutoBendingCreatedByName.text.isEmpty) {
+                      final userName = await _getCurrentUserName();
+                      form.AutoBendingCreatedByName.text = userName;
+                      form.AutoBendingCreatedByTimestamp.text = DateTime.now().toString();
+                    }
 
                     await form.submitDepartmentForm("AutoBending");
                     if (!context.mounted) return;
