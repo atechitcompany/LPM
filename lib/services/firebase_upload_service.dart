@@ -33,9 +33,12 @@ class FirebaseUploadService {
       // 1. Upload to Firebase Storage
       // Create a unique file name to avoid overwrites within the same job/field
       final timestamp = DateTime.now().millisecondsSinceEpoch;
+      // --- BEGIN STORAGE PATH REFACTOR (NESTED JOBS) ---
+      // Developer Notice: Make sure your storage.rules file in Firebase allows writes/reads
+      // to the path: jobs/{lpmNumber}/{fieldName}/{file}
       final storagePath = 'jobs/$mainJobId/$fieldName/${timestamp}_$fileName';
-      
       final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+      // --- END STORAGE PATH REFACTOR (NESTED JOBS) ---
       
       final metadata = SettableMetadata(
         contentType: mimeType,
