@@ -51,7 +51,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
       if (snap.exists) {
         final designer = Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
         _partyName = designer["PartyName"] ?? "";
-        _jobName = designer["ParticularJobName"] ?? "";
+        _jobName = designer["particularJobName"] ?? "";
       }
     } catch (e) {
       debugPrint("❌ Error loading data: $e");
@@ -170,33 +170,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
               onFileSelected: (file) => debugPrint("Invoice3: ${file.name}"),
             ),
 
-            const SizedBox(height: 24),
-            const Divider(height: 1),
-            const SizedBox(height: 20),
 
-            const Text("Quotation Action",
-                style: TextStyle(fontSize: 13, color: Colors.black54)),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Just Save Invoices",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  Switch(
-                    value: _justSave,
-                    onChanged: (v) => setState(() => _justSave = v),
-                    activeColor: const Color(0xFF2979FF),
-                  ),
-                ],
-              ),
-            ),
 
             const SizedBox(height: 24),
             const Divider(height: 1),
@@ -242,21 +216,7 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
               const SizedBox(height: 12),
             ],
 
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _submit,
-                icon: const Icon(Icons.save_alt, size: 18),
-                label: const Text("Save Invoices",
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E2A3A),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
+
           ],
         ),
       ),

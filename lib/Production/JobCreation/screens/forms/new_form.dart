@@ -38,6 +38,10 @@ class NewForm extends StatefulWidget {
 }
 
 class NewFormState extends State<NewForm> {
+  // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
+  final Map<String, String> selectedFiles = {};
+  // --- END MULTI-STEP ATTACHMENT STATE FIX ---
+
   late String department;
   late bool isEditMode;
   bool get isLastDesignerPage {
@@ -880,6 +884,39 @@ class NewFormState extends State<NewForm> {
     }
   }
 
+  // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
+  Future<void> _loadExistingFilesOnly() async {
+    try {
+      final lpm = widget.lpm;
+      if (lpm == null) return;
+      final parts = lpm.split("-");
+      final mainOrderId = parts.length >= 4
+          ? "${parts[0]}-${parts[1]}-${parts[2]}-${parts[3]}"
+          : lpm;
+      
+      final snap = await FirebaseFirestore.instance
+          .collection("jobs")
+          .doc(mainOrderId)
+          .get();
+
+      if (snap.exists) {
+        final filesMap = snap.data()?["files"] as Map<String, dynamic>?;
+        if (filesMap != null) {
+          setState(() {
+            filesMap.forEach((key, value) {
+              if (value is Map && value["fileName"] != null) {
+                selectedFiles[key] = value["fileName"].toString();
+              }
+            });
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ _loadExistingFilesOnly error: $e");
+    }
+  }
+  // --- END MULTI-STEP ATTACHMENT STATE FIX ---
+
   // ────────────────────────────────────────────
   // METHOD 2: Firestore fallback
   // (used when URL data is missing or too long)
@@ -904,6 +941,17 @@ class NewFormState extends State<NewForm> {
         debugPrint("❌ No doc found at jobs/$mainOrderId");
         return;
       }
+
+      // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
+      final filesMap = snap.data()?["files"] as Map<String, dynamic>?;
+      if (filesMap != null) {
+        filesMap.forEach((key, value) {
+          if (value is Map && value["fileName"] != null) {
+            selectedFiles[key] = value["fileName"].toString();
+          }
+        });
+      }
+      // --- END MULTI-STEP ATTACHMENT STATE FIX ---
 
       // Data is stored at: jobs/{mainOrderId}/designer/data
       final Map<String, dynamic> data =
@@ -1230,7 +1278,8 @@ class NewFormState extends State<NewForm> {
             "ManualBending",
             "LaserCutting",
             "Rubber",
-            "Emboss"
+            "Emboss",
+            "Delivery"
           ];
           currentDepartment = "InProgress";
         }
@@ -1369,6 +1418,8 @@ class NewFormState extends State<NewForm> {
         deptData = {
           "AutoBendingStatus": AutoBendingStatus.text,
           "AutoBendingCreatedBy": AutoBendingCreatedBy.text,
+          "AutoBendingCreatedByName": AutoBendingCreatedByName.text,
+          "AutoBendingCreatedByTimestamp": AutoBendingCreatedByTimestamp.text,
           "AutoCreasing": AutoCreasing,
           "AutoCreasingStatus": AutoCreasingStatus.text,
         };
@@ -1377,12 +1428,16 @@ class NewFormState extends State<NewForm> {
         deptData = {
           "ManualBendingStatus": ManualBendingStatus.text,
           "ManualBendingCreatedBy": ManualBendingCreatedBy.text,
+          "ManualBendingCreatedByName": ManualBendingCreatedByName.text,
+          "ManualBendingCreatedByTimestamp": ManualBendingCreatedByTimestamp.text,
         };
         break;
       case "LaserCutting":
         deptData = {
           "LaserCuttingStatus": LaserCuttingStatus.text,
           "LaserCuttingCreatedBy": LaserCuttingCreatedBy.text,
+          "LaserCuttingCreatedByName": LaserCuttingCreatedByName.text,
+          "LaserCuttingCreatedByTimestamp": LaserCuttingCreatedByTimestamp.text,
         };
         break;
       case "Rubber":
@@ -1554,13 +1609,31 @@ class NewFormState extends State<NewForm> {
                   break;
                 case "Delivery":
                   doneBy = DeliveryCreatedBy.text;
-                  // Try to get delivery drawing attachment
-                  try {
-                    fileUrl = jobData['files']?['DrawingAttachment']?['viewUrl']?.toString();
-                    fileLabel = "DELIVERY ATTACHMENT";
-                  } catch (_) {}
                   break;
               }
+
+              // --- BEGIN DEPT-WISE EMAIL ATTACHMENTS FILTER ---
+              final List<Map<String, String>> attachments = [];
+              if (jobData['files'] != null) {
+                final filesMap = Map<String, dynamic>.from(jobData['files']);
+                if (currentDept == "Delivery") {
+                  final billPhoto = filesMap['DeliveryBillPhoto'] ?? filesMap['BillInvoice'];
+                  if (billPhoto != null && billPhoto['viewUrl'] != null) {
+                    attachments.add({
+                      'url': billPhoto['viewUrl'].toString(),
+                      'label': 'Download Delivery Bill Photo',
+                    });
+                  }
+                  final productPhoto = filesMap['DeliveryProductImage'] ?? filesMap['ProductPhoto'];
+                  if (productPhoto != null && productPhoto['viewUrl'] != null) {
+                    attachments.add({
+                      'url': productPhoto['viewUrl'].toString(),
+                      'label': 'Download Delivery Product Image',
+                    });
+                  }
+                }
+              }
+              // --- END DEPT-WISE EMAIL ATTACHMENTS FILTER ---
 
               // Generate HTML email using the generic template
               final htmlBody = generateDepartmentEmailHtml(
@@ -1573,8 +1646,7 @@ class NewFormState extends State<NewForm> {
                 actionTimestampLabel: "Done At",
                 actionTimestamp: timestamp,
                 stepStatus: stepStatus,
-                fileUrl: fileUrl,
-                fileLabel: fileLabel,
+                attachments: attachments,
               );
 
               // Call the sendDispatchEmail Cloud Function via HTTP POST
@@ -1722,6 +1794,7 @@ class NewFormState extends State<NewForm> {
         // ✅ Wait for widget tree, then load existing data
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _loadDataFromQueryParam();
+          _loadExistingFilesOnly();
         });
       }
     } else {

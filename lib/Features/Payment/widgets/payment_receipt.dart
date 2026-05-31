@@ -350,10 +350,12 @@ class _PaymentReceiptWidgetState extends State<PaymentReceiptWidget> {
     try {
       final bytes = await _buildPdf();
 
-      // Upload to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('receipts/$_lpmNumber.pdf');
+      // --- BEGIN STORAGE PATH REFACTOR (NESTED JOBS) ---
+      // Developer Notice: Make sure your storage.rules file in Firebase allows writes/reads
+      // to the path: jobs/{lpmNumber}/receipts/{file}
+      final storagePath = 'jobs/$_lpmNumber/receipts/$_lpmNumber.pdf';
+      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+      // --- END STORAGE PATH REFACTOR (NESTED JOBS) ---
       final uploadTask = storageRef.putData(bytes, SettableMetadata(contentType: 'application/pdf'));
       await uploadTask;
       final downloadUrl = await storageRef.getDownloadURL();

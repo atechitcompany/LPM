@@ -153,93 +153,179 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
   // --- BEGIN DELIVERY LABEL PRINT UI & PDF LOGIC ---
   Future<void> _generateAndPrintLabel(Map<String, dynamic> data, String partyName) async {
     try {
-      final pdf = pw.Document();
-
       final deliveryData = Map<String, dynamic>.from(data["delivery"]?["data"] ?? {});
-      
-      final String deliveryAddress = (deliveryData["DeliveryAddress"] ?? "").toString().trim();
-      final String contactNumber = (deliveryData["ContactNumber"] ?? "").toString().trim();
-      final String lpmNumber = widget.lpm;
-      
       final designerData = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
-      final String jobName = (designerData["ParticularJobName"] ?? "").toString().trim();
+      final String lpmNumber = widget.lpm;
       final String currentDate = DateFormat('dd MMM yyyy').format(DateTime.now());
+
+      // --- BEGIN FIELD FALLBACK CHAINS ---
+      String deliveryAddress = (deliveryData["DeliveryAddress"] ?? "").toString().trim();
+      if (deliveryAddress.isEmpty) {
+        deliveryAddress = (designerData["DeliveryAt"] ?? "").toString().trim();
+      }
+      String contactNumber = (deliveryData["ContactNumber"] ?? "").toString().trim();
+      if (contactNumber.isEmpty) {
+        contactNumber = (deliveryData["WhatsappNumber"] ?? "").toString().trim();
+      }
+      String jobName = (designerData["ParticularJobName"] ?? designerData["particularJobName"] ?? "").toString().trim();
+      // --- END FIELD FALLBACK CHAINS ---
 
       final dispPartyName = partyName.isNotEmpty ? partyName : "N/A";
       final dispDeliveryAddress = deliveryAddress.isNotEmpty ? deliveryAddress : "N/A";
       final dispContactNumber = contactNumber.isNotEmpty ? contactNumber : "N/A";
       final dispJobName = jobName.isNotEmpty ? jobName : "N/A";
 
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a6,
-          build: (pw.Context context) {
-            return pw.Container(
-              padding: const pw.EdgeInsets.all(10),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  pw.Center(
-                    child: pw.Column(
-                      children: [
-                        pw.Text("LIGHT PUNCH MAKER", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                        pw.SizedBox(height: 2),
-                        pw.Text("Wooden Punch Maker", style: const pw.TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  pw.SizedBox(height: 15),
-                  pw.Divider(thickness: 1),
-                  pw.SizedBox(height: 10),
-
-                  // Deliver To
-                  pw.Text("DELIVER TO:", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
-                  pw.SizedBox(height: 8),
-                  pw.Text("Party Name: $dispPartyName", style: const pw.TextStyle(fontSize: 12)),
-                  pw.SizedBox(height: 4),
-                  pw.Text("Address: $dispDeliveryAddress", style: const pw.TextStyle(fontSize: 12)),
-                  pw.SizedBox(height: 4),
-                  pw.Text("Contact: $dispContactNumber", style: const pw.TextStyle(fontSize: 12)),
-                  pw.SizedBox(height: 15),
-
-                  // Job Details
-                  pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
-                    decoration: pw.BoxDecoration(
-                      border: pw.Border.all(width: 1, color: PdfColors.black),
-                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
-                    ),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text("Tracking ID: $lpmNumber", style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                        pw.SizedBox(height: 4),
-                        pw.Text("Job Name: $dispJobName", style: const pw.TextStyle(fontSize: 12)),
-                        pw.SizedBox(height: 4),
-                        pw.Text("Date: $currentDate", style: const pw.TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ),
-
-                  pw.Spacer(),
-                  pw.Divider(thickness: 1),
-                  pw.SizedBox(height: 8),
-
-                  // Footer
-                  pw.Text("From: Light Punch Maker", style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
-                  pw.Text("Gala No. F-16 & F-17, Vasai (East), Dist. Palghar 401-208", style: const pw.TextStyle(fontSize: 9)),
-                  pw.Text("Mob: 9320033034 / 9320033035", style: const pw.TextStyle(fontSize: 9)),
-                ],
-              ),
-            );
-          },
-        ),
+      // Envelope #10: 4.125 × 9.5 inches (104.775mm × 241.3mm)
+      const labelFormat = PdfPageFormat(
+        4.125 * PdfPageFormat.inch,
+        9.5 * PdfPageFormat.inch,
+        marginAll: 8 * PdfPageFormat.mm,
       );
 
       await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdf.save(),
-        name: 'LPM-$lpmNumber-Label.pdf',
+        format: labelFormat,
+        name: 'LPM-$lpmNumber-Label',
+        onLayout: (PdfPageFormat format) async {
+          final pdf = pw.Document(
+            title: 'LPM Delivery Label - $lpmNumber',
+            author: 'Light Punch Maker',
+            subject: 'Delivery Label',
+            creator: 'Light Punch Maker',
+          );
+
+          pdf.addPage(
+            pw.Page(
+              pageFormat: labelFormat,
+              build: (pw.Context ctx) {
+                return pw.SizedBox(
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    mainAxisAlignment: pw.MainAxisAlignment.start,
+                    children: [
+                      // ── TOP SECTION ──
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          // 1. Tilted logo stamp
+                          pw.Align(
+                            alignment: pw.Alignment.center,
+                            child: pw.Transform.rotate(
+                              angle: -6 * 3.14159 / 180,
+                              child: pw.Column(
+                                children: [
+                                  pw.Container(
+                                    color: PdfColor.fromHex('#b9843e'),
+                                    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    child: pw.Column(
+                                      children: [
+                                        pw.Text("LIGHT", style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                                        pw.Text("PUNCH", style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                                        pw.Text("MAKER", style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  pw.SizedBox(height: 1),
+                                  pw.Text("WOODEN PUNCH MAKER", style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ),
+                          pw.SizedBox(height: 8),
+                          // Title with underlined PUNCH
+                          pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.center,
+                            mainAxisSize: pw.MainAxisSize.min,
+                            children: [
+                              pw.Text("LIGHT ", style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                              pw.Container(
+                                decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 2, color: PdfColors.black))),
+                                child: pw.Text("PUNCH", style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                              ),
+                              pw.Text(" MAKER", style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      pw.SizedBox(height: 15),
+
+                      // ── DELIVER TO BOX ──
+                      pw.Container(
+                        width: double.infinity,
+                        padding: const pw.EdgeInsets.all(10),
+                        decoration: pw.BoxDecoration(
+                          color: PdfColor.fromHex('#f2f2f2'),
+                          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+                          border: pw.Border.all(color: PdfColors.grey400, width: 1),
+                        ),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.center,
+                          children: [
+                            pw.Text("DELIVER TO", style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700, fontWeight: pw.FontWeight.bold)),
+                            pw.SizedBox(height: 5),
+                            pw.Text(dispPartyName.toUpperCase(), style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColors.black), textAlign: pw.TextAlign.center),
+                            pw.SizedBox(height: 6),
+                            pw.Text(dispDeliveryAddress, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.black), textAlign: pw.TextAlign.center),
+                            pw.SizedBox(height: 6),
+                            pw.Text("WhatsApp: $dispContactNumber", style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.black), textAlign: pw.TextAlign.center),
+                          ],
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 15),
+
+                      // ── TRACKING SECTION ──
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Divider(color: PdfColors.grey400),
+                          pw.SizedBox(height: 5),
+                          pw.Text(lpmNumber.toUpperCase(), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.black), textAlign: pw.TextAlign.center),
+                          pw.SizedBox(height: 3),
+                          pw.Text("Job - $dispJobName", style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800), textAlign: pw.TextAlign.center),
+                          pw.SizedBox(height: 6),
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: const pw.BoxDecoration(
+                              color: PdfColor(0.878, 0.941, 1.0),
+                              borderRadius: pw.BorderRadius.all(pw.Radius.circular(20)),
+                            ),
+                            child: pw.Text("Dispatched Date: $currentDate", style: pw.TextStyle(color: const PdfColor(0, 0.4, 0.8), fontWeight: pw.FontWeight.bold, fontSize: 8)),
+                          ),
+                          pw.SizedBox(height: 5),
+                          pw.Divider(color: PdfColors.grey400),
+                        ],
+                      ),
+
+                      pw.SizedBox(height: 30),
+
+                      // ── FROM SECTION ──
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text("From:", style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700, fontWeight: pw.FontWeight.bold)),
+                          pw.SizedBox(height: 2),
+                          pw.Text("Light Punch Maker", style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                          pw.SizedBox(height: 2),
+                          pw.Text("Gala No. F-16 & F-17, First Floor,", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
+                          pw.Text("Siddharth Ind. Estate Bldg.no 4,", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
+                          pw.Text("New Shailesh Udyog Nagar,", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
+                          pw.Text("Vasai (East) Dist.Palghar 401-208", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
+                          pw.SizedBox(height: 3),
+                          pw.Text("Mob - 9320033034 / 9320033035", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.red800), textAlign: pw.TextAlign.center),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+
+          return pdf.save();
+        },
       );
     } catch (e) {
       if (!mounted) return;
@@ -354,9 +440,15 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
                   Builder(
                     builder: (context) {
                       final deliveryData = Map<String, dynamic>.from(data["delivery"]?["data"] ?? {});
-                      final receiverName = (deliveryData["ReceiverName"] ?? "").toString().trim();
-                      final deliveryAddress = (deliveryData["DeliveryAddress"] ?? "").toString().trim();
-                      final contactNumber = (deliveryData["ContactNumber"] ?? "").toString().trim();
+                      final designerData = Map<String, dynamic>.from(data["designer"]?["data"] ?? {});
+                      // --- BEGIN FIELD FALLBACK CHAINS ---
+                      String receiverName = (deliveryData["ReceiverName"] ?? "").toString().trim();
+                      if (receiverName.isEmpty) receiverName = partyName != "-" ? partyName : "";
+                      String deliveryAddress = (deliveryData["DeliveryAddress"] ?? "").toString().trim();
+                      if (deliveryAddress.isEmpty) deliveryAddress = (designerData["DeliveryAt"] ?? "").toString().trim();
+                      String contactNumber = (deliveryData["ContactNumber"] ?? "").toString().trim();
+                      if (contactNumber.isEmpty) contactNumber = (deliveryData["WhatsappNumber"] ?? "").toString().trim();
+                      // --- END FIELD FALLBACK CHAINS ---
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 20),

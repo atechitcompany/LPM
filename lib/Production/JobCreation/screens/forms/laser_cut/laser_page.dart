@@ -75,7 +75,7 @@ class _LaserPageState extends State<LaserPage> {
     laserDone = status.toLowerCase() == "done";
 
     // 👀 LOAD DESIGNER DATA (VIEW)
-    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
     form.PlyType.text = designer["PlyType"] ?? "";
     form.PlySelectedBy.text = designer["PlySelectedBy"] ?? "";
@@ -89,6 +89,17 @@ class _LaserPageState extends State<LaserPage> {
         laser["LaserCuttingCreatedByTimestamp"] ?? "";
 
     laserDone = form.LaserCuttingStatus.text.toLowerCase() == "done";
+
+    if (laserDone && form.LaserCuttingCreatedByName.text.isEmpty) {
+      _getCurrentUserName().then((userName) {
+        if (mounted) {
+          setState(() {
+            form.LaserCuttingCreatedByName.text = userName;
+            form.LaserCuttingCreatedByTimestamp.text = DateTime.now().toString();
+          });
+        }
+      });
+    }
 
     setState(() => loading = false);
   }
@@ -294,6 +305,12 @@ class _LaserPageState extends State<LaserPage> {
                         .trim()
                         .toLowerCase() ==
                         "done";
+
+                    if (isDone && form.LaserCuttingCreatedByName.text.isEmpty) {
+                      final userName = await _getCurrentUserName();
+                      form.LaserCuttingCreatedByName.text = userName;
+                      form.LaserCuttingCreatedByTimestamp.text = DateTime.now().toString();
+                    }
 
                     final updateData = {
                       "laserCutting": {

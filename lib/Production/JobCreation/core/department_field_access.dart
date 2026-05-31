@@ -218,8 +218,11 @@ class DepartmentFieldAccess {
     "LpmAutoIncrement": "view",
     "DeliveryAt": "view",
     "Remark": "view",
+    "DesignerCreatedBy": "view",
     "AutoBendingCreatedBy": "view",
+    "ManualBendingCreatedBy": "view",
     "LaserCuttingCreatedBy": "view",
+    "RubberCreatedBy": "view",
     "AccountsCreatedBy": "view",
 
     // ===== EDIT FIELDS (For the Delivery team) =====
