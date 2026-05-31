@@ -684,7 +684,7 @@ class _AccountQuotationPendingTab extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     child: ListTile(
-                      onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
+                      onTap: () => context.push('/account-quotation-form/${doc.id}'),
                       title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                       subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
                       trailing: Container(

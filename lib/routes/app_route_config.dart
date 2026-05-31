@@ -52,7 +52,7 @@ import 'package:lightatech/Production/JobCreation/screens/forms/laser_cut/laser_
 import 'package:lightatech/Production/JobCreation/screens/forms/emboss/emboss_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/rubber/rubber_page.dart';
 import 'package:lightatech/Production/JobCreation/screens/forms/delivery/delivery_page.dart';
-import 'package:lightatech/Production/JobCreation/screens/forms/account/account_form_flow.dart';
+import 'package:lightatech/Production/JobCreation/screens/forms/account/account_quotation_form.dart';
 
 // Map
 import 'package:lightatech/Features/MapScreen/screens/map_screen.dart';
@@ -453,6 +453,12 @@ class AppRoutes {
         path: '/customer-quotation-detail/:id',
         builder: (context, state) => CustomerQuotationDetailScreen(
           docId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/account-quotation-form/:docId',
+        builder: (context, state) => AccountQuotationForm(
+          docId: state.pathParameters['docId']!,
         ),
       ),
 
