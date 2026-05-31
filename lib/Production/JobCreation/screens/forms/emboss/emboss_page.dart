@@ -60,7 +60,7 @@ class _EmbossPageState extends State<EmbossPage> {
 
     // Read-only fields from designer
     form.PartyName.text = designer["PartyName"] ?? "";
-    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
     form.DesigningStatus.text = designer["DesigningStatus"] ?? "";
     form.DesignerCreatedBy.text = designer["DesignerCreatedBy"] ?? "";

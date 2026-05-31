@@ -58,7 +58,7 @@ class _RubberPageState extends State<RubberPage> {
 
     // 👀 VIEW DATA (from Designer)
     form.PartyName.text = designer["PartyName"] ?? "";
-    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
 
     // ✏️ RUBBER DATA

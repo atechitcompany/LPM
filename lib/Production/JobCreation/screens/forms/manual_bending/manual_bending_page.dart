@@ -53,7 +53,7 @@ class _ManualBendingPageState extends State<ManualBendingPage> {
 
     // 👀 DESIGNER VIEW DATA
     form.PartyName.text = designer["PartyName"] ?? "";
-    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
 
     // ✏ MANUAL DATA

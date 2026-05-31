@@ -48,7 +48,7 @@ class _AccountPage1BasicState extends State<AccountPage1Basic> {
 
     // 👀 DESIGNER VIEW DATA
     form.PartyName.text = designer["PartyName"] ?? "";
-    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
     form.Priority.text = designer["Priority"] ?? "";
     form.DesigningStatus.text = designer["DesigningStatus"] ?? "";
