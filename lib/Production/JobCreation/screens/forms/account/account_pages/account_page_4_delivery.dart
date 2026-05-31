@@ -75,13 +75,19 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
           ),
           const SizedBox(height: 8),
 
+          // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
           FileUploadBox(
-            jobId:     lpmParam,      // ✅ ADD
-            fieldName: 'DiePunchImage', // ✅ ADD
+            jobId:     lpmParam,
+            fieldName: 'DiePunchImage',
+            initialFileName: form.selectedFiles['DiePunchImage'],
             onFileSelected: (file) {
+              setState(() {
+                form.selectedFiles['DiePunchImage'] = file.name;
+              });
               debugPrint("Selected File: ${file.name}");
             },
           ),
+          // --- END MULTI-STEP ATTACHMENT STATE FIX ---
 
           const SizedBox(height: 30),
 
@@ -91,13 +97,19 @@ class _AccountPage4DeliveryState extends State<AccountPage4Delivery> {
           ),
           const SizedBox(height: 8),
 
+          // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
           FileUploadBox(
-            jobId:     lpmParam,       // ✅ ADD
-            fieldName: 'InvoiceImage',  // ✅ ADD
+            jobId:     lpmParam,
+            fieldName: 'InvoiceImage',
+            initialFileName: form.selectedFiles['InvoiceImage'],
             onFileSelected: (file) {
+              setState(() {
+                form.selectedFiles['InvoiceImage'] = file.name;
+              });
               debugPrint("Selected File: ${file.name}");
             },
           ),
+          // --- END MULTI-STEP ATTACHMENT STATE FIX ---
 
           const SizedBox(height: 30),
 

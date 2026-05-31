@@ -18,6 +18,13 @@ import 'designer_widgets.dart';
 import 'package:lightatech/services/designer_email_template.dart';
 import 'package:http/http.dart' as http;
 
+// --- BEGIN PROMISE.ALL UPLOAD FIX ---
+class Console {
+  void error(Object? message) => debugPrint("🔴 [ERROR] $message");
+}
+final console = Console();
+// --- END PROMISE.ALL UPLOAD FIX ---
+
 class DesignerPage4 extends StatefulWidget {
   const DesignerPage4({super.key});
 
@@ -397,11 +404,19 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     sectionLabel("Drawing Attachment"),
+                    // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
                     FileUploadBox(
                       jobId: mainJobId,
                       fieldName: 'DrawingAttachment',
-                      onFileSelected: (file) => debugPrint("Drawing: ${file.name}"),
+                      initialFileName: form.selectedFiles['DrawingAttachment'],
+                      onFileSelected: (file) {
+                        setState(() {
+                          form.selectedFiles['DrawingAttachment'] = file.name;
+                        });
+                        debugPrint("Drawing: ${file.name}");
+                      },
                     ),
+                    // --- END MULTI-STEP ATTACHMENT STATE FIX ---
                   ],
                 ),
               ),
@@ -413,11 +428,19 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     sectionLabel("Rubber Report"),
+                    // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
                     FileUploadBox(
                       jobId: mainJobId,
                       fieldName: 'RubberReport',
-                      onFileSelected: (file) => debugPrint("Rubber: ${file.name}"),
+                      initialFileName: form.selectedFiles['RubberReport'],
+                      onFileSelected: (file) {
+                        setState(() {
+                          form.selectedFiles['RubberReport'] = file.name;
+                        });
+                        debugPrint("Rubber: ${file.name}");
+                      },
                     ),
+                    // --- END MULTI-STEP ATTACHMENT STATE FIX ---
                   ],
                 ),
               ),
@@ -429,11 +452,19 @@ class _DesignerPage4State extends State<DesignerPage4> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     sectionLabel("Punch Report"),
+                    // --- BEGIN MULTI-STEP ATTACHMENT STATE FIX ---
                     FileUploadBox(
                       jobId: mainJobId,
                       fieldName: 'PunchReport',
-                      onFileSelected: (file) => debugPrint("Punch: ${file.name}"),
+                      initialFileName: form.selectedFiles['PunchReport'],
+                      onFileSelected: (file) {
+                        setState(() {
+                          form.selectedFiles['PunchReport'] = file.name;
+                        });
+                        debugPrint("Punch: ${file.name}");
+                      },
                     ),
+                    // --- END MULTI-STEP ATTACHMENT STATE FIX ---
                   ],
                 ),
               ),
@@ -661,15 +692,22 @@ class _DesignerPage4State extends State<DesignerPage4> {
                       : () async {
                     setState(() => isSubmitting = true);
                     try {
-                      final isQuotation =
-                          form.QuotationStatus.text.trim().toLowerCase() == "yes";
-                      final sendApproval = form.SendApproval.text.trim().toUpperCase();
+                      // --- BEGIN PROMISE.ALL UPLOAD FIX ---
+                      try {
+                        final isQuotation =
+                            form.QuotationStatus.text.trim().toLowerCase() == "yes";
+                        final sendApproval = form.SendApproval.text.trim().toUpperCase();
 
-                      if (isQuotation && sendApproval != "YES") {
-                        await _submitAsQuotation(form);
-                      } else {
-                        await form.submitDesignerForm();
+                        if (isQuotation && sendApproval != "YES") {
+                          await _submitAsQuotation(form);
+                        } else {
+                          await form.submitDesignerForm();
+                        }
+                      } catch (e) {
+                        console.error("Submission or file upload failed: $e");
+                        rethrow;
                       }
+                      // --- END PROMISE.ALL UPLOAD FIX ---
 
                       // ── Email notification ────────────────────────
                       try {
