@@ -56,8 +56,8 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                     searchText: widget.searchText,
                     isPending: false,
                   )),
-                  _KeepAliveTab(child: _QuotationsTab(searchText: widget.searchText)),
-                  _KeepAliveTab(child: _QuotationPendingTab(searchText: widget.searchText)),
+                  _KeepAliveTab(child: _AccountQuotationsTab(searchText: widget.searchText)),
+                  _KeepAliveTab(child: _AccountQuotationPendingTab(searchText: widget.searchText)),
                 ],
               ),
             ),
@@ -102,8 +102,7 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
                   _KeepAliveTab(child: _FirestoreTab(department: widget.department, searchText: widget.searchText, isPending: true)),
                   _KeepAliveTab(child: _FirestoreTab(department: widget.department, searchText: widget.searchText, isPending: false)),
                   _KeepAliveTab(child: _QuotationsTab(searchText: widget.searchText)),
-                  _KeepAliveTab(child: _QuotationPendingTab(searchText: widget.searchText)),
-                ],
+                  _KeepAliveTab(child: _QuotationPendingTab(searchText: widget.searchText)),                ],
               ),
             ),
           ],
@@ -389,7 +388,7 @@ class _QuotationsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection("quotations")
+          .collection("quotation_pending")
           .orderBy("createdAt", descending: true)
           .snapshots(),
       builder: (context, snapshot) {
@@ -515,7 +514,70 @@ class _QuotationPendingTab extends StatelessWidget {
 
         final filtered = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          if (data['quoteDesignDone'] != true) return false;
+          if (data['quoteDesignDone'] == true) return false;
+          if (query.isEmpty) return true;
+          return doc.id.toLowerCase().contains(query) ||
+              (data["PartyName"] ?? data["partyName"] ?? "").toString().toLowerCase().contains(query);
+        }).toList();
+
+        if (filtered.isEmpty) {
+          return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.hourglass_empty, size: 56, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            Text("No pending quotations", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey.shade400)),
+          ]));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final doc = filtered[index];
+            final data = doc.data() as Map<String, dynamic>;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: ListTile(
+                onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
+                title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                  child: const Text("PENDING", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            );
+          },
+        );
+      },
+
+    );
+  }
+}
+class _AccountQuotationPendingTab extends StatelessWidget {
+  final String searchText;
+  const _AccountQuotationPendingTab({required this.searchText});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("quotation_pending")
+          .orderBy("createdAt", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+
+        final docs = snapshot.data?.docs ?? [];
+        final query = searchText.trim().toLowerCase();
+
+        final filtered = docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (data['quoteDesignDone'] != true) return false;  // Account: only show where toggle is ON
           if (query.isEmpty) return true;
           return doc.id.toLowerCase().contains(query) ||
               (data["PartyName"] ?? data["partyName"] ?? "").toString().toLowerCase().contains(query);
@@ -596,6 +658,67 @@ class _QuotationPendingTab extends StatelessWidget {
                   );
                 }).toList(),
               ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+class _AccountQuotationsTab extends StatelessWidget {
+  final String searchText;
+  const _AccountQuotationsTab({required this.searchText});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("quotations")
+          .orderBy("createdAt", descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+
+        final docs = snapshot.data?.docs ?? [];
+        final query = searchText.trim().toLowerCase();
+
+        final filtered = docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (query.isEmpty) return true;
+          return doc.id.toLowerCase().contains(query) ||
+              (data["PartyName"] ?? data["partyName"] ?? "").toString().toLowerCase().contains(query);
+        }).toList();
+
+        if (filtered.isEmpty) {
+          return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.description_outlined, size: 56, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            Text("No quotations yet", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey.shade400)),
+          ]));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final doc = filtered[index];
+            final data = doc.data() as Map<String, dynamic>;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: ListTile(
+                onTap: () => context.push('/customer-quotation-detail/${doc.id}'),
+                title: Text(doc.id, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                subtitle: Text(data["PartyName"] ?? data["partyName"] ?? "—", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: const Color(0xFFF8D94B).withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                  child: const Text("DONE", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+              ),
             );
           },
         );
