@@ -62,7 +62,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
       final delivery = Map<String, dynamic>.from(data["delivery"]?["data"] ?? {});
 
       form.PartyName.text = designer["PartyName"] ?? "";
-      form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+      form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
       form.LpmAutoIncrement.text = lpm;
       form.DeliveryAt.text = designer["DeliveryAt"] ?? account["DeliveryAt"] ?? "";
       form.Remark.text = designer["Remark"] ?? account["Remark"] ?? "";
