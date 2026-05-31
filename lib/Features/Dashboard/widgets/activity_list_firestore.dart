@@ -111,6 +111,44 @@ class _ActivityListFirestoreState extends State<ActivityListFirestore> {
       );
     }
 
+    if (widget.department == "Delivery") {
+      return DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            // --- BEGIN DELIVERY DASHBOARD TABS (PENDING/COMPLETED) ---
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                labelColor: Colors.black,
+                unselectedLabelColor: Colors.grey.shade500,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorWeight: 2,
+                indicatorColor: const Color(0xFFF8D94B),
+                dividerColor: Colors.black,
+                dividerHeight: 0.8,
+                tabs: const [
+                  Tab(text: "PENDING"),
+                  Tab(text: "Completed"),
+                ],
+              ),
+            ),
+            // --- END DELIVERY DASHBOARD TABS (PENDING/COMPLETED) ---
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _KeepAliveTab(child: _FirestoreTab(department: widget.department, searchText: widget.searchText, isPending: true)),
+                  _KeepAliveTab(child: _FirestoreTab(department: widget.department, searchText: widget.searchText, isPending: false)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return _FirestoreTab(
       department: widget.department,
       searchText: widget.searchText,
@@ -281,17 +319,35 @@ class _FirestoreTabState extends State<_FirestoreTab> {
           if (query.isNotEmpty && !matchesSearch) return false;
           final designingStatus = (designer["DesigningStatus"] ?? "").toString().toLowerCase();
           final approvalStatus = (data["customerApprovalStatus"] ?? "").toString().toLowerCase();
-          if (widget.isPending) {
-            if (designingStatus != "done") return true;
-            if (approvalStatus == "pending") return true;
-            if (approvalStatus == "changes") return true;
-            return false;
+          
+          if (widget.department == "Delivery") {
+            final deliveryStatus = (data["status"] ?? "").toString().toLowerCase();
+            if (widget.isPending) {
+              if (deliveryStatus == "delivered") return false;
+            } else {
+              if (deliveryStatus != "delivered") return false;
+            }
+            return true;
           }
-          if (!widget.isPending) {
+
+          if (widget.department == "Designer") {
+            if (widget.isPending) {
+              if (designingStatus != "done") return true;
+              if (approvalStatus == "pending") return true;
+              if (approvalStatus == "changes") return true;
+              return false;
+            }
+            if (!widget.isPending) {
+              if (approvalStatus == "pending") return false;
+              if (designingStatus != "done") return false;
+              return true;
+            }
+          } else {
             if (approvalStatus == "pending") return false;
             if (designingStatus != "done") return false;
             return true;
           }
+          
           return true;
         }).toList();
         return ActivityList(
