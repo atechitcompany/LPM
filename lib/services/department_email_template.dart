@@ -15,6 +15,7 @@ String generateDepartmentEmailHtml({
   required Map<String, bool> stepStatus,
   String? fileUrl,
   String? fileLabel = "ATTACHED FILE",
+  List<Map<String, String>>? attachments,
 }) {
   // ── Colors from the established design system ──────────────────────────────
   const headerBg = '#2C3E50';
@@ -33,19 +34,42 @@ String generateDepartmentEmailHtml({
   // ── Logo URL (Firebase Storage) ──────────────────────────
   const logoUrl = 'https://firebasestorage.googleapis.com/v0/b/light-punch-maker-atech1.firebasestorage.app/o/public_assets%2FLPM.jpg?alt=media&token=7f6679c1-11f2-4c80-a705-5863d3255224';
   
-  // ── Dynamic File Attachment Section ──
-  final fileSection = (fileUrl != null && fileUrl.isNotEmpty)
-      ? '''
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; border: 1px solid $cardSolidBorder; border-radius: 6px; background-color: #FFFFFF;">
-        <tr>
-          <td style="padding: 24px; text-align: center;">
-            <p style="margin: 0 0 16px 0; font-size: 14px; color: $textPrimary; font-weight: bold; font-family: Arial, sans-serif;">$fileLabel</p>
-            <a href="$fileUrl" target="_blank" style="display: inline-block; background-color: $buttonBg; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">📄 View / Download File</a>
-          </td>
-        </tr>
-      </table>
-      '''
-      : '';
+  // --- BEGIN DEPT-WISE EMAIL ATTACHMENTS FILTER ---
+  String fileSection = '';
+  if (attachments != null && attachments.isNotEmpty) {
+    final buttonsHtml = attachments.map((att) {
+      final label = att['label'] ?? 'View / Download File';
+      final url = att['url'] ?? '';
+      return '''
+      <div style="margin-bottom: 12px;">
+        <a href="$url" target="_blank" style="display: inline-block; background-color: $buttonBg; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">📄 $label</a>
+      </div>
+      ''';
+    }).join('\n');
+
+    fileSection = '''
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; border: 1px solid $cardSolidBorder; border-radius: 6px; background-color: #FFFFFF;">
+      <tr>
+        <td style="padding: 24px; text-align: center;">
+          <p style="margin: 0 0 16px 0; font-size: 14px; color: $textPrimary; font-weight: bold; font-family: Arial, sans-serif;">Download ${departmentName} Files</p>
+          $buttonsHtml
+        </td>
+      </tr>
+    </table>
+    ''';
+  } else if (fileUrl != null && fileUrl.isNotEmpty) {
+    fileSection = '''
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; border: 1px solid $cardSolidBorder; border-radius: 6px; background-color: #FFFFFF;">
+      <tr>
+        <td style="padding: 24px; text-align: center;">
+          <p style="margin: 0 0 16px 0; font-size: 14px; color: $textPrimary; font-weight: bold; font-family: Arial, sans-serif;">$fileLabel</p>
+          <a href="$fileUrl" target="_blank" style="display: inline-block; background-color: $buttonBg; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif;">📄 View / Download File</a>
+        </td>
+      </tr>
+    </table>
+    ''';
+  }
+  // --- END DEPT-WISE EMAIL ATTACHMENTS FILTER ---
 
   // ── Dynamic Live Status Stepper Logic ──
   // 1. Separate into done and pending
