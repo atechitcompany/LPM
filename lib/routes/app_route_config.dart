@@ -71,6 +71,7 @@ as target_profile;
 // Payment
 import 'package:lightatech/Features/Payment/screens/payment_page.dart';
 import 'package:lightatech/Features/Payment/screens/record_payment_page.dart';
+import 'package:lightatech/Features/Payment/screens/client_detail_page.dart';
 
 // Firebase
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -338,6 +339,13 @@ class AppRoutes {
                 docId: extra['docId'] as String,
                 data: extra['data'] as Map<String, dynamic>,
               );
+            },
+          ),
+          GoRoute(
+            path: '/client-detail',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>;
+              return ClientDetailPage(client: extra['client'] as String);
             },
           ),
 

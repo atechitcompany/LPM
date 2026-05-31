@@ -353,7 +353,15 @@ class _RecordPaymentPageState extends State<RecordPaymentPage> {
                   selectedJob: selectedJobs.join(", "),
                   lpmNumber: combinedLpmNumber,
                   clientDiscount: _clientDiscount,
-                  onPaymentRecorded: () => fetchJobsForClient(selectedClient),
+                  onPaymentRecorded: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Payment recorded successfully"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
                 ),
             ],
           ),
