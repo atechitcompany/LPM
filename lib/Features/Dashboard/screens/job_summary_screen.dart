@@ -23,6 +23,17 @@ class JobSummaryScreen extends StatefulWidget {
     "Rubber": "/jobform/rubber",
     "Emboss": "/jobform/emboss",
     "Delivery": "/jobform/delivery",
+    "Account": "/jobform/account-1",
+    // Lowercase variants to handle dynamic department values
+    "designer": "/jobform/designer-1",
+    "autobending": "/jobform/autobending",
+    "manualbending": "/jobform/manualbending",
+    "lasercutting": "/jobform/laser",
+    "lasercut": "/jobform/laser",
+    "rubber": "/jobform/rubber",
+    "emboss": "/jobform/emboss",
+    "delivery": "/jobform/delivery",
+    "account": "/jobform/account-1",
   };
 
   static const Map<String, String> departmentFirestoreKey = {
@@ -148,7 +159,8 @@ class _JobSummaryScreenState extends State<JobSummaryScreen> {
         backgroundColor: Colors.yellow,
         child: const Icon(Icons.edit, color: Colors.black),
         onPressed: () {
-          final route = JobSummaryScreen.departmentEditRoute[currentDept];
+          final route = JobSummaryScreen.departmentEditRoute[currentDept] ?? 
+                        JobSummaryScreen.departmentEditRoute[currentDept.toLowerCase()];
           if (route == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("No form for $currentDept")),
