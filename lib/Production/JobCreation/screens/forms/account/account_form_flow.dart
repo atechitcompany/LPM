@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:lightatech/Production/JobCreation/screens/forms/new_form_scope.dart';
+import 'package:lightatech/FormComponents/FileUploadBox.dart';
 
-import 'account_pages/account_page_1_basic.dart';
-import 'account_pages/account_page_2_sizes.dart';
-import 'account_pages/account_page_3_ply.dart';
-import 'account_pages/account_page_4_delivery.dart';
-import 'account_pages/account_page_5_charges.dart';
-import 'account_pages/account_page_6_review.dart';
-
+//latest form. acc form 1 to 6 are useless
 class AccountFormFlow extends StatefulWidget {
   const AccountFormFlow({super.key});
 
@@ -19,12 +13,15 @@ class AccountFormFlow extends StatefulWidget {
 }
 
 class _AccountFormFlowState extends State<AccountFormFlow> {
-  final PageController _controller = PageController();
-  int _currentPage = 0;
-  final int totalPages = 6;
-
-  bool loading = true;
+  bool _loading = true;
+  bool _justSave = false;
   bool _loaded = false;
+
+  String _partyName = "";
+  String _jobName = "";
+  String _lpm = "";
+
+  final _extraEmailController = TextEditingController();
 
   @override
   void didChangeDependencies() {
@@ -34,274 +31,269 @@ class _AccountFormFlowState extends State<AccountFormFlow> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
-  Future<void> _loadData() async {
-    final form = NewFormScope.of(context);
-    final lpm = form.LpmAutoIncrement.text;
-
-    if (lpm.isEmpty) {
-      setState(() => loading = false);
-      return;
-    }
-
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection("jobs")
-          .doc(lpm)
-          .get();
-
-      if (!snap.exists) {
-        setState(() => loading = false);
-        return;
-      }
-
-      final data = snap.data()!;
-
-      // ── Designer data (read-only) ──
-      final designer = Map<String, dynamic>.from(
-        data["designer"]?["data"] ?? {},
-      );
-
-      // ── Account data (editable) ──
-      final account = Map<String, dynamic>.from(
-        data["account"]?["data"] ?? {},
-      );
-
-      // Read-only from designer
-      form.PartyName.text = designer["PartyName"] ?? "";
-      form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
-      form.LpmAutoIncrement.text = lpm;
-      form.DesigningStatus.text = designer["DesigningStatus"] ?? "";
-      form.DesignerCreatedBy.text = designer["DesignerCreatedBy"] ?? "";
-
-      // 🟢 THE FULLY SYNCHRONIZED ACCOUNT LOAD LIST 🟢
-      form.AccountsCreatedBy.text = account["AccountsCreatedBy"] ?? "";
-      form.BuyerOrderNo.text = account["BuyerOrderNo"] ?? "";
-      form.OrderBy.text = account["OrderBy"] ?? "";
-      form.DeliveryAt.text = account["DeliveryAt"] ?? "";
-      form.Remark.text = account["Remark"] ?? "";
-
-      form.Ups.text = account["Ups"] ?? "NO";
-      form.Size.text = account["Size"] ?? "NO";
-      form.Size2.text = account["Size2"] ?? "NO";
-      form.Size3.text = account["Size3"] ?? "NO";
-      form.Size4.text = account["Size4"] ?? "NO";
-      form.Size5.text = account["Size5"] ?? "NO";
-      form.Ups_32.text = account["Ups_32"] ?? "";
-
-      form.LaserPunchNew.text = account["LaserPunchNew"] ?? "No";
-      form.PlyLength.text = account["PlyLength"] ?? "";
-      form.PlyBreadth.text = account["PlyBreadth"] ?? "";
-      form.BladeSize.text = account["BladeSize"] ?? "";
-      form.CreasingSize.text = account["CreasingSize"] ?? "";
-      form.MinimumChargeApply.text = account["MinimumChargeApply"] ?? "";
-
-      form.DeliveryCreatedBy.text = account["DeliveryCreatedBy"] ?? "";
-      form.DeliveryStatus.text = account["DeliveryStatus"] ?? "Pending";
-      form.DeliveryURL.text = account["DeliveryURL"] ?? "";
-      form.TransportName.text = account["TransportName"] ?? "";
-
-      form.CapsuleRate.text = account["CapsuleRate"] ?? "";
-      form.CapsulePcs.text = account["CapsulePcs"] ?? "";
-      form.PerforationSize.text = account["PerforationSize"] ?? "";
-      form.ZigZagBladeSize.text = account["ZigZagBladeSize"] ?? "";
-      form.RubberSize.text = account["RubberSize"] ?? "";
-      form.CourierCharges.text = account["CourierCharges"] ?? "";
-
-      form.TotalSize.text = account["TotalSize"] ?? "";
-      form.MaleRate.text = account["MaleRate"] ?? "";
-      form.FemaleRate.text = account["FemaleRate"] ?? "";
-      form.InvoiceStatus.text = account["InvoiceStatus"] ?? "Pending";
-      form.InvoicePrintedBy.text = account["InvoicePrintedBy"] ?? "";
-      form.ParticularSlider.text = account["ParticularSlider"] ?? "";
-
-      form.AccountStatus.text = account["AccountStatus"] ?? "Pending";
-
-      // (We can leave Unknown and Extra if they might exist from old data)
-      form.Unknown.text = account["Unknown"] ?? "";
-      form.Extra.text = account["Extra"] ?? "";
-
-      debugPrint("✅ AccountFormFlow loaded data from Firestore");
-    } catch (e) {
-      debugPrint("❌ Error loading account data: $e");
-    }
-
-    setState(() => loading = false);
+  @override
+  void dispose() {
+    _extraEmailController.dispose();
+    super.dispose();
   }
 
-  Future<void> _saveAndSubmit() async {
+  Future<void> _loadData() async {
     final form = NewFormScope.of(context);
-    final lpm = form.LpmAutoIncrement.text.trim();
+    _lpm = form.LpmAutoIncrement.text.trim();
 
-    if (lpm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("LPM is empty, cannot save")),
-      );
+    if (_lpm.isEmpty) {
+      setState(() => _loading = false);
       return;
     }
 
     try {
-      // 🟢 The job moves to Delivery ONLY if Account is Done
-      final isDone = form.AccountStatus.text.trim().toLowerCase() == "done" ||
-          form.AccountStatus.text.trim().toLowerCase() == "yes";
-
-      // 🟢 Map EVERY single field from Pages 1-6
-      final accountData = {
-        "AccountsCreatedBy": form.AccountsCreatedBy.text,
-        "BuyerOrderNo": form.BuyerOrderNo.text,
-        "OrderBy": form.OrderBy.text,
-        "DeliveryAt": form.DeliveryAt.text,
-        "Remark": form.Remark.text,
-        "Size2": form.Size2.text,
-        "Size3": form.Size3.text,
-        "Size4": form.Size4.text,
-        "Size5": form.Size5.text,
-        "Ups_32": form.Ups_32.text,
-        "LaserPunchNew": form.LaserPunchNew.text,
-        "PlyLength": form.PlyLength.text,
-        "PlyBreadth": form.PlyBreadth.text,
-        "BladeSize": form.BladeSize.text,
-        "CreasingSize": form.CreasingSize.text,
-        "MinimumChargeApply": form.MinimumChargeApply.text,
-        "DeliveryCreatedBy": form.DeliveryCreatedBy.text,
-        "DeliveryStatus": form.DeliveryStatus.text,
-        "DeliveryURL": form.DeliveryURL.text,
-        "TransportName": form.TransportName.text,
-        "CapsuleRate": form.CapsuleRate.text,
-        "CapsulePcs": form.CapsulePcs.text,
-        "PerforationSize": form.PerforationSize.text,
-        "ZigZagBladeSize": form.ZigZagBladeSize.text,
-        "RubberSize": form.RubberSize.text,
-        "CourierCharges": form.CourierCharges.text,
-        "TotalSize": form.TotalSize.text,
-        "MaleRate": form.MaleRate.text,
-        "FemaleRate": form.FemaleRate.text,
-        "InvoiceStatus": form.InvoiceStatus.text,
-        "InvoicePrintedBy": form.InvoicePrintedBy.text,
-        "ParticularSlider": form.ParticularSlider.text,
-        "AccountStatus": form.AccountStatus.text,
-      };
-
-      final updateData = {
-        "account": {
-          "submitted": true,
-          "data": accountData,
-        },
-        "currentDepartment": isDone ? "Delivery" : "Account",
-        "updatedAt": FieldValue.serverTimestamp(),
-      };
-
-      // 🟢 Add visibility permission for the next department
-      if (isDone) {
-        updateData["visibleTo"] = FieldValue.arrayUnion(["Delivery"]);
+      final snap = await FirebaseFirestore.instance.collection("jobs").doc(_lpm).get();
+      if (snap.exists) {
+        final designer = Map<String, dynamic>.from(snap.data()?["designer"]?["data"] ?? {});
+        _partyName = designer["PartyName"] ?? "";
+        _jobName = designer["ParticularJobName"] ?? "";
       }
-
-      // 🟢 Fire it off to Firestore
-      await FirebaseFirestore.instance
-          .collection("jobs")
-          .doc(lpm)
-          .set(updateData, SetOptions(merge: true));
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account Form Submitted Successfully!")),
-      );
-
-      // Return to dashboard
-      context.go('/dashboard');
-
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      debugPrint("❌ Error loading data: $e");
+    }
+
+    setState(() => _loading = false);
+  }
+
+  Future<void> _submit() async {
+    setState(() => _loading = true);
+    try {
+      if (_justSave) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("✅ Invoices saved"), backgroundColor: Colors.green),
+          );
+          context.go('/dashboard');
+        }
+      } else {
+        final extraEmail = _extraEmailController.text.trim();
+
+        String partyEmail = "";
+        if (_partyName.isNotEmpty) {
+          final snap = await FirebaseFirestore.instance
+              .collection("customers")
+              .where("Party Names", isEqualTo: _partyName)
+              .limit(1)
+              .get();
+          if (snap.docs.isNotEmpty) {
+            partyEmail = (snap.docs.first.data()["Email"] ?? "").toString().trim();
+          }
+        }
+
+        final toEmail = extraEmail.isNotEmpty ? extraEmail : partyEmail;
+
+        await FirebaseFirestore.instance.collection("jobs").doc(_lpm).set({
+          "quotationSentTo": toEmail,
+          "quotationSentAt": FieldValue.serverTimestamp(),
+          "updatedAt": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("✅ Quotation sent to $toEmail"), backgroundColor: Colors.green),
+          );
+          context.go('/dashboard');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
-        title: Text("Account Form (${_currentPage + 1}/$totalPages)"),
-        backgroundColor: Colors.yellow,
+        elevation: 0,
+        backgroundColor: const Color(0xFF1E2A3A),
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
+        title: const Text("Upload Quotations",
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: PageView(
-              controller: _controller,
-              onPageChanged: (index) {
-                setState(() => _currentPage = index);
-              },
-              children: const [
-                AccountPage1Basic(),
-                AccountPage2Sizes(),
-                AccountPage3Ply(),
-                AccountPage4Delivery(),
-                AccountPage5Charges(),
-                AccountPage6Review(),
-              ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionHeader("JOB DETAILS"),
+            _infoCard([
+              _infoRow("LPM Number", _lpm),
+              _divider(),
+              _infoRow("Party Name", _partyName),
+              _divider(),
+              _infoRow("Job Name", _jobName),
+            ]),
+
+            const SizedBox(height: 24),
+
+            _sectionHeader("UPLOAD PROFORMA INVOICES"),
+            const SizedBox(height: 4),
+
+            _uploadLabel("Proforma Invoice 1"),
+            FileUploadBox(
+              jobId: _lpm,
+              fieldName: 'ProformaInvoice1',
+              onFileSelected: (file) => debugPrint("Invoice1: ${file.name}"),
             ),
-          ),
+            const SizedBox(height: 16),
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
+            _uploadLabel("Proforma Invoice 2 (Optional)"),
+            FileUploadBox(
+              jobId: _lpm,
+              fieldName: 'ProformaInvoice2',
+              onFileSelected: (file) => debugPrint("Invoice2: ${file.name}"),
+            ),
+            const SizedBox(height: 16),
 
-                // BACK BUTTON
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      if (_currentPage == 0) {
-                        context.go('/dashboard');
-                      } else {
-                        _controller.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    child: const Text("Back"),
+            _uploadLabel("Proforma Invoice 3 (Optional)"),
+            FileUploadBox(
+              jobId: _lpm,
+              fieldName: 'ProformaInvoice3',
+              onFileSelected: (file) => debugPrint("Invoice3: ${file.name}"),
+            ),
+
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 20),
+
+            const Text("Quotation Action",
+                style: TextStyle(fontSize: 13, color: Colors.black54)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Just Save Invoices",
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Switch(
+                    value: _justSave,
+                    onChanged: (v) => setState(() => _justSave = v),
+                    activeColor: const Color(0xFF2979FF),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 20),
+
+            if (!_justSave) ...[
+              _sectionHeader("SEND TO ADDITIONAL EMAIL (OPTIONAL)"),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: TextField(
+                  controller: _extraEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: "Send to this Mail To",
+                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    prefixIcon: Icon(Icons.alternate_email, color: Colors.grey.shade400, size: 20),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   ),
                 ),
-
-                const SizedBox(width: 12),
-
-                // NEXT / SUBMIT BUTTON
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_currentPage == totalPages - 1) {
-                        _saveAndSubmit();
-                      } else {
-                        _controller.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
-                      foregroundColor: Colors.black,
-                    ),
-                    child: Text(
-                      _currentPage == totalPages - 1 ? "Submit" : "Next",
-                    ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _submit,
+                  icon: const Icon(Icons.send, size: 18),
+                  label: const Text("Send Quotation to Customer",
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2979FF),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+            ],
 
-              ],
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.save_alt, size: 18),
+                label: const Text("Save Invoices",
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E2A3A),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  Widget _sectionHeader(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Text(text,
+        style: const TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w700,
+            color: Color(0xFF2979FF), letterSpacing: 0.8)),
+  );
+
+  Widget _uploadLabel(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+  );
+
+  Widget _infoCard(List<Widget> children) => Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: Column(children: children),
+  );
+
+  Widget _infoRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+      const SizedBox(height: 4),
+      Text(value.isEmpty ? "—" : value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+    ]),
+  );
+
+  Widget _divider() => Divider(height: 1, color: Colors.grey.shade100);
 }
