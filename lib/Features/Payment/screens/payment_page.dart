@@ -19,6 +19,13 @@ class _PaymentPageState extends State<PaymentPage> {
   final List<String> _tabs = ['All', 'Overdue', 'Jobs', 'Paid'];
   final TextEditingController _searchController = TextEditingController();
 
+  bool _matchesSearch(Map<String, dynamic> data) {
+    if (_searchQuery.isEmpty) return true;
+    final client = (data['client'] ?? '').toString().toLowerCase();
+    final lpm = (data['lpmNumber'] ?? '').toString().toLowerCase();
+    return client.contains(_searchQuery) || lpm.contains(_searchQuery);
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -54,14 +61,13 @@ class _PaymentPageState extends State<PaymentPage> {
             color: Colors.white,
             child: Column(
               children: [
-                // Search bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: TextField(
                     controller: _searchController,
                     onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
                     decoration: InputDecoration(
-                      hintText: 'Search client...',
+                      hintText: 'Search client or LPM number...',
                       hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
                       prefixIcon: const Icon(Icons.search, size: 18),
                       suffixIcon: _searchQuery.isNotEmpty
@@ -80,7 +86,6 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                   ),
                 ),
-                // Tabs + filter row
                 Row(
                   children: [
                     Expanded(
@@ -159,6 +164,7 @@ class _PaymentPageState extends State<PaymentPage> {
             if (!clientMap.containsKey(client)) {
               clientMap[client] = {
                 'client': client,
+                'lpmNumber': (data['lpmNumber'] ?? '').toString(),
                 'jobs': <Map<String, dynamic>>[],
               };
             }
@@ -177,6 +183,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   'date': instDate,
                   'amount': amount,
                   'clientName': client,
+                  'lpmNumber': (data['lpmNumber'] ?? '').toString(),
                 });
                 continue;
               }
@@ -188,18 +195,22 @@ class _PaymentPageState extends State<PaymentPage> {
                 'date': instDate,
                 'amount': amount,
                 'clientName': client,
+                'lpmNumber': (data['lpmNumber'] ?? '').toString(),
               };
               (clientMap[client]!['jobs'] as List<Map<String, dynamic>>).add(jobEntry);
               allJobItems.add(jobEntry);
             }
           }
 
-          // Apply search filter to paid items
-          if (_selectedTab == 'Paid') {
-            final filtered = _searchQuery.isEmpty
-                ? paidItems
-                : paidItems.where((p) => (p['clientName'] as String).toLowerCase().contains(_searchQuery)).toList();
+          bool _matchesItem(Map<String, dynamic> item) {
+            if (_searchQuery.isEmpty) return true;
+            final client = (item['clientName'] ?? '').toString().toLowerCase();
+            final lpm = (item['lpmNumber'] ?? '').toString().toLowerCase();
+            return client.contains(_searchQuery) || lpm.contains(_searchQuery);
+          }
 
+          if (_selectedTab == 'Paid') {
+            final filtered = paidItems.where(_matchesItem).toList();
             if (filtered.isEmpty) {
               return const Center(child: Text("No paid payments found.", style: TextStyle(fontSize: 16)));
             }
@@ -208,9 +219,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
           if (_selectedTab == 'Jobs') {
             allJobItems.sort((a, b) => (a['date'] as DateTime).compareTo(b['date'] as DateTime));
-            final filtered = _searchQuery.isEmpty
-                ? allJobItems
-                : allJobItems.where((j) => (j['clientName'] as String).toLowerCase().contains(_searchQuery)).toList();
+            final filtered = allJobItems.where(_matchesItem).toList();
             if (filtered.isEmpty) {
               return const Center(child: Text("No jobs found.", style: TextStyle(fontSize: 16)));
             }
@@ -222,7 +231,11 @@ class _PaymentPageState extends State<PaymentPage> {
           for (final entry in clientMap.entries) {
             final jobs = entry.value['jobs'] as List<Map<String, dynamic>>;
             if (jobs.isEmpty) continue;
-            if (_searchQuery.isNotEmpty && !entry.key.toLowerCase().contains(_searchQuery)) continue;
+
+            final lpm = (entry.value['lpmNumber'] ?? '').toString().toLowerCase();
+            if (_searchQuery.isNotEmpty &&
+                !entry.key.toLowerCase().contains(_searchQuery) &&
+                !lpm.contains(_searchQuery)) continue;
 
             final todayJobs = jobs.where((j) => (j['date'] as DateTime) == todayDate).toList();
             final overdueJobs = jobs.where((j) => (j['date'] as DateTime).isBefore(todayDate)).toList();
@@ -233,6 +246,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
             allClients.add({
               'client': entry.key,
+              'lpmNumber': entry.value['lpmNumber'],
               'jobs': jobs,
               'todayJobs': todayJobs,
               'overdueJobs': overdueJobs,
@@ -255,11 +269,7 @@ class _PaymentPageState extends State<PaymentPage> {
           }
 
           if (_selectedTab == 'All') {
-            return _AllTabView(
-              displayList: displayList,
-              todayDate: todayDate,
-              selectedTab: _selectedTab,
-            );
+            return _AllTabView(displayList: displayList, todayDate: todayDate, selectedTab: _selectedTab);
           }
 
           return _OverdueTabView(displayList: displayList);
@@ -273,13 +283,11 @@ class _PaymentPageState extends State<PaymentPage> {
 
 class _PaidTabView extends StatelessWidget {
   final List<Map<String, dynamic>> paidItems;
-
   const _PaidTabView({required this.paidItems});
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##,##0', 'en_IN');
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: paidItems.length,
@@ -291,6 +299,7 @@ class _PaidTabView extends StatelessWidget {
         final date = item['date'] as DateTime;
         final amount = (item['amount'] as num).toDouble();
         final jobName = inst['label'] ?? data['jobName'] ?? data['job'] ?? 'Job';
+        final lpm = (item['lpmNumber'] ?? '').toString();
 
         return GestureDetector(
           onTap: () => context.push('/client-detail', extra: {'client': client}),
@@ -316,6 +325,8 @@ class _PaidTabView extends StatelessWidget {
                     children: [
                       Text(client, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       Text(jobName.toString(), style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      if (lpm.isNotEmpty)
+                        Text('LPM: $lpm', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                     ],
                   ),
                 ),
@@ -350,13 +361,11 @@ class _PaidTabView extends StatelessWidget {
 class _JobsTabView extends StatelessWidget {
   final List<Map<String, dynamic>> jobItems;
   final DateTime todayDate;
-
   const _JobsTabView({required this.jobItems, required this.todayDate});
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##,##0', 'en_IN');
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: jobItems.length,
@@ -368,6 +377,7 @@ class _JobsTabView extends StatelessWidget {
         final date = job['date'] as DateTime;
         final amount = (job['amount'] as num).toDouble();
         final jobName = inst['label'] ?? data['jobName'] ?? data['job'] ?? 'Job';
+        final lpm = (job['lpmNumber'] ?? '').toString();
         final isOverdue = date.isBefore(todayDate);
         final isToday = date == todayDate;
 
@@ -395,6 +405,8 @@ class _JobsTabView extends StatelessWidget {
                     children: [
                       Text(client, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       Text(jobName.toString(), style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      if (lpm.isNotEmpty)
+                        Text('LPM: $lpm', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                     ],
                   ),
                 ),
@@ -437,7 +449,6 @@ class _AllTabView extends StatefulWidget {
   final List<Map<String, dynamic>> displayList;
   final DateTime todayDate;
   final String selectedTab;
-
   const _AllTabView({required this.displayList, required this.todayDate, required this.selectedTab});
 
   @override
@@ -457,14 +468,15 @@ class _AllTabViewState extends State<_AllTabView> {
 
     for (final c in widget.displayList) {
       final client = c['client'] as String;
+      final lpm = (c['lpmNumber'] ?? '').toString();
       for (final j in (c['todayJobs'] as List<Map<String, dynamic>>)) {
-        todayItems.add({...j, 'clientName': client});
+        todayItems.add({...j, 'clientName': client, 'lpmNumber': lpm});
       }
       for (final j in (c['overdueJobs'] as List<Map<String, dynamic>>)) {
-        overdueItems.add({...j, 'clientName': client});
+        overdueItems.add({...j, 'clientName': client, 'lpmNumber': lpm});
       }
       for (final j in (c['upcomingJobs'] as List<Map<String, dynamic>>)) {
-        upcomingItems.add({...j, 'clientName': client});
+        upcomingItems.add({...j, 'clientName': client, 'lpmNumber': lpm});
       }
     }
 
@@ -476,30 +488,11 @@ class _AllTabViewState extends State<_AllTabView> {
       padding: const EdgeInsets.all(16),
       children: [
         if (todayItems.isNotEmpty)
-          _SectionGroup(
-            label: 'Today',
-            total: todayTotal,
-            items: todayItems,
-            expanded: _todayExpanded,
-            onToggle: () => setState(() => _todayExpanded = !_todayExpanded),
-            isToday: true,
-          ),
+          _SectionGroup(label: 'Today', total: todayTotal, items: todayItems, expanded: _todayExpanded, onToggle: () => setState(() => _todayExpanded = !_todayExpanded), isToday: true),
         if (overdueItems.isNotEmpty)
-          _SectionGroup(
-            label: 'Overdue',
-            total: overdueTotal,
-            items: overdueItems,
-            expanded: _overdueExpanded,
-            onToggle: () => setState(() => _overdueExpanded = !_overdueExpanded),
-          ),
+          _SectionGroup(label: 'Overdue', total: overdueTotal, items: overdueItems, expanded: _overdueExpanded, onToggle: () => setState(() => _overdueExpanded = !_overdueExpanded)),
         if (upcomingItems.isNotEmpty)
-          _SectionGroup(
-            label: 'Upcoming',
-            total: upcomingTotal,
-            items: upcomingItems,
-            expanded: _upcomingExpanded,
-            onToggle: () => setState(() => _upcomingExpanded = !_upcomingExpanded),
-          ),
+          _SectionGroup(label: 'Upcoming', total: upcomingTotal, items: upcomingItems, expanded: _upcomingExpanded, onToggle: () => setState(() => _upcomingExpanded = !_upcomingExpanded)),
       ],
     );
   }
@@ -513,14 +506,7 @@ class _SectionGroup extends StatelessWidget {
   final VoidCallback onToggle;
   final bool isToday;
 
-  const _SectionGroup({
-    required this.label,
-    required this.total,
-    required this.items,
-    required this.expanded,
-    required this.onToggle,
-    this.isToday = false,
-  });
+  const _SectionGroup({required this.label, required this.total, required this.items, required this.expanded, required this.onToggle, this.isToday = false});
 
   List<Widget> _buildClientCards(BuildContext context) {
     final Map<String, List<Map<String, dynamic>>> byClient = {};
@@ -528,7 +514,6 @@ class _SectionGroup extends StatelessWidget {
       final client = item['clientName'] as String? ?? (item['data'] as Map<String, dynamic>)['client'] ?? '';
       byClient.putIfAbsent(client, () => []).add(item);
     }
-
     final fmt = NumberFormat('#,##,##0', 'en_IN');
 
     return byClient.entries.map((entry) {
@@ -536,6 +521,7 @@ class _SectionGroup extends StatelessWidget {
       final clientItems = entry.value;
       final totalAmount = clientItems.fold<double>(0, (s, e) => s + (e['amount'] as num).toDouble());
       final date = clientItems.map((i) => i['date'] as DateTime).reduce((a, b) => a.isBefore(b) ? a : b);
+      final lpm = (clientItems.first['lpmNumber'] ?? '').toString();
 
       return GestureDetector(
         onTap: () => context.push('/client-detail', extra: {'client': client}),
@@ -561,6 +547,8 @@ class _SectionGroup extends StatelessWidget {
                   children: [
                     Text(client, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     Text('${clientItems.length} pending job(s)', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    if (lpm.isNotEmpty)
+                      Text('LPM: $lpm', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                   ],
                 ),
               ),
@@ -622,7 +610,6 @@ class _SectionGroup extends StatelessWidget {
 
 class _OverdueTabView extends StatelessWidget {
   final List<Map<String, dynamic>> displayList;
-
   const _OverdueTabView({required this.displayList});
 
   @override
@@ -636,6 +623,7 @@ class _OverdueTabView extends StatelessWidget {
         final client = c['client'] as String;
         final overdueJobs = c['overdueJobs'] as List<Map<String, dynamic>>;
         final overdueTotal = c['overdueTotal'] as double;
+        final lpm = (c['lpmNumber'] ?? '').toString();
 
         return GestureDetector(
           onTap: () => context.push('/client-detail', extra: {'client': client}),
@@ -661,6 +649,8 @@ class _OverdueTabView extends StatelessWidget {
                     children: [
                       Text(client, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       Text('${overdueJobs.length} overdue job(s)', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      if (lpm.isNotEmpty)
+                        Text('LPM: $lpm', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                     ],
                   ),
                 ),
@@ -694,7 +684,6 @@ class _ActionIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-
   const _ActionIcon({required this.icon, required this.color, required this.onTap});
 
   @override
