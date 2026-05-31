@@ -264,7 +264,6 @@ class _EditPaymentPageState extends State<EditPaymentPage> {
                         : const [
                       DropdownMenuItem(value: "No", child: Text("No")),
                       DropdownMenuItem(value: "Yes", child: Text("Yes")),
-                      DropdownMenuItem(value: "Partial", child: Text("Partial")),
                     ],
                     onChanged: locked ? null : (v) => setState(() => _paymentStatuses[i] = v!),
                   ),

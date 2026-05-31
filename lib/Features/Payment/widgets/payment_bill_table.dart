@@ -21,6 +21,7 @@ class PaymentBillTable extends StatefulWidget {
 }
 
 class PaymentBillTableState extends State<PaymentBillTable> {
+  late List<PaymentMaterialModel> _materials;
   late List<Map<String, TextEditingController>> _controllers;
   late List<double> _quantities;
   String _selectedGST = "No GST";
@@ -55,18 +56,19 @@ class PaymentBillTableState extends State<PaymentBillTable> {
   @override
   void initState() {
     super.initState();
-    _quantities = List.filled(widget.materials.length, 1.0);
-    _controllers = widget.materials.map((item) {
+    _materials = List<PaymentMaterialModel>.of(widget.materials, growable: true);
+    _quantities = List<double>.generate(_materials.length, (_) => 1.0, growable: true);
+    _controllers = _materials.map((item) {
       final fields = _fieldsFor(item.material);
       return {for (final f in fields) f: TextEditingController()};
-    }).toList();
+    }).toList(growable: true);
     _initInstallments(1);
   }
 
   void _initInstallments(int count) {
-    _amountControllers = List.generate(count, (_) => TextEditingController());
-    _paymentDates = List<DateTime?>.filled(count, null, growable: true);
-    _paymentStatuses = List<String>.filled(count, "No", growable: true);
+    _amountControllers = List<TextEditingController>.generate(count, (_) => TextEditingController(), growable: true);
+    _paymentDates = List<DateTime?>.generate(count, (_) => null, growable: true);
+    _paymentStatuses = List<String>.generate(count, (_) => "No", growable: true);
     _redistributeAmounts();
   }
 
@@ -109,6 +111,7 @@ class PaymentBillTableState extends State<PaymentBillTable> {
   }
 
   void _updateQuantity(int index) {
+    if (index >= _controllers.length) return;
     final map = _controllers[index];
     double product = 1.0;
     bool anyFilled = false;
@@ -124,8 +127,9 @@ class PaymentBillTableState extends State<PaymentBillTable> {
 
   double get _totalAmount {
     double total = 0;
-    for (int i = 0; i < widget.materials.length; i++) {
-      total += widget.materials[i].rate * _quantities[i];
+    final length = _materials.length < _quantities.length ? _materials.length : _quantities.length;
+    for (int i = 0; i < length; i++) {
+      total += _materials[i].rate * _quantities[i];
     }
     return total;
   }
@@ -144,6 +148,110 @@ class PaymentBillTableState extends State<PaymentBillTable> {
     });
   }
 
+  void _showAddItemDialog() {
+    final materialCtrl = TextEditingController();
+    final materialNameCtrl = TextEditingController();
+    final rateCtrl = TextEditingController();
+    final srNo = _materials.isEmpty ? 1 : (_materials.last.srNo + 1);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.indigo.shade50, borderRadius: BorderRadius.circular(10)),
+              child: Icon(Icons.add_shopping_cart, color: Colors.indigo.shade600, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text("Add Item", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _dialogField(materialCtrl, "Material Type", Icons.category_outlined),
+              const SizedBox(height: 12),
+              _dialogField(materialNameCtrl, "Material Name", Icons.label_outline),
+              const SizedBox(height: 12),
+              _dialogField(rateCtrl, "Rate (₹)", Icons.currency_rupee, isNumber: true),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final mat = materialCtrl.text.trim();
+              final name = materialNameCtrl.text.trim();
+              final rate = double.tryParse(rateCtrl.text.trim()) ?? 0.0;
+              if (mat.isEmpty || name.isEmpty || rate <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please fill all fields correctly")),
+                );
+                return;
+              }
+              final newItem = PaymentMaterialModel(
+                srNo: srNo,
+                material: mat,
+                materialName: name,
+                rate: rate,
+                quantityOrSize: "",
+                amount: 0,
+              );
+              setState(() {
+                _materials.add(newItem);
+                _quantities.add(1.0);
+                final fields = _fieldsFor(mat);
+                _controllers.add({for (final f in fields) f: TextEditingController()});
+                _redistributeAmounts();
+              });
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.indigo,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Add", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dialogField(TextEditingController ctrl, String label, IconData icon, {bool isNumber = false}) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 18, color: Colors.indigo.shade400),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.indigo.shade400, width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
+
+  void _removeItem(int index) {
+    setState(() {
+      _controllers[index].values.forEach((c) => c.dispose());
+      _materials.removeAt(index);
+      _quantities.removeAt(index);
+      _controllers.removeAt(index);
+      _redistributeAmounts();
+    });
+  }
+
   Future<void> _submitPayment() async {
     if (widget.lpmNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("LPM number not found.")));
@@ -159,8 +267,8 @@ class PaymentBillTableState extends State<PaymentBillTable> {
         "status": _paymentStatuses[i],
       });
 
-      final materialsData = List.generate(widget.materials.length, (i) {
-        final item = widget.materials[i];
+      final materialsData = List.generate(_materials.length, (i) {
+        final item = _materials[i];
         final dims = <String, double>{};
         _controllers[i].forEach((field, ctrl) { dims[field] = double.tryParse(ctrl.text) ?? 0.0; });
         return {
@@ -193,263 +301,430 @@ class PaymentBillTableState extends State<PaymentBillTable> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.materials.isEmpty) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("No bill materials found")));
-    }
     final count = _numberOfPayments.toInt();
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [Colors.indigo.shade600, Colors.indigo.shade400]),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            ),
+            child: Row(
               children: [
-                DropdownButtonFormField<String>(
-                  value: _selectedGST,
-                  decoration: InputDecoration(
-                    labelText: "GST Type", filled: true, fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: "No GST", child: Text("No GST")),
-                    DropdownMenuItem(value: "GST", child: Text("GST")),
-                    DropdownMenuItem(value: "IGST", child: Text("IGST")),
-                  ],
-                  onChanged: (v) => setState(() { _selectedGST = v!; _redistributeAmounts(); }),
-                ),
-                const SizedBox(height: 20),
-                Text("Payments : $count", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Slider(
-                  value: _numberOfPayments, min: 1, max: 10, divisions: 9,
-                  label: count.toString(),
-                  onChanged: (v) {
-                    final newCount = v.toInt();
-                    final oldCount = _numberOfPayments.toInt();
-                    setState(() {
-                      _numberOfPayments = v;
-                      if (newCount > oldCount) {
-                        for (int i = oldCount; i < newCount; i++) {
-                          _amountControllers.add(TextEditingController());
-                          _paymentDates.add(null);
-                          _paymentStatuses.add("No");
-                        }
-                      } else {
-                        for (int i = oldCount - 1; i >= newCount; i--) {
-                          _amountControllers[i].dispose();
-                          _amountControllers.removeAt(i);
-                          _paymentDates.removeAt(i);
-                          _paymentStatuses.removeAt(i);
-                        }
-                      }
-                      _redistributeAmounts();
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(Colors.grey.shade200),
-              columnSpacing: 24,
-              columns: const [
-                DataColumn(label: Text("Sr. No.", style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text("Material", style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text("Material Name", style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text("Rate", style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text("Qty / Size", style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text("Amount", style: TextStyle(fontWeight: FontWeight.bold))),
-              ],
-              rows: List.generate(widget.materials.length, (i) {
-                final item = widget.materials[i];
-                final fields = _fieldsFor(item.material);
-                return DataRow(cells: [
-                  DataCell(Text(item.srNo.toString())),
-                  DataCell(Text(item.material)),
-                  DataCell(SizedBox(width: 220, child: Text(item.materialName))),
-                  DataCell(Text("₹ ${item.rate.toStringAsFixed(2)}")),
-                  DataCell(SizedBox(
-                    width: fields.length * 90.0,
-                    child: Row(
-                      children: fields.map((field) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: SizedBox(
-                          width: 80,
-                          child: TextField(
-                            controller: _controllers[i][field],
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              labelText: field, isDense: true,
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                            ),
-                            onChanged: (_) => _updateQuantity(i),
-                          ),
-                        ),
-                      )).toList(),
+                const Icon(Icons.receipt_long, color: Colors.white, size: 22),
+                const SizedBox(width: 10),
+                const Expanded(child: Text("Payment Bill", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
+                GestureDetector(
+                  onTap: _showAddItemDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withOpacity(0.4)),
                     ),
-                  )),
-                  DataCell(Text("₹ ${(item.rate * _quantities[i]).toStringAsFixed(2)}")),
-                ]);
-              }),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, color: Colors.white, size: 16),
+                        SizedBox(width: 4),
+                        Text("Add Item", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          if (_selectedGST != "No GST")
+          if (_materials.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Icon(Icons.inbox_outlined, size: 48, color: Colors.grey.shade300),
+                  const SizedBox(height: 12),
+                  Text("No materials added", style: TextStyle(color: Colors.grey.shade400, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: _showAddItemDialog,
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text("Add First Item"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: DropdownButtonFormField<String>(
+                value: _selectedGST,
+                decoration: InputDecoration(
+                  labelText: "GST Type",
+                  prefixIcon: Icon(Icons.percent, size: 18, color: Colors.indigo.shade400),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.indigo.shade400, width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+                items: const [
+                  DropdownMenuItem(value: "No GST", child: Text("No GST")),
+                  DropdownMenuItem(value: "GST", child: Text("GST (CGST + SGST)")),
+                  DropdownMenuItem(value: "IGST", child: Text("IGST (18%)")),
+                ],
+                onChanged: (v) => setState(() { _selectedGST = v!; _redistributeAmounts(); }),
+              ),
+            ),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(Colors.indigo.shade50),
+                    dataRowColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.indigo.shade50;
+                      return Colors.white;
+                    }),
+                    columnSpacing: 20,
+                    headingTextStyle: TextStyle(fontWeight: FontWeight.w700, color: Colors.indigo.shade700, fontSize: 13),
+                    columns: const [
+                      DataColumn(label: Text("Sr.")),
+                      DataColumn(label: Text("Material")),
+                      DataColumn(label: Text("Name")),
+                      DataColumn(label: Text("Rate")),
+                      DataColumn(label: Text("Qty / Dims")),
+                      DataColumn(label: Text("Amount")),
+                      DataColumn(label: Text("")),
+                    ],
+                    rows: List.generate(_materials.length, (i) {
+                      if (i >= _controllers.length || i >= _quantities.length) return const DataRow(cells: []);
+                      final item = _materials[i];
+                      final fields = _fieldsFor(item.material);
+                      return DataRow(cells: [
+                        DataCell(Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.indigo.shade50, borderRadius: BorderRadius.circular(6)),
+                          child: Text(item.srNo.toString(), style: TextStyle(color: Colors.indigo.shade600, fontWeight: FontWeight.bold, fontSize: 12)),
+                        )),
+                        DataCell(Text(item.material, style: const TextStyle(fontWeight: FontWeight.w500))),
+                        DataCell(SizedBox(width: 200, child: Text(item.materialName, style: TextStyle(color: Colors.grey.shade700)))),
+                        DataCell(Text("₹${item.rate.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w500))),
+                        DataCell(SizedBox(
+                          width: fields.length * 88.0,
+                          child: Row(
+                            children: fields.map((field) {
+                              final ctrl = _controllers[i][field];
+                              if (ctrl == null) return const SizedBox.shrink();
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: SizedBox(
+                                  width: 80,
+                                  child: TextField(
+                                    controller: ctrl,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    decoration: InputDecoration(
+                                      labelText: field,
+                                      isDense: true,
+                                      filled: true,
+                                      fillColor: Colors.grey.shade50,
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.indigo.shade400)),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                      labelStyle: const TextStyle(fontSize: 11),
+                                    ),
+                                    onChanged: (_) => _updateQuantity(i),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        )),
+                        DataCell(Text("₹${(item.rate * _quantities[i]).toStringAsFixed(2)}",
+                            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.green))),
+                        DataCell(IconButton(
+                          icon: Icon(Icons.delete_outline, color: Colors.red.shade300, size: 20),
+                          onPressed: () => _removeItem(i),
+                          tooltip: "Remove",
+                        )),
+                      ]);
+                    }),
+                  ),
+                ),
+              ),
+            ),
+
+            if (_selectedGST != "No GST")
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.blue.shade100),
+                  ),
+                  child: Column(
+                    children: [
+                      _summaryRow("Sub Total", "₹${_totalAmount.toStringAsFixed(2)}", Colors.grey.shade700),
+                      Divider(color: Colors.blue.shade100, height: 20),
+                      if (_selectedGST == "GST") ...[
+                        _summaryRow("CGST (9%)", "₹${_cgstAmount.toStringAsFixed(2)}", Colors.blueGrey),
+                        const SizedBox(height: 6),
+                        _summaryRow("SGST (9%)", "₹${_sgstAmount.toStringAsFixed(2)}", Colors.blueGrey),
+                      ] else
+                        _summaryRow("IGST (18%)", "₹${_gstAmount.toStringAsFixed(2)}", Colors.blueGrey),
+                    ],
+                  ),
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade100),
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      const Text("Sub Total", style: TextStyle(fontSize: 14)),
-                      Text("₹ ${_totalAmount.toStringAsFixed(2)}", style: const TextStyle(fontSize: 14)),
+                    Row(children: [
+                      Icon(Icons.payments_outlined, color: Colors.indigo.shade400, size: 18),
+                      const SizedBox(width: 8),
+                      Text("Number of Installments", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.indigo, borderRadius: BorderRadius.circular(20)),
+                        child: Text(count.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
                     ]),
-                    const Divider(),
-                    if (_selectedGST == "GST") ...[
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        const Text("CGST (9%)", style: TextStyle(fontSize: 14, color: Colors.blueGrey)),
-                        Text("₹ ${_cgstAmount.toStringAsFixed(2)}", style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
-                      ]),
-                      const SizedBox(height: 4),
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        const Text("SGST (9%)", style: TextStyle(fontSize: 14, color: Colors.blueGrey)),
-                        Text("₹ ${_sgstAmount.toStringAsFixed(2)}", style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
-                      ]),
-                    ] else if (_selectedGST == "IGST")
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        const Text("IGST (18%)", style: TextStyle(fontSize: 14, color: Colors.blueGrey)),
-                        Text("₹ ${_gstAmount.toStringAsFixed(2)}", style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
-                      ]),
+                    Slider(
+                      value: _numberOfPayments, min: 1, max: 10, divisions: 9,
+                      activeColor: Colors.indigo,
+                      label: count.toString(),
+                      onChanged: (v) {
+                        final newCount = v.toInt();
+                        final oldCount = _numberOfPayments.toInt();
+                        setState(() {
+                          _numberOfPayments = v;
+                          if (newCount > oldCount) {
+                            for (int i = oldCount; i < newCount; i++) {
+                              _amountControllers.add(TextEditingController());
+                              _paymentDates.add(null);
+                              _paymentStatuses.add("No");
+                            }
+                          } else {
+                            for (int i = oldCount - 1; i >= newCount; i--) {
+                              _amountControllers[i].dispose();
+                              _amountControllers.removeAt(i);
+                              _paymentDates.removeAt(i);
+                              _paymentStatuses.removeAt(i);
+                            }
+                          }
+                          _redistributeAmounts();
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
             ),
 
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Payment Installments", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                ...List.generate(count, (i) => Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100, borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Payment ${i + 1}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _amountControllers[i],
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: "Amount", prefixText: "₹ ", filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        onChanged: (v) { _onAmountChanged(i, v); setState(() {}); },
-                        readOnly: i != 0 && count > 1 && i == count - 1,
-                      ),
-                      const SizedBox(height: 12),
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _paymentDates[i] ?? DateTime.now(),
-                            firstDate: DateTime(2000), lastDate: DateTime(2100),
-                          );
-                          if (picked != null) _onDateSelected(i, picked);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.schedule, color: Colors.indigo.shade400, size: 18),
+                    const SizedBox(width: 8),
+                    const Text("Payment Schedule", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  ]),
+                  const SizedBox(height: 14),
+                  ...List.generate(count, (i) => Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white, borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.grey.shade400),
+                            color: Colors.indigo.shade50,
+                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
                           ),
                           child: Row(children: [
-                            const Icon(Icons.date_range), const SizedBox(width: 12),
-                            Text(_paymentDates[i] == null
-                                ? "Select Date"
-                                : "${_paymentDates[i]!.day}/${_paymentDates[i]!.month}/${_paymentDates[i]!.year}"),
+                            Container(
+                              width: 28, height: 28,
+                              decoration: const BoxDecoration(color: Colors.indigo, shape: BoxShape.circle),
+                              child: Center(child: Text("${i + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+                            ),
+                            const SizedBox(width: 10),
+                            Text("Payment ${i + 1}", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.indigo.shade700)),
                           ]),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _paymentStatuses[i],
-                        decoration: InputDecoration(
-                          labelText: "Payment Status", filled: true, fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              TextField(
+                                controller: _amountControllers[i],
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  labelText: "Amount",
+                                  prefixText: "₹ ",
+                                  prefixIcon: Icon(Icons.currency_rupee, size: 18, color: Colors.indigo.shade400),
+                                  filled: true,
+                                  fillColor: Colors.grey.shade50,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.indigo.shade400, width: 1.5)),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                onChanged: (v) { _onAmountChanged(i, v); setState(() {}); },
+                                readOnly: i != 0 && count > 1 && i == count - 1,
+                              ),
+                              const SizedBox(height: 12),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _paymentDates[i] ?? DateTime.now(),
+                                    firstDate: DateTime(2000), lastDate: DateTime(2100),
+                                    builder: (ctx, child) => Theme(
+                                      data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.light(primary: Colors.indigo.shade600)),
+                                      child: child!,
+                                    ),
+                                  );
+                                  if (picked != null) _onDateSelected(i, picked);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.grey.shade300),
+                                  ),
+                                  child: Row(children: [
+                                    Icon(Icons.calendar_today, size: 18, color: Colors.indigo.shade400),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      _paymentDates[i] == null
+                                          ? "Select Date"
+                                          : "${_paymentDates[i]!.day}/${_paymentDates[i]!.month}/${_paymentDates[i]!.year}",
+                                      style: TextStyle(color: _paymentDates[i] == null ? Colors.grey.shade400 : Colors.grey.shade800),
+                                    ),
+                                    const Spacer(),
+                                    Icon(Icons.arrow_drop_down, color: Colors.grey.shade400),
+                                  ]),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: _paymentStatuses[i],
+                                decoration: InputDecoration(
+                                  labelText: "Payment Status",
+                                  prefixIcon: Icon(
+                                    _paymentStatuses[i] == "Yes" ? Icons.check_circle_outline : _paymentStatuses[i] == "Partial" ? Icons.timelapse : Icons.cancel_outlined,
+                                    size: 18,
+                                    color: _paymentStatuses[i] == "Yes" ? Colors.green : _paymentStatuses[i] == "Partial" ? Colors.orange : Colors.red.shade300,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey.shade50,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.indigo.shade400, width: 1.5)),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(value: "No", child: Text("Not Paid")),
+                                  DropdownMenuItem(value: "Yes", child: Text("Paid")),
+                                ],
+                                onChanged: (v) => setState(() => _paymentStatuses[i] = v!),
+                              ),
+                            ],
+                          ),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: "No", child: Text("No")),
-                          DropdownMenuItem(value: "Yes", child: Text("Yes")),
-                          DropdownMenuItem(value: "Partial", child: Text("Partial")),
-                        ],
-                        onChanged: (v) => setState(() => _paymentStatuses[i] = v!),
-                      ),
-                    ],
-                  ),
-                )),
-              ],
+                      ],
+                    ),
+                  )),
+                ],
+              ),
             ),
-          ),
+          ],
 
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
+              color: Colors.grey.shade50,
+              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
             ),
             child: Column(
               children: [
-                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  const Text("Grand Total : ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text("₹ ${_finalAmount.toStringAsFixed(2)}",
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text("Grand Total", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+                  Text("₹${_finalAmount.toStringAsFixed(2)}",
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
                 ]),
-                const SizedBox(height: 4),
-                if (!_amountValid)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      "Sum of installments must equal Grand Total (₹ ${_finalAmount.toStringAsFixed(2)})",
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
+                if (!_amountValid && _materials.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade200)),
+                    child: Row(children: [
+                      Icon(Icons.warning_amber_rounded, size: 16, color: Colors.red.shade400),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text("Installment sum must equal ₹${_finalAmount.toStringAsFixed(2)}", style: TextStyle(color: Colors.red.shade600, fontSize: 12))),
+                    ]),
                   ),
-                const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity, height: 52,
                   child: ElevatedButton(
-                    onPressed: (_isSubmitting || !_amountValid) ? null : _submitPayment,
+                    onPressed: (_isSubmitting || !_amountValid || _materials.isEmpty) ? null : _submitPayment,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.indigo,
+                      disabledBackgroundColor: Colors.grey.shade300,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 2,
                     ),
                     child: _isSubmitting
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Submit Payment", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                        : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text("Submit Payment", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ]),
                   ),
                 ),
               ],
@@ -458,5 +733,12 @@ class PaymentBillTableState extends State<PaymentBillTable> {
         ],
       ),
     );
+  }
+
+  Widget _summaryRow(String label, String value, Color color) {
+    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(label, style: TextStyle(fontSize: 14, color: color)),
+      Text(value, style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500)),
+    ]);
   }
 }
