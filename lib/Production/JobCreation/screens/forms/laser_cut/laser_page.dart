@@ -75,7 +75,7 @@ class _LaserPageState extends State<LaserPage> {
     laserDone = status.toLowerCase() == "done";
 
     // 👀 LOAD DESIGNER DATA (VIEW)
-    form.ParticularJobName.text = designer["ParticularJobName"] ?? "";
+    form.ParticularJobName.text = designer["ParticularJobName"] ?? designer["particularJobName"] ?? "";
     form.LpmAutoIncrement.text = lpm;
     form.PlyType.text = designer["PlyType"] ?? "";
     form.PlySelectedBy.text = designer["PlySelectedBy"] ?? "";
